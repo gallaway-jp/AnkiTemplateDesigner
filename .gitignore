@@ -26,3 +26,15 @@ wheels/
 *~
 .DS_Store
 meta.json
+
+# GrapeJS downloaded assets (keep folder structure)
+web/grapesjs/*.js
+web/grapesjs/*.css
+web/grapesjs/*.map
+!web/grapesjs/.gitkeep
+
+# Test coverage
+htmlcov/
+.coverage
+coverage.json
+*.coverage.*

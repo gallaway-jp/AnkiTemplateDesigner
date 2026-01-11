@@ -1,16 +1,9 @@
 """
-UI package for Anki Template Designer
+UI package for Anki Template Designer.
+
+This package will contain the new GrapeJS-based designer interface.
+Old Qt-based components have been removed.
 """
 
-# Don't import anything here to avoid circular imports
-# Modules should be imported directly where needed
+__all__ = []
 
-__all__ = [
-    'TemplateDesignerDialog', 'AndroidStudioDesignerDialog',
-    'ComponentTree', 'DesignSurface',
-    'PreviewWidget', 'EditorWidget',
-    'VisualTemplateBuilder', 'Component', 'TextFieldComponent',
-    'ImageFieldComponent', 'DividerComponent', 'HeadingComponent',
-    'ContainerComponent', 'ConditionalComponent', 'ComponentType',
-    'Alignment', 'PropertiesPanel', 'TemplateConverter'
-]
