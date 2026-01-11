@@ -237,6 +237,11 @@ function initializeEditor() {
     
     console.log('[Designer] Editor initialized');
     window.log('[Designer] GrapeJS editor ready');
+    
+    } catch (error) {
+        console.error('[Designer] Failed to initialize editor:', error);
+        showError('Failed to initialize editor: ' + error.message);
+    }
 }
 
 /**
@@ -366,6 +371,9 @@ function showPanel(selector) {
 /**
  * Register editor event handlers
  */
+/**
+ * Register editor event handlers
+ */
 function registerEventHandlers() {
     // Component selected
     editor.on('component:selected', (component) => {
@@ -387,18 +395,10 @@ function registerEventHandlers() {
     editor.on('load', () => {
         console.log('[Designer] Editor loaded');
         hideLoading();
-    });() => {
-        initializeEditor();
-        // Fallback timeout to hide loading if editor doesn't fully initialize
-        setTimeout(hideLoading, 5000);
     });
-} else {
-    // Fallback if bridge.js not loaded
-    console.warn('[Designer] bridge.js not loaded, initializing without bridge');
-    document.addEventListener('DOMContentLoaded', () => {
-        initializeEditor();
-        setTimeout(hideLoading, 5000);
-    }
+}
+
+/**
  * Hide loading indicator
  */
 function hideLoading() {
@@ -435,8 +435,16 @@ window.setTheme = function(theme) {
 
 // Wait for bridge to be ready, then initialize editor
 if (typeof initializeBridge === 'function') {
-    initializeBridge(initializeEditor);
+    initializeBridge(() => {
+        initializeEditor();
+        // Fallback timeout to hide loading if editor doesn't fully initialize
+        setTimeout(hideLoading, 5000);
+    });
 } else {
     // Fallback if bridge.js not loaded
-    document.addEventListener('DOMContentLoaded', initializeEditor);
+    console.warn('[Designer] bridge.js not loaded, initializing without bridge');
+    document.addEventListener('DOMContentLoaded', () => {
+        initializeEditor();
+        setTimeout(hideLoading, 5000);
+    });
 }
