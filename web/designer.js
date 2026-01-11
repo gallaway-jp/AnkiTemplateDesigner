@@ -25,14 +25,19 @@ function initializeEditor() {
         console.log('[Designer] GrapeJS library loaded, creating editor...');
         showDebug('Step 2: Creating editor instance...');
         
-        // Initialize GrapeJS with minimal configuration
-        window.editor = grapesjs.init({
-            container: '#gjs',
-            height: '100%',
-            width: 'auto',
-            storageManager: false,
-            plugins: ['anki-plugin']
-        });
+        try {
+            // Initialize GrapeJS with minimal configuration
+            window.editor = grapesjs.init({
+                container: '#gjs',
+                height: '100%',
+                width: 'auto',
+                storageManager: false
+                // Note: plugins removed - will configure after init
+            });
+        } catch (initError) {
+            showDebug('ERROR during init: ' + initError.message);
+            throw initError;
+        }
         
         showDebug('Step 3: Editor created successfully');
         console.log('[Designer] Editor created, configuring managers...');
@@ -75,15 +80,32 @@ function initializeEditor() {
         }
         
         console.log('[Designer] Managers configured');
-        showDebug('Step 9: Registering components...');
+        showDebug('Step 9: Loading anki-plugin...');
+        
+        // Load anki plugin after editor creation
+        try {
+            if (typeof ankiPlugin === 'function') {
+                ankiPlugin(editor);
+                showDebug('Step 9: anki-plugin loaded');
+            } else {
+                showDebug('Step 9: anki-plugin not available (ok)');
+            }
+        } catch (e) {
+            console.warn('[Designer] Could not load anki-plugin:', e.message);
+            showDebug('Plugin error: ' + e.message);
+        }
+        
+        showDebug('Step 10: Registering components...');
     
     // Register custom component types (must be FIRST)
     if (typeof registerComponentTypes === 'function') {
         console.log('[Designer] Registering component types...');
         registerComponentTypes(editor);
         console.log('[Designer] Component types registered');
+        showDebug('Step 11: Component types registered');
     } else {
         console.warn('[Designer] registerComponentTypes function not available');
+        showDebug('WARNING: registerComponentTypes not available');
     }
     
     // Register custom traits (must be before blocks)
@@ -91,8 +113,10 @@ function initializeEditor() {
         console.log('[Designer] Registering traits...');
         registerAnkiTraits(editor);
         console.log('[Designer] Traits registered');
+        showDebug('Step 12: Traits registered');
     } else {
         console.warn('[Designer] registerAnkiTraits function not available');
+        showDebug('WARNING: registerAnkiTraits not available');
     }
     
     // Register custom blocks
@@ -100,20 +124,23 @@ function initializeEditor() {
         console.log('[Designer] Registering blocks...');
         registerAnkiBlocks(editor);
         console.log('[Designer] Blocks registered');
+        showDebug('Step 13: Blocks registered');
     } else {
         console.warn('[Designer] registerAnkiBlocks function not available');
+        showDebug('WARNING: registerAnkiBlocks not available');
     }
     
     // Setup panels
     setupPanels(editor);
+    showDebug('Step 14: Panels set up');
     
     // Register custom commands
     registerCommands();
-    showDebug('Step 13: Commands registered');
+    showDebug('Step 15: Commands registered');
     
     // Register event handlers
     registerEventHandlers();
-    showDebug('Step 14: Event handlers registered');
+    showDebug('Step 16: Event handlers registered');
     
     console.log('[Designer] Editor initialized');
     window.log('[Designer] GrapeJS editor ready');
