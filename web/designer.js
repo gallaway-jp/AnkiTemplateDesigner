@@ -23,89 +23,45 @@ function initializeEditor() {
         
         console.log('[Designer] GrapeJS library loaded, creating editor...');
         
-        // Initialize GrapeJS
+        // Initialize GrapeJS with minimal configuration
         window.editor = grapesjs.init({
-        container: '#gjs',
-        height: '100%',
-        width: 'auto',
-        
-        // Storage disabled - we manage it via Python bridge
-        storageManager: false,
-        
-        // Asset manager disabled - Anki handles media
-        assetManager: {
-            upload: false,
-            embedAsBase64: true
-        },
-        
-        // Canvas configuration
-        canvas: {
-            styles: [],
-            scripts: []
-        },
-        
-        // Layer Manager
-        layerManager: {
-            appendTo: '.layers-container'
-        },
-        
-        // Block Manager
-        blockManager: {
-            appendTo: '.blocks-container'
-        },
-        
-        // Style Manager
-        styleManager: {
-            appendTo: '.styles-container'
-        },
-        
-        // Trait Manager
-        traitManager: {
-            appendTo: '.traits-container'
-        },
-        
-        // Selector Manager
-        selectorManager: {
-            appendTo: '.selectors-container'
-        },
-        
-        // Device Manager
-        deviceManager: {
-            devices: [
-                {
-                    name: 'Desktop',
-                    width: ''
-                },
-                {
-                    name: 'Mobile',
-                    width: '320px',
-                    widthMedia: '480px'
-                }
-            ]
-        },
-        
-        // Plugins
-        plugins: ['anki-plugin'],
-        pluginsOpts: {
-            'anki-plugin': {
-                validateOnSave: true,
-                autoSaveInterval: 30000
+            container: '#gjs',
+            height: '100%',
+            width: 'auto',
+            storageManager: false,
+            plugins: ['anki-plugin']
+        });
+    
+    console.log('[Designer] Editor created, configuring managers...');
+    
+    // Configure managers after initialization
+    try {
+        editor.LayerManager.getConfig().appendTo = '.layers-container';
+        editor.BlockManager.getConfig().appendTo = '.blocks-container';
+        editor.StyleManager.getConfig().appendTo = '.styles-container';
+        editor.TraitManager.getConfig().appendTo = '.traits-container';
+    } catch (e) {
+        console.warn('[Designer] Could not configure manager targets:', e.message);
+    }
+    
+    // Set up devices
+    try {
+        editor.setDevice('Desktop');
+        if (editor.Devices) {
+            const desktopDevice = editor.Devices.get('desktop');
+            if (!desktopDevice) {
+                editor.addDevice('Desktop', { width: '' });
+            }
+            const mobileDevice = editor.Devices.get('mobile');
+            if (!mobileDevice) {
+                editor.addDevice('Mobile', { width: '320px', widthMedia: '480px' });
             }
         }
-    });
+    } catch (e) {
+        console.warn('[Designer] Could not configure devices:', e.message);
+    }
     
-    console.log('[Designer] Editor created, configuring style sectors...');
-    
-    // Configure style manager sectors after initialization
-    const styleManager = editor.StyleManager;
-    getStyleSectors().forEach(sector => {
-        styleManager.addSector(sector.name, {
-            open: sector.open,
-            buildProps: sector.buildProps
-        });
-    });
-    
-    console.log('[Designer] Style sectors configured');
+    console.log('[Designer] Managers configured');
     
     // Register custom component types (must be FIRST)
     if (typeof registerComponentTypes === 'function') {
