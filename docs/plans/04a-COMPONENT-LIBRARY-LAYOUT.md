@@ -17,6 +17,242 @@ Each block includes HTML template, default styles, traits (properties), and Anki
 
 ---
 
+## Component Type Registration (Required First)
+
+### Component Registration Order
+
+**CRITICAL**: GrapeJS checks component types in **REVERSE registration order**.
+- Register generic/base components FIRST
+- Register specific/custom components LAST (checked first)
+
+### `web/components/index.js`
+
+```javascript
+/**
+ * Register all custom component types
+ * MUST be called before block registration
+ */
+export function registerComponentTypes(editor) {
+    // Register in order: generic first, specific last
+    // (GrapeJS checks in reverse order)
+    
+    // 1. Base layout components (generic)
+    registerBaseComponents(editor);
+    
+    // 2. Anki-specific components (checked first)
+    registerStudyActionBarComponent(editor);
+}
+
+/**
+ * Register base layout component types
+ */
+function registerBaseComponents(editor) {
+    // Frame component type
+    editor.DomComponents.addType('frame', {
+        isComponent: el => el.classList?.contains('atd-frame'),
+        model: {
+            defaults: {
+                tagName: 'div',
+                draggable: true,
+                droppable: true,
+                traits: [
+                    { type: 'text', name: 'id', label: 'ID' },
+                    { type: 'select', name: 'device', label: 'Device', options: [
+                        { id: 'mobile', label: 'Mobile (375x667)' },
+                        { id: 'tablet', label: 'Tablet (768x1024)' },
+                        { id: 'desktop', label: 'Desktop (1920x1080)' }
+                    ]},
+                    { type: 'color', name: 'background', label: 'Background' }
+                ]
+            }
+        }
+    });
+    
+    // Card component type
+    editor.DomComponents.addType('card', {
+        isComponent: el => el.classList?.contains('atd-card'),
+        model: {
+            defaults: {
+                tagName: 'div',
+                draggable: true,
+                droppable: true,
+                traits: [
+                    { type: 'text', name: 'id', label: 'ID' },
+                    { type: 'select', name: 'elevation', label: 'Elevation', options: [
+                        { id: '1', label: 'Low' },
+                        { id: '2', label: 'Medium' },
+                        { id: '3', label: 'High' }
+                    ]},
+                    { type: 'checkbox', name: 'clickable', label: 'Clickable' }
+                ]
+            }
+        }
+    });
+}
+
+/**
+ * Register Study Action Bar Component
+ * Specialized toolbar for Anki review session controls
+ */
+function registerStudyActionBarComponent(editor) {
+    editor.DomComponents.addType('study-action-bar', {
+        // Recognize existing elements when importing HTML
+        isComponent: el => {
+            // Check by class
+            if (el.classList?.contains('atd-study-action-bar')) {
+                return { type: 'study-action-bar' };
+            }
+            // Check by data attribute
+            if (el.getAttribute?.('data-gjs-type') === 'study-action-bar') {
+                return { type: 'study-action-bar' };
+            }
+            return false;
+        },
+        
+        model: {
+            defaults: {
+                tagName: 'div',
+                draggable: true,
+                droppable: true,
+                attributes: { class: 'atd-study-action-bar' },
+                style: {
+                    display: 'flex',
+                    'align-items': 'center',
+                    'justify-content': 'flex-start',
+                    padding: '12px 16px',
+                    background: '#f5f5f5',
+                    border: '1px solid #e0e0e0',
+                    'border-radius': '8px',
+                    gap: '8px',
+                    'flex-direction': 'row'
+                },
+                traits: [
+                    {
+                        type: 'select',
+                        name: 'placement',
+                        label: 'Position',
+                        changeProp: true, // Bind to property instead of attribute
+                        options: [
+                            { id: 'top', label: 'Top' },
+                            { id: 'bottom', label: 'Bottom' },
+                            { id: 'inline', label: 'Inline' }
+                        ]
+                    },
+                    {
+                        type: 'select',
+                        name: 'direction',
+                        label: 'Layout Direction',
+                        changeProp: true,
+                        options: [
+                            { id: 'horizontal', label: 'Horizontal' },
+                            { id: 'vertical', label: 'Vertical' }
+                        ]
+                    },
+                    {
+                        type: 'checkbox',
+                        name: 'sticky',
+                        label: 'Sticky Positioning',
+                        changeProp: true,
+                        valueTrue: 'true',
+                        valueFalse: 'false'
+                    },
+                    {
+                        type: 'checkbox',
+                        name: 'responsive',
+                        label: 'Stack on Mobile',
+                        changeProp: true,
+                        valueTrue: 'true',
+                        valueFalse: 'false'
+                    }
+                ],
+                // Default property values
+                placement: 'inline',
+                direction: 'horizontal',
+                sticky: false,
+                responsive: true
+            },
+            
+            // Initialize trait behavior
+            init() {
+                // Listen to trait changes (properties since changeProp: true)
+                this.on('change:placement', this.handlePlacementChange);
+                this.on('change:sticky', this.handleStickyChange);
+                this.on('change:direction', this.handleDirectionChange);
+                this.on('change:responsive', this.handleResponsiveChange);
+                
+                // Apply initial state
+                this.handlePlacementChange();
+                this.handleDirectionChange();
+                this.handleResponsiveChange();
+            },
+            
+            // Handle placement changes (top/bottom/inline)
+            handlePlacementChange() {
+                const placement = this.get('placement') || 'inline';
+                const sticky = this.get('sticky');
+                
+                if (placement === 'top' && sticky) {
+                    this.setStyle({ position: 'sticky', top: '0', bottom: 'auto' });
+                } else if (placement === 'bottom' && sticky) {
+                    this.setStyle({ position: 'sticky', top: 'auto', bottom: '0' });
+                } else {
+                    this.setStyle({ position: 'static', top: 'auto', bottom: 'auto' });
+                }
+            },
+            
+            // Handle sticky positioning changes
+            handleStickyChange() {
+                const sticky = this.get('sticky');
+                const placement = this.get('placement') || 'inline';
+                
+                if (sticky && (placement === 'top' || placement === 'bottom')) {
+                    const pos = placement === 'bottom' ? 'bottom' : 'top';
+                    this.setStyle({ position: 'sticky', [pos]: '0' });
+                } else {
+                    this.setStyle({ position: 'static', top: 'auto', bottom: 'auto' });
+                }
+            },
+            
+            // Handle layout direction changes (horizontal/vertical)
+            handleDirectionChange() {
+                const direction = this.get('direction') || 'horizontal';
+                this.setStyle({ 
+                    'flex-direction': direction === 'horizontal' ? 'row' : 'column' 
+                });
+            },
+            
+            // Handle responsive behavior (stack on mobile)
+            handleResponsiveChange() {
+                const responsive = this.get('responsive');
+                if (responsive) {
+                    this.addClass('atd-study-action-bar--responsive');
+                } else {
+                    this.removeClass('atd-study-action-bar--responsive');
+                }
+            }
+        }
+    });
+}
+```
+
+**CSS for Responsive Behavior**:
+
+```css
+/* Add to generated styles */
+@media (max-width: 768px) {
+    .atd-study-action-bar--responsive {
+        flex-direction: column !important;
+        align-items: stretch;
+    }
+    
+    .atd-study-action-bar--responsive button {
+        width: 100%;
+    }
+}
+```
+
+---
+
 ## Block Registration Pattern
 
 ### `web/blocks/index.js`
@@ -24,6 +260,7 @@ Each block includes HTML template, default styles, traits (properties), and Anki
 ```javascript
 /**
  * Register all Anki Template Designer blocks
+ * IMPORTANT: Must call registerComponentTypes() FIRST
  */
 (function() {
     // Wait for GrapeJS to be available
@@ -494,66 +731,29 @@ export function registerStudyActionBar(editor) {
     const category = 'Anki Special';
     
     // Study Action Bar - Flexible control bar for review sessions
+    // NOTE: Component type must be registered first via registerStudyActionBarComponent()
     bm.add('study-action-bar', {
         label: 'Study Action Bar',
         category,
         content: {
-            type: 'study-action-bar',
-            tagName: 'div',
-            classes: ['atd-study-action-bar'],
-            style: {
-                display: 'flex',
-                'align-items': 'center',
-                'justify-content': 'flex-start',
-                padding: '12px 16px',
-                background: '#f5f5f5',
-                border: '1px solid #e0e0e0',
-                'border-radius': '8px',
-                gap: '8px'
-            },
+            type: 'study-action-bar', // Uses custom component type defined above
             components: [
                 {
                     tagName: 'button',
-                    content: 'Action',
+                    content: 'Show Answer',
                     classes: ['study-btn'],
+                    attributes: { 'data-action': 'showAnswer' },
                     style: { padding: '8px 16px', background: '#1976d2', color: '#fff', border: 'none', 'border-radius': '4px', cursor: 'pointer' }
-                }
-            ],
-            traits: [
-                {
-                    name: 'placement',
-                    label: 'Position',
-                    type: 'select',
-                    options: [
-                        { value: 'top', name: 'Top' },
-                        { value: 'bottom', name: 'Bottom' },
-                        { value: 'inline', name: 'Inline' }
-                    ],
-                    value: 'inline'
                 },
                 {
-                    name: 'direction',
-                    label: 'Layout Direction',
-                    type: 'select',
-                    options: [
-                        { value: 'horizontal', name: 'Horizontal' },
-                        { value: 'vertical', name: 'Vertical' }
-                    ],
-                    value: 'horizontal'
-                },
-                {
-                    name: 'sticky',
-                    label: 'Sticky Positioning',
-                    type: 'checkbox',
-                    value: false
-                },
-                {
-                    name: 'responsive',
-                    label: 'Stack on Mobile',
-                    type: 'checkbox',
-                    value: true
+                    tagName: 'button',
+                    content: 'Play Audio',
+                    classes: ['study-btn'],
+                    attributes: { 'data-action': 'playAudio' },
+                    style: { padding: '8px 16px', background: '#757575', color: '#fff', border: 'none', 'border-radius': '4px', cursor: 'pointer' }
                 }
             ]
+            // Traits are inherited from component type definition
         }
     });
 }
@@ -649,43 +849,15 @@ The following generic navigation components are not applicable to Anki templates
 
 ## Component Traits (Properties)
 
-### Layout Component Traits
+**Note**: Component traits are now defined in the component type registration section above.
 
-```javascript
-// Register traits for layout components
-editor.DomComponents.addType('frame', {
-    model: {
-        defaults: {
-            traits: [
-                { type: 'text', name: 'id', label: 'ID' },
-                { type: 'select', name: 'device', label: 'Device', options: [
-                    { id: 'mobile', name: 'Mobile (375x667)' },
-                    { id: 'tablet', name: 'Tablet (768x1024)' },
-                    { id: 'desktop', name: 'Desktop (1920x1080)' }
-                ]},
-                { type: 'color', name: 'background', label: 'Background' }
-            ]
-        }
-    }
-});
+See `registerBaseComponents()` and `registerStudyActionBarComponent()` for trait definitions.
 
-// Card traits
-editor.DomComponents.addType('card', {
-    model: {
-        defaults: {
-            traits: [
-                { type: 'text', name: 'id', label: 'ID' },
-                { type: 'select', name: 'elevation', label: 'Elevation', options: [
-                    { id: '1', name: 'Low' },
-                    { id: '2', name: 'Medium' },
-                    { id: '3', name: 'High' }
-                ]},
-                { type: 'checkbox', name: 'clickable', label: 'Clickable' }
-            ]
-        }
-    }
-});
-```
+**Key Trait Concepts**:
+- `changeProp: true` - Binds trait to component property instead of attribute
+- `options` array for select traits uses `{ id: 'value', label: 'Display' }` format
+- `valueTrue`/`valueFalse` for checkbox traits
+- Trait changes trigger component listeners via `change:propertyName` events
 
 ---
 

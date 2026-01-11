@@ -3,19 +3,129 @@
 > **Purpose**: Define GrapeJS blocks for Input, Form, and Button components.
 > **Target Agent**: Claude Haiku 4.5 chat agent in VS Code
 > **Date**: January 11, 2026
+> **Updated**: Based on VALIDATION-REPORT.md - Added component types with validation traits
 
 ---
 
 ## Overview
 
 This document defines blocks for:
-- **Basic Inputs** (3 components: text, textarea, helper)
+- **Basic Inputs** (3 components: text, textarea, password)
 - **Selection Inputs** (4 components: checkbox, radio, toggle, dropdown)
 - **Advanced Inputs** (3 components: date, slider, rating)
 - **Form Structure** (3 components: form, field-group, required indicator)
 - **Buttons & Actions** (5 components: primary, secondary, icon, destructive, link)
 
-**Updated**: Based on COMPONENT-AUDIT.md - removed email/url/phone/search field variants (consolidate to text-field), removed advanced pickers (color, file, range-slider), removed redundant button variants (tertiary, text, ghost, FAB, loading, split, toggle, button-group)
+**Updated**: Based on COMPONENT-AUDIT.md - removed email/url/phone/search field variants (consolidate to text-field), removed advanced pickers (color, file, range-slider), removed redundant button variants (tertiary, text, ghost, FAB, loading, split, toggle, button-group). Added validation traits per VALIDATION-REPORT.md.
+
+---
+
+## Component Type Registration
+
+### `web/components/inputs.js`
+
+```javascript
+/**
+ * Register input component types with validation traits
+ */
+export function registerInputComponentTypes(editor) {
+    // Text Input Component Type (with validation traits)
+    editor.DomComponents.addType('text-input', {
+        isComponent: el => el.tagName === 'INPUT' && el.type === 'text',
+        model: {
+            defaults: {
+                tagName: 'input',
+                draggable: true,
+                droppable: false,
+                attributes: { type: 'text' },
+                traits: [
+                    { type: 'text', name: 'name', label: 'Name' },
+                    { type: 'text', name: 'placeholder', label: 'Placeholder' },
+                    { type: 'checkbox', name: 'required', label: 'Required' },
+                    { type: 'text', name: 'pattern', label: 'Pattern (regex)' },
+                    { type: 'number', name: 'minlength', label: 'Min Length', min: 0 },
+                    { type: 'number', name: 'maxlength', label: 'Max Length', min: 0 }
+                ]
+            }
+        }
+    });
+    
+    // Textarea Component Type
+    editor.DomComponents.addType('textarea-input', {
+        isComponent: el => el.tagName === 'TEXTAREA',
+        model: {
+            defaults: {
+                tagName: 'textarea',
+                draggable: true,
+                droppable: false,
+                traits: [
+                    { type: 'text', name: 'name', label: 'Name' },
+                    { type: 'text', name: 'placeholder', label: 'Placeholder' },
+                    { type: 'checkbox', name: 'required', label: 'Required' },
+                    { type: 'number', name: 'rows', label: 'Rows', min: 1, max: 20 },
+                    { type: 'number', name: 'minlength', label: 'Min Length', min: 0 },
+                    { type: 'number', name: 'maxlength', label: 'Max Length', min: 0 }
+                ]
+            }
+        }
+    });
+    
+    // Select Component Type
+    editor.DomComponents.addType('select-input', {
+        isComponent: el => el.tagName === 'SELECT',
+        model: {
+            defaults: {
+                tagName: 'select',
+                draggable: true,
+                droppable: false,
+                traits: [
+                    { type: 'text', name: 'name', label: 'Name' },
+                    { type: 'checkbox', name: 'required', label: 'Required' },
+                    { type: 'checkbox', name: 'multiple', label: 'Multiple Selection' }
+                ]
+            }
+        }
+    });
+    
+    // Checkbox Component Type
+    editor.DomComponents.addType('checkbox-input', {
+        isComponent: el => el.tagName === 'INPUT' && el.type === 'checkbox',
+        model: {
+            defaults: {
+                tagName: 'input',
+                draggable: true,
+                droppable: false,
+                attributes: { type: 'checkbox' },
+                traits: [
+                    { type: 'text', name: 'name', label: 'Name' },
+                    { type: 'text', name: 'value', label: 'Value' },
+                    { type: 'checkbox', name: 'checked', label: 'Checked by Default' },
+                    { type: 'checkbox', name: 'required', label: 'Required' }
+                ]
+            }
+        }
+    });
+    
+    // Radio Button Component Type
+    editor.DomComponents.addType('radio-input', {
+        isComponent: el => el.tagName === 'INPUT' && el.type === 'radio',
+        model: {
+            defaults: {
+                tagName: 'input',
+                draggable: true,
+                droppable: false,
+                attributes: { type: 'radio' },
+                traits: [
+                    { type: 'text', name: 'name', label: 'Group Name' },
+                    { type: 'text', name: 'value', label: 'Value' },
+                    { type: 'checkbox', name: 'checked', label: 'Selected by Default' },
+                    { type: 'checkbox', name: 'required', label: 'Required' }
+                ]
+            }
+        }
+    });
+}
+```
 
 ---
 
@@ -26,6 +136,7 @@ This document defines blocks for:
 ```javascript
 /**
  * Input & Form Component Blocks
+ * NOTE: Call registerInputComponentTypes() before registering blocks
  */
 
 export function registerInputBlocks(editor) {
@@ -43,7 +154,11 @@ export function registerInputBlocks(editor) {
             classes: ['atd-field'],
             components: [
                 { tagName: 'label', content: 'Label', attributes: { for: 'text-input' }, style: { display: 'block', 'margin-bottom': '4px', 'font-size': '14px', 'font-weight': '500' } },
-                { tagName: 'input', attributes: { type: 'text', id: 'text-input', placeholder: 'Enter text...' }, style: { width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', 'border-radius': '6px', 'font-size': '16px' } }
+                { 
+                    type: 'text-input', // Uses component type with validation traits
+                    attributes: { type: 'text', id: 'text-input', placeholder: 'Enter text...' }, 
+                    style: { width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', 'border-radius': '6px', 'font-size': '16px' } 
+                }
             ]
         }
     });
@@ -57,7 +172,11 @@ export function registerInputBlocks(editor) {
             classes: ['atd-field'],
             components: [
                 { tagName: 'label', content: 'Label', style: { display: 'block', 'margin-bottom': '4px', 'font-size': '14px', 'font-weight': '500' } },
-                { tagName: 'textarea', attributes: { rows: '4', placeholder: 'Enter text...' }, style: { width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', 'border-radius': '6px', 'font-size': '16px', resize: 'vertical' } }
+                { 
+                    type: 'textarea-input', // Uses component type with validation traits
+                    attributes: { rows: '4', placeholder: 'Enter text...' }, 
+                    style: { width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', 'border-radius': '6px', 'font-size': '16px', resize: 'vertical' } 
+                }
             ]
         }
     });
@@ -87,7 +206,7 @@ export function registerInputBlocks(editor) {
             classes: ['atd-checkbox'],
             style: { display: 'flex', 'align-items': 'center', gap: '8px', cursor: 'pointer' },
             components: [
-                { tagName: 'input', attributes: { type: 'checkbox' }, style: { width: '18px', height: '18px', cursor: 'pointer' } },
+                { type: 'checkbox-input', style: { width: '18px', height: '18px', cursor: 'pointer' } },
                 { tagName: 'span', content: 'Checkbox label' }
             ]
         }
@@ -101,8 +220,14 @@ export function registerInputBlocks(editor) {
             tagName: 'div',
             classes: ['atd-radio-group'],
             components: [
-                { tagName: 'label', style: { display: 'flex', 'align-items': 'center', gap: '8px', cursor: 'pointer', 'margin-bottom': '8px' }, components: [{ tagName: 'input', attributes: { type: 'radio', name: 'radio-group' }, style: { width: '18px', height: '18px' } }, { tagName: 'span', content: 'Option 1' }] },
-                { tagName: 'label', style: { display: 'flex', 'align-items': 'center', gap: '8px', cursor: 'pointer' }, components: [{ tagName: 'input', attributes: { type: 'radio', name: 'radio-group' }, style: { width: '18px', height: '18px' } }, { tagName: 'span', content: 'Option 2' }] }
+                { tagName: 'label', style: { display: 'flex', 'align-items': 'center', gap: '8px', cursor: 'pointer', 'margin-bottom': '8px' }, components: [
+                    { type: 'radio-input', attributes: { name: 'radio-group' }, style: { width: '18px', height: '18px' } }, 
+                    { tagName: 'span', content: 'Option 1' }
+                ]},
+                { tagName: 'label', style: { display: 'flex', 'align-items': 'center', gap: '8px', cursor: 'pointer' }, components: [
+                    { type: 'radio-input', attributes: { name: 'radio-group' }, style: { width: '18px', height: '18px' } }, 
+                    { tagName: 'span', content: 'Option 2' }
+                ]}
             ]
         }
     });
@@ -117,7 +242,7 @@ export function registerInputBlocks(editor) {
             style: { display: 'flex', 'align-items': 'center', gap: '12px', cursor: 'pointer' },
             components: [
                 { tagName: 'div', style: { position: 'relative', width: '48px', height: '28px' }, components: [
-                    { tagName: 'input', attributes: { type: 'checkbox' }, style: { opacity: '0', width: '0', height: '0' } },
+                    { type: 'checkbox-input', style: { opacity: '0', width: '0', height: '0' } },
                     { tagName: 'span', classes: ['atd-toggle-slider'], style: { position: 'absolute', top: '0', left: '0', right: '0', bottom: '0', background: '#ccc', 'border-radius': '28px', transition: '0.3s' } }
                 ]},
                 { tagName: 'span', content: 'Toggle label' }
@@ -134,11 +259,15 @@ export function registerInputBlocks(editor) {
             classes: ['atd-field'],
             components: [
                 { tagName: 'label', content: 'Select option', style: { display: 'block', 'margin-bottom': '4px', 'font-size': '14px', 'font-weight': '500' } },
-                { tagName: 'select', style: { width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', 'border-radius': '6px', 'font-size': '16px', background: '#fff' }, components: [
-                    { tagName: 'option', content: 'Option 1', attributes: { value: '1' } },
-                    { tagName: 'option', content: 'Option 2', attributes: { value: '2' } },
-                    { tagName: 'option', content: 'Option 3', attributes: { value: '3' } }
-                ]}
+                { 
+                    type: 'select-input', 
+                    style: { width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', 'border-radius': '6px', 'font-size': '16px', background: '#fff' }, 
+                    components: [
+                        { tagName: 'option', content: 'Option 1', attributes: { value: '1' } },
+                        { tagName: 'option', content: 'Option 2', attributes: { value: '2' } },
+                        { tagName: 'option', content: 'Option 3', attributes: { value: '3' } }
+                    ]
+                }
             ]
         }
     });
