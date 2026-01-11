@@ -1,6 +1,6 @@
-# 03a - GrapeJS Setup: Auto-Downloader and Asset Management
+# 03a - GrapeJS Setup: Build Script and Asset Management
 
-> **Purpose**: Detail the auto-downloader implementation and asset management for GrapeJS.
+> **Purpose**: Detail the build script implementation and asset management for GrapeJS.
 > **Target Agent**: Claude Haiku 4.5 chat agent in VS Code
 > **Date**: January 11, 2026
 
@@ -8,7 +8,12 @@
 
 ## Overview
 
-GrapeJS files are downloaded at runtime to avoid committing large vendor files to git. The downloader checks for required assets on addon initialization and downloads them from unpkg CDN if missing.
+GrapeJS files are included in the addon release but downloaded via a build script for source code maintenance. The build script downloads assets from unpkg CDN and commits them to git for distribution. This approach ensures:
+
+- Clean separation between development and runtime
+- Reliable asset availability in releases
+- Easy version updates during development
+- No runtime network dependencies
 
 ---
 
@@ -35,41 +40,42 @@ GrapeJS files are downloaded at runtime to avoid committing large vendor files t
 
 ```
 web/
-├── .gitignore              # Ignore downloaded files
 ├── grapesjs/
-│   ├── .gitkeep            # Keep folder in git
-│   ├── grapes.min.js       # Downloaded (gitignored)
-│   ├── grapes.min.css      # Downloaded (gitignored)
+│   ├── grapes.min.js       # Committed to git
+│   ├── grapes.min.css      # Committed to git
 │   └── plugins/            # Optional plugins
-│       └── .gitkeep
+│       ├── gjs-blocks-basic.min.js
+│       └── gjs-plugin-forms.min.js
 └── index.html              # Main editor HTML
 ```
 
 ### `.gitignore` Content
 
 ```gitignore
-# GrapeJS downloaded assets - do not commit
-grapesjs/*.js
-grapesjs/*.css
-grapesjs/plugins/*.js
-!grapesjs/.gitkeep
-!grapesjs/plugins/.gitkeep
+# No GrapeJS files ignored - they are committed to git
+# Build artifacts can be ignored if needed
+build/
+dist/
+*.pyc
+__pycache__/
 ```
 
 ---
 
-## Downloader Implementation
+## Build Script Implementation
 
-### `services/downloader.py`
+### `scripts/download_grapejs.py`
 
 ```python
-"""Auto-downloader for GrapeJS assets."""
+"""Build script to download GrapeJS assets for development and releases."""
 import urllib.request
 import urllib.error
 import ssl
 import hashlib
+import argparse
+import sys
 from pathlib import Path
-from typing import Optional, Callable
+from typing import Optional
 from dataclasses import dataclass
 
 @dataclass
@@ -82,17 +88,16 @@ class Asset:
 
 class GrapeJSDownloader:
     """
-    Download GrapeJS assets if not present.
+    Download GrapeJS assets for build process.
     
     Usage:
-        downloader = GrapeJSDownloader()
-        if not downloader.assets_exist():
-            downloader.download_assets(progress_callback=my_callback)
+        python scripts/download_grapejs.py
+        python scripts/download_grapejs.py --plugins
+        python scripts/download_grapejs.py --verify-only
     """
     
     # Version pinned for stability
     GRAPESJS_VERSION = "0.21.10"
-    BASE_URL = f"https://unpkg.com/grapesjs@{GRAPESJS_VERSION}"
     
     CORE_ASSETS = [
         Asset(
@@ -109,12 +114,12 @@ class GrapeJSDownloader:
     
     PLUGIN_ASSETS = [
         Asset(
-            url="https://unpkg.com/grapesjs-blocks-basic@1.0.2",
+            url="https://unpkg.com/grapesjs-blocks-basic@1.0.2/dist/grapesjs-blocks-basic.min.js",
             filename="plugins/gjs-blocks-basic.min.js",
             required=False
         ),
         Asset(
-            url="https://unpkg.com/grapesjs-plugin-forms@2.0.6",
+            url="https://unpkg.com/grapesjs-plugin-forms@2.0.6/dist/grapesjs-plugin-forms.min.js",
             filename="plugins/gjs-plugin-forms.min.js",
             required=False
         ),
@@ -127,24 +132,10 @@ class GrapeJSDownloader:
         self.assets_dir = addon_path / "web" / "grapesjs"
         self.plugins_dir = self.assets_dir / "plugins"
     
-    def assets_exist(self, include_plugins: bool = False) -> bool:
-        """Check if all required assets exist."""
-        assets = self.CORE_ASSETS.copy()
-        if include_plugins:
-            assets.extend(self.PLUGIN_ASSETS)
-        
-        for asset in assets:
-            if not asset.required:
-                continue
-            filepath = self.assets_dir / asset.filename
-            if not filepath.exists():
-                return False
-        return True
-    
     def download_assets(
         self, 
         include_plugins: bool = False,
-        progress_callback: Optional[Callable[[int, int, str], None]] = None,
+        force: bool = False,
         timeout: int = 30
     ) -> list[str]:
         """
@@ -152,7 +143,7 @@ class GrapeJSDownloader:
         
         Args:
             include_plugins: Whether to download optional plugins
-            progress_callback: Called with (current, total, filename)
+            force: Force re-download even if files exist
             timeout: Download timeout in seconds
             
         Returns:
@@ -165,10 +156,6 @@ class GrapeJSDownloader:
         self.assets_dir.mkdir(parents=True, exist_ok=True)
         self.plugins_dir.mkdir(parents=True, exist_ok=True)
         
-        # Create .gitkeep files
-        (self.assets_dir / ".gitkeep").touch()
-        (self.plugins_dir / ".gitkeep").touch()
-        
         # Collect assets to download
         assets = self.CORE_ASSETS.copy()
         if include_plugins:
@@ -178,16 +165,15 @@ class GrapeJSDownloader:
         ssl_context = ssl.create_default_context()
         
         downloaded = []
-        for i, asset in enumerate(assets):
+        for asset in assets:
             filepath = self.assets_dir / asset.filename
             
-            if progress_callback:
-                progress_callback(i + 1, len(assets), asset.filename)
-            
-            if filepath.exists():
+            if filepath.exists() and not force:
+                print(f"✓ {asset.filename} already exists")
                 downloaded.append(asset.filename)
                 continue
             
+            print(f"Downloading {asset.filename}...")
             try:
                 self._download_file(asset.url, filepath, ssl_context, timeout)
                 
@@ -198,14 +184,41 @@ class GrapeJSDownloader:
                         raise RuntimeError(f"Integrity check failed: {asset.filename}")
                 
                 downloaded.append(asset.filename)
+                print(f"✓ Downloaded {asset.filename}")
                 
             except Exception as e:
                 if asset.required:
                     raise RuntimeError(f"Failed to download {asset.filename}: {e}")
                 # Log warning for optional assets
-                print(f"Warning: Could not download optional {asset.filename}: {e}")
+                print(f"⚠ Could not download optional {asset.filename}: {e}")
         
         return downloaded
+    
+    def verify_assets(self, include_plugins: bool = False) -> bool:
+        """
+        Verify all assets exist and are valid.
+        
+        Returns:
+            True if all required assets exist
+        """
+        assets = self.CORE_ASSETS.copy()
+        if include_plugins:
+            assets.extend(self.PLUGIN_ASSETS)
+        
+        missing = []
+        for asset in assets:
+            if not asset.required:
+                continue
+            filepath = self.assets_dir / asset.filename
+            if not filepath.exists():
+                missing.append(asset.filename)
+        
+        if missing:
+            print(f"Missing required assets: {', '.join(missing)}")
+            return False
+        
+        print("✓ All required assets present")
+        return True
     
     def _download_file(
         self, 
@@ -221,7 +234,7 @@ class GrapeJSDownloader:
             try:
                 request = urllib.request.Request(
                     url,
-                    headers={"User-Agent": "AnkiTemplateDesigner/2.0"}
+                    headers={"User-Agent": "AnkiTemplateDesigner-Build/2.0"}
                 )
                 
                 with urllib.request.urlopen(
@@ -251,211 +264,241 @@ class GrapeJSDownloader:
                 sha256.update(chunk)
         return sha256.hexdigest() == expected_hash
     
-    def get_js_path(self) -> Path:
-        """Get path to GrapeJS JavaScript file."""
-        return self.assets_dir / "grapes.min.js"
-    
-    def get_css_path(self) -> Path:
-        """Get path to GrapeJS CSS file."""
-        return self.assets_dir / "grapes.min.css"
-    
-    def clear_cache(self):
-        """Remove all downloaded assets."""
-        import shutil
-        if self.assets_dir.exists():
-            for f in self.assets_dir.glob("*.js"):
-                f.unlink()
-            for f in self.assets_dir.glob("*.css"):
-                f.unlink()
-            if self.plugins_dir.exists():
-                shutil.rmtree(self.plugins_dir)
-                self.plugins_dir.mkdir()
-                (self.plugins_dir / ".gitkeep").touch()
-```
-
----
-
-## Progress Dialog Integration
-
-### Show Download Progress in Qt
-
-```python
-"""Download progress dialog for GrapeJS assets."""
-from aqt.qt import QDialog, QVBoxLayout, QLabel, QProgressBar
-from aqt import mw
-
-class DownloadProgressDialog(QDialog):
-    """Show download progress for GrapeJS assets."""
-    
-    def __init__(self, parent=None):
-        super().__init__(parent or mw)
-        self.setWindowTitle("Downloading GrapeJS...")
-        self.setModal(True)
-        self.setFixedWidth(400)
+    def get_asset_info(self) -> dict:
+        """Get information about downloaded assets."""
+        info = {
+            "version": self.GRAPESJS_VERSION,
+            "assets": [],
+            "missing": [],
+            "total_size": 0
+        }
         
-        layout = QVBoxLayout(self)
+        for asset in self.CORE_ASSETS + self.PLUGIN_ASSETS:
+            filepath = self.assets_dir / asset.filename
+            if filepath.exists():
+                size = filepath.stat().st_size
+                info["assets"].append({
+                    "filename": asset.filename,
+                    "size": size,
+                    "required": asset.required
+                })
+                info["total_size"] += size
+            elif asset.required:
+                info["missing"].append(asset.filename)
         
-        self.label = QLabel("Initializing...")
-        layout.addWidget(self.label)
-        
-        self.progress = QProgressBar()
-        self.progress.setMinimum(0)
-        self.progress.setMaximum(100)
-        layout.addWidget(self.progress)
-    
-    def update_progress(self, current: int, total: int, filename: str):
-        """Update progress display."""
-        percent = int((current / total) * 100)
-        self.progress.setValue(percent)
-        self.label.setText(f"Downloading: {filename}")
-        # Process events to update UI
-        from aqt.qt import QApplication
-        QApplication.processEvents()
+        return info
 
 
-def ensure_grapejs_assets() -> bool:
-    """
-    Ensure GrapeJS assets are downloaded.
-    Shows progress dialog if download needed.
+def main():
+    """Command line interface for the build script."""
+    parser = argparse.ArgumentParser(
+        description="Download GrapeJS assets for Anki Template Designer"
+    )
+    parser.add_argument(
+        "--plugins", 
+        action="store_true",
+        help="Include optional plugins"
+    )
+    parser.add_argument(
+        "--force", 
+        action="store_true",
+        help="Force re-download even if files exist"
+    )
+    parser.add_argument(
+        "--verify-only", 
+        action="store_true",
+        help="Only verify assets exist, don't download"
+    )
+    parser.add_argument(
+        "--info", 
+        action="store_true",
+        help="Show asset information"
+    )
     
-    Returns:
-        True if assets are available, False on failure
-    """
-    from ..services.downloader import GrapeJSDownloader
+    args = parser.parse_args()
     
     downloader = GrapeJSDownloader()
     
-    if downloader.assets_exist():
-        return True
-    
-    # Show progress dialog
-    dialog = DownloadProgressDialog()
-    dialog.show()
-    
     try:
-        downloader.download_assets(
-            progress_callback=dialog.update_progress
-        )
-        dialog.close()
-        return True
+        if args.info:
+            info = downloader.get_asset_info()
+            print(f"GrapeJS Version: {info['version']}")
+            print(f"Total Size: {info['total_size'] / 1024:.1f} KB")
+            print(f"Assets: {len(info['assets'])}")
+            if info['missing']:
+                print(f"Missing: {', '.join(info['missing'])}")
+            return
         
-    except RuntimeError as e:
-        dialog.close()
-        from aqt.utils import showWarning
-        showWarning(
-            f"Failed to download GrapeJS assets:\n\n{e}\n\n"
-            "Please check your internet connection and try again.",
-            title="Download Error"
+        if args.verify_only:
+            success = downloader.verify_assets(args.plugins)
+            sys.exit(0 if success else 1)
+        
+        downloaded = downloader.download_assets(
+            include_plugins=args.plugins,
+            force=args.force
         )
-        return False
+        
+        print(f"\n✓ Downloaded {len(downloaded)} assets successfully")
+        
+        # Show asset info
+        info = downloader.get_asset_info()
+        print(f"Total size: {info['total_size'] / 1024:.1f} KB")
+        
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
 ```
 
 ---
 
-## Initialization Flow
+## Usage Instructions
+
+### Development Setup
+
+```bash
+# Download core GrapeJS files
+python scripts/download_grapejs.py
+
+# Download with optional plugins
+python scripts/download_grapejs.py --plugins
+
+# Force re-download all files
+python scripts/download_grapejs.py --force
+
+# Verify assets exist
+python scripts/download_grapejs.py --verify-only
+
+# Show asset information
+python scripts/download_grapejs.py --info
+```
+
+### Release Process
+
+```bash
+# Ensure all assets are downloaded and committed
+python scripts/download_grapejs.py --plugins
+git add web/grapesjs/
+git commit -m "Update GrapeJS assets to v0.21.10"
+```
+
+### CI/CD Integration
+
+```yaml
+# .github/workflows/release.yml
+- name: Download GrapeJS assets
+  run: python scripts/download_grapejs.py --plugins
+
+- name: Verify assets
+  run: python scripts/download_grapejs.py --verify-only
+```
+
+---
+
+## Build Process Flow
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                     ADDON INITIALIZATION                         │
+│                     BUILD PROCESS                               │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
                     ┌───────────────────┐
-                    │ profile_did_open  │
-                    │      hook         │
+                    │ Run Build Script  │
+                    │ download_grapejs.py│
                     └─────────┬─────────┘
                               │
                               ▼
                     ┌───────────────────┐
-                    │   setup_menu()    │
+                    │ Download Assets   │
+                    │ from unpkg CDN    │
                     └─────────┬─────────┘
                               │
                               ▼
-            User clicks "Template Designer" menu
-                              │
-                              ▼
                     ┌───────────────────┐
-                    │ assets_exist()?   │
+                    │ Verify Integrity  │
+                    │ (optional hashes) │
                     └─────────┬─────────┘
                               │
               ┌───────────────┴───────────────┐
               │                               │
               ▼                               ▼
         ┌───────────┐                 ┌───────────────┐
-        │    Yes    │                 │      No       │
+        │ Success   │                 │   Failure    │
         └─────┬─────┘                 └───────┬───────┘
               │                               │
-              │                               ▼
-              │                     ┌───────────────────┐
-              │                     │ Show Progress     │
-              │                     │ Dialog            │
-              │                     └─────────┬─────────┘
-              │                               │
-              │                               ▼
-              │                     ┌───────────────────┐
-              │                     │ download_assets() │
-              │                     └─────────┬─────────┘
-              │                               │
-              │                    ┌──────────┴──────────┐
-              │                    │                     │
-              │                    ▼                     ▼
-              │              ┌──────────┐         ┌──────────┐
-              │              │ Success  │         │ Failure  │
-              │              └────┬─────┘         └────┬─────┘
-              │                   │                    │
-              │◀──────────────────┘                    ▼
-              │                              ┌───────────────┐
-              │                              │ Show Error    │
-              │                              │ Return        │
-              │                              └───────────────┘
-              ▼
-    ┌───────────────────┐
-    │ Open Designer     │
-    │ Dialog            │
-    └───────────────────┘
+              ▼                               ▼
+    ┌───────────────────┐           ┌───────────────────┐
+    │ Commit to Git     │           │ Show Error        │
+    │ web/grapesjs/     │           │ Exit with error   │
+    └───────────────────┘           └───────────────────┘
+                              │
+                              ▼
+                    ┌───────────────────┐
+                    │ Create Release    │
+                    │ Package           │
+                    └───────────────────┘
 ```
 
 ---
 
-## Offline Mode Considerations
+## Asset Management
 
-### Cached Assets Check
+### Version Control Strategy
+
+- **Core files** (`grapes.min.js`, `grapes.min.css`) are committed to git
+- **Plugins** are optional and committed when included
+- **Version pinning** ensures reproducible builds
+- **Integrity verification** optional for security-critical deployments
+
+### Updating GrapeJS Versions
+
+```bash
+# Update version in download_grapejs.py
+GRAPESJS_VERSION = "0.21.11"  # New version
+
+# Download new assets
+python scripts/download_grapejs.py --force
+
+# Test the new version
+# ... run tests ...
+
+# Commit the update
+git add web/grapesjs/ scripts/download_grapejs.py
+git commit -m "Update GrapeJS to v0.21.11"
+```
+
+### Asset Verification
 
 ```python
-def can_run_offline(self) -> bool:
-    """Check if addon can run without internet."""
-    return self.assets_exist()
-
-def get_asset_info(self) -> dict:
-    """Get information about downloaded assets."""
-    info = {
-        "version": self.GRAPESJS_VERSION,
-        "assets": [],
-        "missing": [],
-        "total_size": 0
-    }
+def verify_runtime_assets() -> bool:
+    """
+    Verify assets exist at runtime (no downloads).
+    Called during addon initialization.
+    """
+    addon_path = Path(__file__).parent.parent
+    assets_dir = addon_path / "web" / "grapesjs"
     
-    for asset in self.CORE_ASSETS + self.PLUGIN_ASSETS:
-        filepath = self.assets_dir / asset.filename
-        if filepath.exists():
-            size = filepath.stat().st_size
-            info["assets"].append({
-                "filename": asset.filename,
-                "size": size,
-                "required": asset.required
-            })
-            info["total_size"] += size
-        elif asset.required:
-            info["missing"].append(asset.filename)
+    required_files = [
+        "grapes.min.js",
+        "grapes.min.css"
+    ]
     
-    return info
+    for filename in required_files:
+        if not (assets_dir / filename).exists():
+            return False
+    
+    return True
 ```
 
 ---
 
 ## Error Handling
 
-### Network Errors
+### Build Script Errors
 
 ```python
 class DownloadError(Exception):
@@ -475,55 +518,92 @@ class TimeoutError(DownloadError):
     pass
 ```
 
-### User-Friendly Messages
+### Build Failure Scenarios
 
-| Error Type | User Message |
-|------------|--------------|
-| NetworkError | "Cannot connect to download server. Please check your internet connection." |
-| TimeoutError | "Download timed out. The server may be slow or unavailable." |
-| IntegrityError | "Downloaded file appears corrupted. Please try again." |
-| PermissionError | "Cannot write to addon folder. Please check folder permissions." |
+| Error Type | Cause | Resolution |
+|------------|-------|------------|
+| NetworkError | No internet or CDN down | Retry later, check connection |
+| TimeoutError | Slow connection | Increase timeout, retry |
+| IntegrityError | Corrupted download | Re-download with --force |
+| PermissionError | Cannot write files | Check folder permissions |
+
+### CI/CD Error Handling
+
+```yaml
+# .github/workflows/build.yml
+- name: Download GrapeJS assets
+  run: python scripts/download_grapejs.py --plugins
+  continue-on-error: false  # Fail build if download fails
+
+- name: Verify assets
+  run: python scripts/download_grapejs.py --verify-only
+```
 
 ---
 
-## Testing the Downloader
+## Testing the Build Script
 
-### Unit Test
+### Unit Tests
 
 ```python
-"""Tests for GrapeJS downloader."""
+"""Tests for GrapeJS build script."""
 import pytest
 from pathlib import Path
-from tempfile import TemporaryDirectory
-from services.downloader import GrapeJSDownloader
+from unittest.mock import patch, mock_open
+from scripts.download_grapejs import GrapeJSDownloader, Asset
 
 class TestGrapeJSDownloader:
     
-    def test_assets_exist_false_when_empty(self):
-        with TemporaryDirectory() as tmpdir:
-            downloader = GrapeJSDownloader(Path(tmpdir))
-            assert downloader.assets_exist() is False
+    def test_verify_assets_missing_files(self, tmp_path):
+        downloader = GrapeJSDownloader(tmp_path)
+        assert downloader.verify_assets() is False
     
-    def test_download_creates_files(self):
-        with TemporaryDirectory() as tmpdir:
-            downloader = GrapeJSDownloader(Path(tmpdir))
-            downloaded = downloader.download_assets()
-            
-            assert len(downloaded) >= 2
-            assert downloader.assets_exist() is True
-            assert downloader.get_js_path().exists()
-            assert downloader.get_css_path().exists()
+    @patch('urllib.request.urlopen')
+    def test_download_assets_success(self, mock_urlopen, tmp_path):
+        # Mock successful download
+        mock_response = mock_open(read_data=b'fake content')
+        mock_urlopen.return_value.__enter__.return_value = mock_response()
+        
+        downloader = GrapeJSDownloader(tmp_path)
+        downloaded = downloader.download_assets()
+        
+        assert len(downloaded) >= 2
+        assert (tmp_path / "web" / "grapesjs" / "grapes.min.js").exists()
     
-    def test_clear_cache(self):
-        with TemporaryDirectory() as tmpdir:
-            downloader = GrapeJSDownloader(Path(tmpdir))
-            downloader.download_assets()
-            
-            assert downloader.assets_exist() is True
-            
-            downloader.clear_cache()
-            
-            assert downloader.assets_exist() is False
+    def test_get_asset_info(self, tmp_path):
+        downloader = GrapeJSDownloader(tmp_path)
+        
+        # Create fake files
+        js_file = tmp_path / "web" / "grapesjs" / "grapes.min.js"
+        js_file.parent.mkdir(parents=True)
+        js_file.write_text("fake js content")
+        
+        info = downloader.get_asset_info()
+        assert info["version"] == "0.21.10"
+        assert len(info["assets"]) == 1
+        assert info["assets"][0]["filename"] == "grapes.min.js"
+```
+
+### Integration Tests
+
+```bash
+# Test script functionality
+python scripts/download_grapejs.py --verify-only  # Should fail initially
+python scripts/download_grapejs.py               # Download assets
+python scripts/download_grapejs.py --verify-only  # Should pass
+python scripts/download_grapejs.py --info         # Show asset info
+```
+
+### CI/CD Testing
+
+```yaml
+# .github/workflows/test.yml
+- name: Test build script
+  run: |
+    python scripts/download_grapejs.py --verify-only && exit 1 || echo "Expected failure"
+    python scripts/download_grapejs.py
+    python scripts/download_grapejs.py --verify-only
+    python scripts/download_grapejs.py --info
 ```
 
 ---
