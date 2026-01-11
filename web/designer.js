@@ -51,14 +51,12 @@ function initializeEditor() {
         
         // Block Manager
         blockManager: {
-            appendTo: '.blocks-container',
-            blocks: []
+            appendTo: '.blocks-container'
         },
         
         // Style Manager
         styleManager: {
-            appendTo: '.styles-container',
-            sectors: getStyleSectors()
+            appendTo: '.styles-container'
         },
         
         // Trait Manager
@@ -95,6 +93,19 @@ function initializeEditor() {
             }
         }
     });
+    
+    console.log('[Designer] Editor created, configuring style sectors...');
+    
+    // Configure style manager sectors after initialization
+    const styleManager = editor.StyleManager;
+    getStyleSectors().forEach(sector => {
+        styleManager.addSector(sector.name, {
+            open: sector.open,
+            buildProps: sector.buildProps
+        });
+    });
+    
+    console.log('[Designer] Style sectors configured');
     
     // Register custom component types (must be FIRST)
     if (typeof registerComponentTypes === 'function') {
