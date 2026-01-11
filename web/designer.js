@@ -12,6 +12,7 @@ window.editor = null;
  */
 function initializeEditor() {
     console.log('[Designer] Initializing GrapeJS editor...');
+    showDebug('Step 1: Checking GrapeJS...');
     
     try {
         // Check if GrapeJS is available
@@ -22,6 +23,7 @@ function initializeEditor() {
         }
         
         console.log('[Designer] GrapeJS library loaded, creating editor...');
+        showDebug('Step 2: Creating editor instance...');
         
         // Initialize GrapeJS with minimal configuration
         window.editor = grapesjs.init({
@@ -31,37 +33,49 @@ function initializeEditor() {
             storageManager: false,
             plugins: ['anki-plugin']
         });
-    
-    console.log('[Designer] Editor created, configuring managers...');
-    
-    // Configure managers after initialization
-    try {
-        editor.LayerManager.getConfig().appendTo = '.layers-container';
-        editor.BlockManager.getConfig().appendTo = '.blocks-container';
-        editor.StyleManager.getConfig().appendTo = '.styles-container';
-        editor.TraitManager.getConfig().appendTo = '.traits-container';
-    } catch (e) {
-        console.warn('[Designer] Could not configure manager targets:', e.message);
-    }
-    
-    // Set up devices
-    try {
-        editor.setDevice('Desktop');
-        if (editor.Devices) {
-            const desktopDevice = editor.Devices.get('desktop');
-            if (!desktopDevice) {
-                editor.addDevice('Desktop', { width: '' });
-            }
-            const mobileDevice = editor.Devices.get('mobile');
-            if (!mobileDevice) {
-                editor.addDevice('Mobile', { width: '320px', widthMedia: '480px' });
-            }
+        
+        showDebug('Step 3: Editor created successfully');
+        console.log('[Designer] Editor created, configuring managers...');
+        
+        // Configure managers after initialization
+        try {
+            showDebug('Step 4: Configuring LayerManager...');
+            editor.LayerManager.getConfig().appendTo = '.layers-container';
+            
+            showDebug('Step 5: Configuring BlockManager...');
+            editor.BlockManager.getConfig().appendTo = '.blocks-container';
+            
+            showDebug('Step 6: Configuring StyleManager...');
+            editor.StyleManager.getConfig().appendTo = '.styles-container';
+            
+            showDebug('Step 7: Configuring TraitManager...');
+            editor.TraitManager.getConfig().appendTo = '.traits-container';
+        } catch (e) {
+            console.warn('[Designer] Could not configure manager targets:', e.message);
+            showDebug('Manager config error: ' + e.message);
         }
-    } catch (e) {
-        console.warn('[Designer] Could not configure devices:', e.message);
-    }
-    
-    console.log('[Designer] Managers configured');
+        
+        // Set up devices
+        try {
+            showDebug('Step 8: Setting up devices...');
+            editor.setDevice('Desktop');
+            if (editor.Devices) {
+                const desktopDevice = editor.Devices.get('desktop');
+                if (!desktopDevice) {
+                    editor.addDevice('Desktop', { width: '' });
+                }
+                const mobileDevice = editor.Devices.get('mobile');
+                if (!mobileDevice) {
+                    editor.addDevice('Mobile', { width: '320px', widthMedia: '480px' });
+                }
+            }
+        } catch (e) {
+            console.warn('[Designer] Could not configure devices:', e.message);
+            showDebug('Device config error: ' + e.message);
+        }
+        
+        console.log('[Designer] Managers configured');
+        showDebug('Step 9: Registering components...');
     
     // Register custom component types (must be FIRST)
     if (typeof registerComponentTypes === 'function') {
@@ -95,16 +109,20 @@ function initializeEditor() {
     
     // Register custom commands
     registerCommands();
+    showDebug('Step 13: Commands registered');
     
     // Register event handlers
     registerEventHandlers();
+    showDebug('Step 14: Event handlers registered');
     
     console.log('[Designer] Editor initialized');
     window.log('[Designer] GrapeJS editor ready');
+    hideDebug();
     
     } catch (error) {
         console.error('[Designer] Failed to initialize editor:', error);
-        showError('Failed to initialize editor: ' + error.message);
+        console.error('[Designer] Stack:', error.stack);
+        showError('Failed to initialize editor at: ' + error.message + '\n\nCheck browser console for full stack trace.');
     }
 }
 
@@ -387,6 +405,53 @@ function hideLoading() {
     if (loading) {
         loading.classList.add('hidden');
         console.log('[Designer] Loading indicator hidden');
+    }
+}
+
+/**
+ * Show debug message (overlay on the page)
+ */
+function showDebug(message) {
+    let debugDiv = document.getElementById('debug-messages');
+    if (!debugDiv) {
+        debugDiv = document.createElement('div');
+        debugDiv.id = 'debug-messages';
+        debugDiv.style.cssText = `
+            position: fixed;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 4px;
+            padding: 15px;
+            max-width: 90%;
+            z-index: 20000;
+            font-family: monospace;
+            font-size: 12px;
+            color: #333;
+            max-height: 200px;
+            overflow-y: auto;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        `;
+        document.body.appendChild(debugDiv);
+    }
+    
+    const timestamp = new Date().toLocaleTimeString();
+    debugDiv.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+    debugDiv.scrollTop = debugDiv.scrollHeight;
+    console.log('[Debug]', message);
+}
+
+/**
+ * Hide debug messages
+ */
+function hideDebug() {
+    const debugDiv = document.getElementById('debug-messages');
+    if (debugDiv) {
+        setTimeout(() => {
+            debugDiv.style.display = 'none';
+        }, 2000);
     }
 }
 
