@@ -21,8 +21,8 @@ except ImportError:
     ANKI_AVAILABLE = False
 
 from .webview_bridge import WebViewBridge
-from services.downloader import GrapeJSDownloader
-from core.converter import AnkiTemplateParser, AnkiTemplateGenerator
+from ..services.downloader import GrapeJSDownloader
+from ..core.converter import AnkiTemplateParser, AnkiTemplateGenerator
 
 
 class TemplateDesignerDialog(QDialog):

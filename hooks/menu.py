@@ -30,7 +30,7 @@ def open_designer():
         print("[Template Designer] Cannot open - Anki not available")
         return
     
-    from gui.designer_dialog import TemplateDesignerDialog
+    from ..gui.designer_dialog import TemplateDesignerDialog
     
     try:
         dialog = TemplateDesignerDialog(mw)
