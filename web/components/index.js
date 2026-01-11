@@ -31,6 +31,10 @@ export function registerComponentTypes(editor) {
 // Make available globally for non-module scripts
 window.registerComponentTypes = registerComponentTypes;
 
+// Signal that the module is ready
+window.ankiComponentsModuleReady = true;
+console.log('[Modules] Components module loaded');
+
 /**
  * Register base layout component types
  */

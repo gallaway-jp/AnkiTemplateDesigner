@@ -95,52 +95,12 @@ function initializeEditor() {
             showDebug('Plugin error: ' + e.message);
         }
         
-        showDebug('Step 10: Registering components...');
+        showDebug('Step 10: Scheduling component registration...');
     
-    // Register custom component types (must be FIRST)
-    if (typeof registerComponentTypes === 'function') {
-        console.log('[Designer] Registering component types...');
-        registerComponentTypes(editor);
-        console.log('[Designer] Component types registered');
-        showDebug('Step 11: Component types registered');
-    } else {
-        console.warn('[Designer] registerComponentTypes function not available');
-        showDebug('WARNING: registerComponentTypes not available');
-    }
-    
-    // Register custom traits (must be before blocks)
-    if (typeof registerAnkiTraits === 'function') {
-        console.log('[Designer] Registering traits...');
-        registerAnkiTraits(editor);
-        console.log('[Designer] Traits registered');
-        showDebug('Step 12: Traits registered');
-    } else {
-        console.warn('[Designer] registerAnkiTraits function not available');
-        showDebug('WARNING: registerAnkiTraits not available');
-    }
-    
-    // Register custom blocks
-    if (typeof registerAnkiBlocks === 'function') {
-        console.log('[Designer] Registering blocks...');
-        registerAnkiBlocks(editor);
-        console.log('[Designer] Blocks registered');
-        showDebug('Step 13: Blocks registered');
-    } else {
-        console.warn('[Designer] registerAnkiBlocks function not available');
-        showDebug('WARNING: registerAnkiBlocks not available');
-    }
-    
-    // Setup panels
-    setupPanels(editor);
-    showDebug('Step 14: Panels set up');
-    
-    // Register custom commands
-    registerCommands();
-    showDebug('Step 15: Commands registered');
-    
-    // Register event handlers
-    registerEventHandlers();
-    showDebug('Step 16: Event handlers registered');
+    // Schedule registration after modules have time to load
+    setTimeout(() => {
+        registerCustomizations(editor);
+    }, 100);
     
     console.log('[Designer] Editor initialized');
     window.log('[Designer] GrapeJS editor ready');
@@ -150,6 +110,67 @@ function initializeEditor() {
         console.error('[Designer] Failed to initialize editor:', error);
         console.error('[Designer] Stack:', error.stack);
         showError('Failed to initialize editor at: ' + error.message + '\n\nCheck browser console for full stack trace.');
+    }
+}
+
+/**
+ * Register all customizations (components, traits, blocks)
+ * Called after a delay to allow ES6 modules time to load
+ */
+function registerCustomizations(editor) {
+    try {
+        showDebug('Step 11: Modules loaded, registering customizations...');
+        
+        // Register custom component types (must be FIRST)
+        if (typeof registerComponentTypes === 'function') {
+            console.log('[Designer] Registering component types...');
+            registerComponentTypes(editor);
+            console.log('[Designer] Component types registered');
+            showDebug('Step 12: Component types registered');
+        } else {
+            console.warn('[Designer] registerComponentTypes function not available');
+            showDebug('WARNING: registerComponentTypes not available');
+        }
+        
+        // Register custom traits (must be before blocks)
+        if (typeof registerAnkiTraits === 'function') {
+            console.log('[Designer] Registering traits...');
+            registerAnkiTraits(editor);
+            console.log('[Designer] Traits registered');
+            showDebug('Step 13: Traits registered');
+        } else {
+            console.warn('[Designer] registerAnkiTraits function not available');
+            showDebug('WARNING: registerAnkiTraits not available');
+        }
+        
+        // Register custom blocks
+        if (typeof registerAnkiBlocks === 'function') {
+            console.log('[Designer] Registering blocks...');
+            registerAnkiBlocks(editor);
+            console.log('[Designer] Blocks registered');
+            showDebug('Step 14: Blocks registered');
+        } else {
+            console.warn('[Designer] registerAnkiBlocks function not available');
+            showDebug('WARNING: registerAnkiBlocks not available');
+        }
+        
+        // Setup panels
+        setupPanels(editor);
+        showDebug('Step 15: Panels set up');
+        
+        // Register custom commands
+        registerCommands();
+        showDebug('Step 16: Commands registered');
+        
+        // Register event handlers
+        registerEventHandlers();
+        showDebug('Step 17: Event handlers registered');
+        
+        console.log('[Designer] All customizations loaded');
+        hideDebug();
+    } catch (error) {
+        console.error('[Designer] Failed during customizations:', error);
+        showError('Failed to load customizations: ' + error.message);
     }
 }
 

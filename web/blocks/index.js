@@ -109,3 +109,8 @@ window.registerAnkiBlocks = function(editor) {
     
     console.log('✓ Anki blocks registered successfully');
 };
+
+// Signal that the module is ready
+window.ankiBlocksModuleReady = true;
+console.log('[Modules] Blocks module loaded');
+
