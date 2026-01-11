@@ -192,6 +192,11 @@ function initializeEditor() {
         }
     });
     
+    // Register custom component types (must be FIRST)
+    if (typeof registerComponentTypes === 'function') {
+        registerComponentTypes(editor);
+    }
+    
     // Register custom traits (must be before blocks)
     if (typeof registerAnkiTraits === 'function') {
         registerAnkiTraits(editor);

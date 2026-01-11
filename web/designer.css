@@ -419,3 +419,65 @@ body, html {
 .traits-container::-webkit-scrollbar-thumb:hover {
     background: #999;
 }
+
+/* ========== Component Responsive Styles ========== */
+
+/* Study Action Bar Responsive Behavior */
+@media (max-width: 768px) {
+    .atd-study-action-bar--responsive {
+        flex-direction: column !important;
+        align-items: stretch;
+    }
+    
+    .atd-study-action-bar--responsive button {
+        width: 100%;
+    }
+}
+
+/* ========== Animation Keyframes ========== */
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ========== Toggle Switch Styling (for toggle-switch block) ========== */
+
+/* Toggle switch checked state */
+input[type="checkbox"]:checked + .atd-toggle-slider {
+    background: #1976d2;
+}
+
+input[type="checkbox"]:checked + .atd-toggle-slider::before {
+    transform: translateX(20px);
+}
+
+/* ========== Tooltip Hover Effect ========== */
+
+.atd-tooltip-trigger:hover .atd-tooltip {
+    visibility: visible;
+}

@@ -39,11 +39,14 @@
     <!-- GrapeJS Library (loaded locally) -->
     <script src="grapesjs/grapes.min.js"></script>
     
+    <!-- Custom Component Types (must load before traits/blocks) -->
+    <script type="module" src="components/index.js"></script>
+    
     <!-- Custom Traits -->
     <script src="traits/index.js"></script>
     
     <!-- Custom Blocks -->
-    <script src="blocks/index.js"></script>
+    <script type="module" src="blocks/index.js"></script>
     
     <!-- Anki Plugin -->
     <script src="plugins/anki-plugin.js"></script>
