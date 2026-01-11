@@ -4,4 +4,9 @@ This module contains Anki hooks for menu integration and
 webview customization.
 """
 
-__all__ = []
+from .menu import setup_menu, open_designer
+
+__all__ = [
+    "setup_menu",
+    "open_designer",
+]
