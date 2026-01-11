@@ -7,36 +7,100 @@
 // Global bridge object
 window.bridge = null;
 
-// Initialize QWebChannel connection
-new QWebChannel(qt.webChannelTransport, function(channel) {
-    // Get bridge object exposed by Python
-    window.bridge = channel.objects.bridge;
-    
-    console.log('[Bridge] Connected to Python');
-    
-    // Listen to Python signals
-    bridge.templateLoaded.connect(function(jsonStr) {
-        console.log('[Bridge] Template loaded from Python');
-        onTemplateLoaded(jsonStr);
-    });
-    
-    bridge.fieldsUpdated.connect(function(jsonStr) {
-        console.log('[Bridge] Fields updated from Python');
-        onFieldsUpdated(jsonStr);
-    });
-    
-    bridge.behaviorsUpdated.connect(function(jsonStr) {
-        console.log('[Bridge] Behaviors updated from Python');
-        onBehaviorsUpdated(jsonStr);
-    });
-    
-    // Initialize editor after bridge is ready
-    if (typeof initializeEditor === 'function') {
-        initializeEditor();
-    }
-});
+// Global available fields and behaviors
+window.availableFields = ['Front', 'Back', 'Extra'];
+window.availableBehaviors = [];
 
-// Global functions to be called by Python bridge signals
+/**
+ * Create a mock bridge for standalone testing
+ */
+function createMockBridge() {
+    return {
+        saveProject: (jsonStr) => console.log('[Mock Bridge] Save:', jsonStr.length, 'bytes'),
+        requestPreview: (jsonStr) => console.log('[Mock Bridge] Preview:', jsonStr.length, 'bytes'),
+        exportTemplate: (format, jsonStr) => console.log('[Mock Bridge] Export:', format),
+        log: (msg) => console.log('[Mock Bridge]', msg),
+        showError: (msg) => console.error('[Mock Bridge]', msg),
+        getAnkiFields: () => JSON.stringify(['Front', 'Back', 'Extra']),
+        getAnkiBehaviors: () => JSON.stringify([])
+    };
+}
+
+/**
+ * Initialize QWebChannel bridge
+ */
+function initializeBridge(callback) {
+    // Check if running in Qt WebEngine
+    if (typeof QWebChannel === 'undefined') {
+        console.warn('[Bridge] QWebChannel not available - using mock bridge');
+        window.bridge = createMockBridge();
+        if (callback) callback();
+        return;
+    }
+    
+    new QWebChannel(qt.webChannelTransport, function(channel) {
+        // Get bridge object exposed by Python
+        window.bridge = channel.objects.bridge;
+        
+        if (!window.bridge) {
+            console.error('[Bridge] Bridge object not found in channel');
+            window.bridge = createMockBridge();
+            if (callback) callback();
+            return;
+        }
+        
+        console.log('[Bridge] Connected to Python');
+        
+        // Connect Python signals
+        if (window.bridge.templateLoaded) {
+            window.bridge.templateLoaded.connect(function(jsonStr) {
+                console.log('[Bridge] Template loaded from Python');
+                onTemplateLoaded(jsonStr);
+            });
+        }
+        
+        if (window.bridge.fieldsUpdated) {
+            window.bridge.fieldsUpdated.connect(function(jsonStr) {
+                console.log('[Bridge] Fields updated from Python');
+                onFieldsUpdated(jsonStr);
+            });
+        }
+        
+        if (window.bridge.behaviorsUpdated) {
+            window.bridge.behaviorsUpdated.connect(function(jsonStr) {
+                console.log('[Bridge] Behaviors updated from Python');
+                onBehaviorsUpdated(jsonStr);
+            });
+        }
+        
+        // Fetch initial data
+        try {
+            if (window.bridge.getAnkiFields) {
+                const fieldsJson = window.bridge.getAnkiFields();
+                window.availableFields = JSON.parse(fieldsJson);
+                console.log('[Bridge] Loaded fields:', window.availableFields);
+            }
+        } catch (e) {
+            console.error('[Bridge] Failed to get fields:', e);
+        }
+        
+        try {
+            if (window.bridge.getAnkiBehaviors) {
+                const behaviorsJson = window.bridge.getAnkiBehaviors();
+                window.availableBehaviors = JSON.parse(behaviorsJson);
+                console.log('[Bridge] Loaded behaviors:', window.availableBehaviors.length);
+            }
+        } catch (e) {
+            console.error('[Bridge] Failed to get behaviors:', e);
+        }
+        
+        // Initialize editor after bridge is ready
+        if (callback) callback();
+    });
+}
+
+// ========== Signal Handlers ========== 
+
 function onTemplateLoaded(jsonStr) {
     if (!window.editor) return;
     
@@ -53,8 +117,6 @@ function onTemplateLoaded(jsonStr) {
 }
 
 function onFieldsUpdated(jsonStr) {
-    if (!window.availableFields) window.availableFields = [];
-    
     try {
         window.availableFields = JSON.parse(jsonStr);
         console.log('[Bridge] Updated fields:', window.availableFields);
@@ -64,17 +126,16 @@ function onFieldsUpdated(jsonStr) {
 }
 
 function onBehaviorsUpdated(jsonStr) {
-    if (!window.availableBehaviors) window.availableBehaviors = [];
-    
     try {
         window.availableBehaviors = JSON.parse(jsonStr);
-        console.log('[Bridge] Updated behaviors:', window.availableBehaviors);
+        console.log('[Bridge] Updated behaviors:', window.availableBehaviors.length);
     } catch (e) {
         console.error('[Bridge] Failed to update behaviors:', e);
     }
 }
 
-// Functions called by Python to trigger exports
+// ========== Functions Called by Python ========== 
+
 window.saveProject = function() {
     if (!window.editor) return;
     
@@ -106,6 +167,16 @@ window.exportTemplate = function(formatType) {
     if (window.bridge) {
         window.bridge.exportTemplate(formatType, jsonStr);
     }
+};
+
+window.loadTemplate = function(projectData) {
+    if (!window.editor) return;
+    window.editor.loadProjectData(projectData);
+};
+
+window.getProjectData = function() {
+    if (!window.editor) return null;
+    return window.editor.getProjectData();
 };
 
 // Utility: Log to Python console

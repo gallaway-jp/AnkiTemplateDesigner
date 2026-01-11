@@ -6,9 +6,10 @@
 
 // Global editor instance
 window.editor = null;
-window.availableFields = ['Front', 'Back', 'Extra'];
-window.availableBehaviors = [];
 
+/**
+ * Initialize the GrapeJS editor
+ */
 function initializeEditor() {
     console.log('[Designer] Initializing GrapeJS editor...');
     
@@ -21,9 +22,25 @@ function initializeEditor() {
         // Storage disabled - we manage it via Python bridge
         storageManager: false,
         
+        // Asset manager disabled - Anki handles media
+        assetManager: {
+            upload: false,
+            embedAsBase64: true
+        },
+        
+        // Canvas configuration
+        canvas: {
+            styles: [],
+            scripts: []
+        },
+        
         // Panels configuration
         panels: {
             defaults: [
+                {
+                    id: 'panel-top',
+                    el: '.panel__top'
+                },
                 {
                     id: 'basic-actions',
                     el: '.panel__basic-actions',
@@ -32,10 +49,32 @@ function initializeEditor() {
                             id: 'visibility',
                             active: true,
                             className: 'btn-toggle-borders',
-                            label: '<i class="fa fa-clone"></i>',
+                            label: '🔲',
                             command: 'sw-visibility',
+                            attributes: { title: 'Toggle borders' }
+                        },
+                        {
+                            id: 'export',
+                            className: 'btn-export',
+                            label: '💾',
+                            command: 'export-template',
+                            attributes: { title: 'Export template' }
+                        },
+                        {
+                            id: 'preview',
+                            className: 'btn-preview',
+                            label: '👁',
+                            command: 'preview-card',
+                            attributes: { title: 'Preview card' }
+                        },
+                        {
+                            id: 'validate',
+                            className: 'btn-validate',
+                            label: '✓',
+                            command: 'validate-template',
+                            attributes: { title: 'Validate template' }
                         }
-                    ],
+                    ]
                 },
                 {
                     id: 'panel-devices',
@@ -43,18 +82,60 @@ function initializeEditor() {
                     buttons: [
                         {
                             id: 'device-desktop',
-                            label: '<i class="fa fa-desktop"></i>',
+                            label: '🖥',
                             command: 'set-device-desktop',
                             active: true,
                             togglable: false,
+                            attributes: { title: 'Desktop view' }
                         },
                         {
                             id: 'device-mobile',
-                            label: '<i class="fa fa-mobile"></i>',
+                            label: '📱',
                             command: 'set-device-mobile',
                             togglable: false,
+                            attributes: { title: 'Mobile view' }
                         }
-                    ],
+                    ]
+                },
+                {
+                    id: 'panel-switcher',
+                    el: '.panel__switcher',
+                    buttons: [
+                        {
+                            id: 'show-blocks',
+                            active: true,
+                            label: 'Blocks',
+                            command: 'show-blocks',
+                            togglable: false
+                        },
+                        {
+                            id: 'show-layers',
+                            label: 'Layers',
+                            command: 'show-layers',
+                            togglable: false
+                        },
+                        {
+                            id: 'show-style',
+                            label: 'Styles',
+                            command: 'show-styles',
+                            togglable: false
+                        },
+                        {
+                            id: 'show-traits',
+                            label: 'Settings',
+                            command: 'show-traits',
+                            togglable: false
+                        }
+                    ]
+                },
+                {
+                    id: 'layers',
+                    el: '.panel__right',
+                    resizable: {
+                        maxDim: 350,
+                        minDim: 200,
+                        tc: 0, cr: 0, bc: 0, cl: 1
+                    }
                 }
             ]
         },
@@ -64,7 +145,7 @@ function initializeEditor() {
             appendTo: '.layers-container'
         },
         
-        // Blocks configuration
+        // Block Manager
         blockManager: {
             appendTo: '.blocks-container',
             blocks: []
@@ -73,161 +154,214 @@ function initializeEditor() {
         // Style Manager
         styleManager: {
             appendTo: '.styles-container',
-            sectors: [
-                {
-                    name: 'Dimension',
-                    open: false,
-                    buildProps: ['width', 'min-height', 'padding', 'margin'],
-                },
-                {
-                    name: 'Typography',
-                    open: false,
-                    buildProps: ['font-family', 'font-size', 'font-weight', 'letter-spacing', 'color', 'line-height', 'text-align'],
-                },
-                {
-                    name: 'Decorations',
-                    open: false,
-                    buildProps: ['background-color', 'border-radius', 'border', 'box-shadow'],
-                },
-                {
-                    name: 'Extra',
-                    open: false,
-                    buildProps: ['opacity', 'transition', 'transform'],
-                }
-            ]
+            sectors: getStyleSectors()
         },
         
-        // Trait Manager for component properties
+        // Trait Manager
         traitManager: {
-            appendTo: '.traits-container',
+            appendTo: '.traits-container'
         },
         
-        // Canvas configuration
-        canvas: {
-            styles: [],
-            scripts: [],
+        // Selector Manager
+        selectorManager: {
+            appendTo: '.selectors-container'
         },
         
-        // Device Manager for responsive design
+        // Device Manager
         deviceManager: {
             devices: [
                 {
                     name: 'Desktop',
-                    width: '',
+                    width: ''
                 },
                 {
                     name: 'Mobile',
                     width: '320px',
-                    widthMedia: '480px',
+                    widthMedia: '480px'
                 }
             ]
         },
         
         // Plugins
-        plugins: [],
-        pluginsOpts: {}
+        plugins: ['anki-plugin'],
+        pluginsOpts: {
+            'anki-plugin': {
+                validateOnSave: true,
+                autoSaveInterval: 30000
+            }
+        }
     });
     
-    // Load Anki-specific blocks
-    loadAnkiBlocks();
+    // Register custom traits (must be before blocks)
+    if (typeof registerAnkiTraits === 'function') {
+        registerAnkiTraits(editor);
+    }
     
-    // Setup custom commands
-    setupCommands();
+    // Register custom blocks
+    if (typeof registerAnkiBlocks === 'function') {
+        registerAnkiBlocks(editor);
+    }
     
-    // Fetch initial data from Python
-    fetchInitialData();
+    // Register custom commands
+    registerCommands();
+    
+    // Register event handlers
+    registerEventHandlers();
     
     console.log('[Designer] Editor initialized');
     window.log('[Designer] GrapeJS editor ready');
 }
 
-function loadAnkiBlocks() {
-    const blockManager = window.editor.BlockManager;
-    
-    // Basic Blocks
-    blockManager.add('text', {
-        label: 'Text',
-        category: 'Basic',
-        content: '<div data-gjs-type="text">Insert text here</div>',
-        attributes: { class: 'fa fa-text-width' }
-    });
-    
-    blockManager.add('image', {
-        label: 'Image',
-        category: 'Basic',
-        content: { type: 'image' },
-        attributes: { class: 'fa fa-image' }
-    });
-    
-    blockManager.add('link', {
-        label: 'Link',
-        category: 'Basic',
-        content: '<a href="#">Link</a>',
-        attributes: { class: 'fa fa-link' }
-    });
-    
-    // Anki Field Block
-    blockManager.add('anki-field', {
-        label: 'Anki Field',
-        category: 'Anki',
-        content: '<div class="anki-field" data-anki-field="Front">{{Front}}</div>',
-        attributes: { class: 'fa fa-bookmark' }
-    });
-    
-    // Layout Blocks
-    blockManager.add('container', {
-        label: 'Container',
-        category: 'Layout',
-        content: '<div class="container"></div>',
-        attributes: { class: 'fa fa-square-o' }
-    });
-    
-    blockManager.add('row', {
-        label: 'Row',
-        category: 'Layout',
-        content: '<div class="row"><div class="col">Column 1</div><div class="col">Column 2</div></div>',
-        attributes: { class: 'fa fa-columns' }
-    });
+/**
+ * Get style manager sector configuration
+ */
+function getStyleSectors() {
+    return [
+        {
+            name: 'Dimension',
+            open: false,
+            buildProps: ['width', 'height', 'max-width', 'min-height', 'margin', 'padding']
+        },
+        {
+            name: 'Typography',
+            open: false,
+            buildProps: [
+                'font-family', 'font-size', 'font-weight', 'letter-spacing',
+                'color', 'line-height', 'text-align', 'text-decoration',
+                'text-transform'
+            ]
+        },
+        {
+            name: 'Decorations',
+            open: false,
+            buildProps: [
+                'background-color', 'border-radius', 'border',
+                'box-shadow', 'opacity'
+            ]
+        },
+        {
+            name: 'Layout',
+            open: false,
+            buildProps: [
+                'display', 'flex-direction', 'justify-content',
+                'align-items', 'flex-wrap', 'gap'
+            ]
+        },
+        {
+            name: 'Position',
+            open: false,
+            buildProps: ['position', 'top', 'right', 'bottom', 'left', 'z-index']
+        }
+    ];
 }
 
-function setupCommands() {
-    const commands = window.editor.Commands;
+/**
+ * Register custom editor commands
+ */
+function registerCommands() {
+    const commands = editor.Commands;
     
-    // Device switcher commands
+    // Export template command
+    commands.add('export-template', {
+        run(editor) {
+            const projectData = editor.getProjectData();
+            if (window.bridge) {
+                window.bridge.exportTemplate('html', JSON.stringify(projectData));
+            }
+        }
+    });
+    
+    // Preview card command
+    commands.add('preview-card', {
+        run(editor) {
+            const projectData = editor.getProjectData();
+            if (window.bridge) {
+                window.bridge.requestPreview(JSON.stringify(projectData));
+            }
+        }
+    });
+    
+    // Device switching commands
     commands.add('set-device-desktop', {
-        run: editor => editor.setDevice('Desktop')
+        run(editor) {
+            editor.setDevice('Desktop');
+        }
     });
     
     commands.add('set-device-mobile', {
-        run: editor => editor.setDevice('Mobile')
+        run(editor) {
+            editor.setDevice('Mobile');
+        }
+    });
+    
+    // Panel visibility commands
+    commands.add('show-blocks', {
+        run(editor) {
+            showPanel('.blocks-container');
+        }
+    });
+    
+    commands.add('show-layers', {
+        run(editor) {
+            showPanel('.layers-container');
+        }
+    });
+    
+    commands.add('show-styles', {
+        run(editor) {
+            showPanel('.styles-container');
+        }
+    });
+    
+    commands.add('show-traits', {
+        run(editor) {
+            showPanel('.traits-container');
+        }
     });
 }
 
-function fetchInitialData() {
-    // Request Anki fields from Python
-    if (window.bridge) {
-        try {
-            const fieldsJson = window.bridge.getAnkiFields();
-            window.availableFields = JSON.parse(fieldsJson);
-            console.log('[Designer] Loaded Anki fields:', window.availableFields);
-        } catch (e) {
-            console.error('[Designer] Failed to get Anki fields:', e);
-        }
-        
-        try {
-            const behaviorsJson = window.bridge.getAnkiBehaviors();
-            window.availableBehaviors = JSON.parse(behaviorsJson);
-            console.log('[Designer] Loaded behaviors:', window.availableBehaviors.length);
-        } catch (e) {
-            console.error('[Designer] Failed to get behaviors:', e);
-        }
+/**
+ * Show a specific panel and hide others
+ */
+function showPanel(selector) {
+    // Hide all panels
+    document.querySelectorAll('.blocks-container, .layers-container, .styles-container, .traits-container').forEach(el => {
+        el.style.display = 'none';
+    });
+    
+    // Show selected panel
+    const panel = document.querySelector(selector);
+    if (panel) {
+        panel.style.display = '';
     }
 }
 
-// Auto-save every 30 seconds
-setInterval(() => {
-    if (window.editor && window.bridge) {
-        window.saveProject();
-        console.log('[Designer] Auto-saved');
-    }
-}, 30000);
+/**
+ * Register editor event handlers
+ */
+function registerEventHandlers() {
+    // Component selected
+    editor.on('component:selected', (component) => {
+        console.log('[Designer] Selected:', component.get('type'));
+    });
+    
+    // Component updated
+    editor.on('component:update', (component) => {
+        // Could trigger auto-save here
+    });
+    
+    // Canvas ready
+    editor.on('canvas:ready', () => {
+        console.log('[Designer] Canvas ready');
+    });
+}
+
+// ========== Initialization ========== 
+
+// Wait for bridge to be ready, then initialize editor
+if (typeof initializeBridge === 'function') {
+    initializeBridge(initializeEditor);
+} else {
+    // Fallback if bridge.js not loaded
+    document.addEventListener('DOMContentLoaded', initializeEditor);
+}

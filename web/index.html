@@ -9,58 +9,44 @@
     <link rel="stylesheet" href="grapesjs/grapes.min.css">
     
     <!-- Custom Designer Styles -->
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body, html {
-            height: 100%;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        }
-        
-        #gjs {
-            height: 100%;
-            overflow: hidden;
-        }
-        
-        /* Anki field marker */
-        [data-anki-field]::before {
-            content: "{{" attr(data-anki-field) "}}";
-            background: #4CAF50;
-            color: white;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-size: 11px;
-            margin-right: 5px;
-            font-weight: bold;
-        }
-        
-        /* Behavior marker */
-        [data-anki-behaviors]::after {
-            content: "⚡";
-            position: absolute;
-            top: 0;
-            right: 0;
-            background: #FF9800;
-            color: white;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-size: 11px;
-            font-weight: bold;
-        }
-    </style>
+    <link rel="stylesheet" href="designer.css">
 </head>
 <body>
-    <div id="gjs"></div>
+    <!-- Editor Layout -->
+    <div class="editor-row">
+        <!-- Main Editor Container -->
+        <div id="gjs"></div>
+        
+        <!-- Right Sidebar -->
+        <div class="panel__right">
+            <div class="panel__switcher"></div>
+            <div class="blocks-container"></div>
+            <div class="layers-container" style="display: none;"></div>
+            <div class="styles-container" style="display: none;"></div>
+            <div class="traits-container" style="display: none;"></div>
+        </div>
+    </div>
+    
+    <!-- Top Toolbar Panels (injected by GrapeJS) -->
+    <div class="panel__top">
+        <div class="panel__basic-actions"></div>
+        <div class="panel__devices"></div>
+    </div>
     
     <!-- QWebChannel for Python bridge -->
     <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
     
     <!-- GrapeJS Library (loaded locally) -->
     <script src="grapesjs/grapes.min.js"></script>
+    
+    <!-- Custom Traits -->
+    <script src="traits/index.js"></script>
+    
+    <!-- Custom Blocks -->
+    <script src="blocks/index.js"></script>
+    
+    <!-- Anki Plugin -->
+    <script src="plugins/anki-plugin.js"></script>
     
     <!-- Python Bridge Setup -->
     <script src="bridge.js"></script>
