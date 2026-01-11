@@ -14,7 +14,7 @@ try:
     def on_profile_loaded():
         """Initialize add-on after profile is loaded."""
         try:
-            from hooks import setup_menu
+            from .hooks.menu import setup_menu
             setup_menu()
             print("[Template Designer] Addon initialized successfully")
         except Exception as e:
