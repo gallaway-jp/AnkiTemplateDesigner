@@ -5,17 +5,19 @@ from pathlib import Path
 try:
     from aqt.qt import (
         QDialog, QVBoxLayout, QHBoxLayout, QPushButton,
-        QWebEngineView, QWebChannel, QUrl, QSize
+        QWebEngineView, QWebChannel, QUrl, QSize, Qt
     )
     from aqt import mw
+    from aqt.theme import theme_manager
     ANKI_AVAILABLE = True
 except ImportError:
     # Fallback for testing without Anki
     from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QPushButton
     from PyQt6.QtWebEngineWidgets import QWebEngineView
     from PyQt6.QtWebChannel import QWebChannel
-    from PyQt6.QtCore import QUrl, QSize
+    from PyQt6.QtCore import QUrl, QSize, Qt
     mw = None
+    theme_manager = None
     ANKI_AVAILABLE = False
 
 from .webview_bridge import WebViewBridge
@@ -37,17 +39,45 @@ class TemplateDesignerDialog(QDialog):
         """
         super().__init__(parent or mw)
         self.setWindowTitle("Anki Template Designer")
+        
+        # Make dialog resizable, minimizable, and maximizable
+        self.setWindowFlags(
+            Qt.WindowType.Window |
+            Qt.WindowType.WindowMinimizeButtonHint |
+            Qt.WindowType.WindowMaximizeButtonHint |
+            Qt.WindowType.WindowCloseButtonHint
+        )
+        
+        # Set size constraints but allow resizing
         self.setMinimumSize(QSize(self.MIN_WIDTH, self.MIN_HEIGHT))
+        self.resize(QSize(1400, 900))  # Default size
         
         self.parser = AnkiTemplateParser()
         self.generator = AnkiTemplateGenerator()
         self.bridge = WebViewBridge(self)
         self.webview: QWebEngineView = None
+        self._theme_mode = self._detect_theme()
         
         self._setup_ui()
         self._setup_bridge()
         self._ensure_assets()
         self._load_editor()
+    
+    def _detect_theme(self):
+        """Detect if Anki is using light or dark theme.
+        
+        Returns:
+            str: 'dark' or 'light'
+        """
+        if ANKI_AVAILABLE and theme_manager:
+            # Check Anki's theme
+            if hasattr(theme_manager, 'night_mode'):
+                return 'dark' if theme_manager.night_mode else 'light'
+            # Fallback to checking theme name
+            theme_name = str(theme_manager.default_palette).lower()
+            if 'dark' in theme_name or 'night' in theme_name:
+                return 'dark'
+        return 'light'
     
     def _setup_ui(self):
         """Setup dialog UI with webview and toolbar."""
@@ -56,6 +86,16 @@ class TemplateDesignerDialog(QDialog):
         
         # WebView for GrapeJS
         self.webview = QWebEngineView(self)
+        
+        # Enable developer tools and debugging
+        settings = self.webview.settings()
+        settings.setAttribute(settings.WebAttribute.LocalContentCanAccessFileUrls, True)
+        settings.setAttribute(settings.WebAttribute.LocalStorageEnabled, True)
+        settings.setAttribute(settings.WebAttribute.JavascriptEnabled, True)
+        
+        # Enable console messages for debugging
+        self.webview.page().javaScriptConsoleMessage = self._on_js_console_message
+        
         layout.addWidget(self.webview, stretch=1)
         
         # Bottom toolbar
@@ -106,10 +146,55 @@ class TemplateDesignerDialog(QDialog):
         addon_path = Path(__file__).parent.parent
         html_path = addon_path / "web" / "index.html"
         
-        if html_path.exists():
-            self.webview.setUrl(QUrl.fromLocalFile(str(html_path)))
+        print(f"[Template Designer] Loading editor from: {html_path}")
+        print(f"[Template Designer] Theme mode: {self._theme_mode}")
+        
+        if not html_path.exists():
+            error_msg = f"Editor HTML not found: {html_path}"
+            print(f"[Template Designer] ERROR: {error_msg}")
+            self.bridge.showError(error_msg)
+            return
+        
+        # Load HTML file
+        url = QUrl.fromLocalFile(str(html_path.resolve()))
+        print(f"[Template Designer] Loading URL: {url.toString()}")
+        self.webview.setUrl(url)
+        
+        # Connect load finished signal for debugging
+        self.webview.loadFinished.connect(self._on_load_finished)
+    
+    def _on_load_finished(self, ok):
+        """Handle page load completion."""
+        if ok:
+            print("[Template Designer] ✓ Page loaded successfully")
+            # Inject theme preference
+            self._inject_theme()
         else:
-            self.bridge.showError(f"Editor HTML not found: {html_path}")
+            print("[Template Designer] ✗ Page load failed!")
+            error_msg = "Failed to load editor. Check console for details."
+            if ANKI_AVAILABLE:
+                from aqt.utils import showWarning
+                showWarning(error_msg)
+    
+    def _inject_theme(self):
+        """Inject theme preference into the editor."""
+        js_code = f"""
+            if (typeof window.setTheme === 'function') {{
+                window.setTheme('{self._theme_mode}');
+            }} else {{
+                document.body.setAttribute('data-theme', '{self._theme_mode}');
+                console.log('Theme set to: {self._theme_mode}');
+            }}
+        """
+        self.webview.page().runJavaScript(js_code)
+    
+    def _on_js_console_message(self, level, message, line, source):
+        """Handle JavaScript console messages for debugging."""
+        level_names = ['Info', 'Warning', 'Error']
+        level_name = level_names[min(level, 2)]
+        print(f"[JS {level_name}] {message} (line {line})")
+        if level == 2:  # Error
+            print(f"  Source: {source}")
     
     def _on_import(self):
         """Handle import button click - import existing Anki template."""

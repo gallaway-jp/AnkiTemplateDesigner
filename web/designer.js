@@ -13,8 +13,16 @@ window.editor = null;
 function initializeEditor() {
     console.log('[Designer] Initializing GrapeJS editor...');
     
-    // Initialize GrapeJS
-    window.editor = grapesjs.init({
+    try {
+        // Check if GrapeJS is available
+        if (typeof grapesjs === 'undefined') {
+            console.error('[Designer] GrapeJS library not loaded!');
+            showError('GrapeJS library failed to load. Please check your installation.');
+            return;
+        }
+        
+        // Initialize GrapeJS
+        window.editor = grapesjs.init({
         container: '#gjs',
         height: '100%',
         width: 'auto',
@@ -358,8 +366,56 @@ function registerEventHandlers() {
     // Canvas ready
     editor.on('canvas:ready', () => {
         console.log('[Designer] Canvas ready');
+        hideLoading();
     });
+    
+    // Load event - hide loading spinner
+    editor.on('load', () => {
+        console.log('[Designer] Editor loaded');
+        hideLoading();
+    });() => {
+        initializeEditor();
+        // Fallback timeout to hide loading if editor doesn't fully initialize
+        setTimeout(hideLoading, 5000);
+    });
+} else {
+    // Fallback if bridge.js not loaded
+    console.warn('[Designer] bridge.js not loaded, initializing without bridge');
+    document.addEventListener('DOMContentLoaded', () => {
+        initializeEditor();
+        setTimeout(hideLoading, 5000);
+    }
+ * Hide loading indicator
+ */
+function hideLoading() {
+    const loading = document.getElementById('loading');
+    if (loading) {
+        loading.classList.add('hidden');
+        console.log('[Designer] Loading indicator hidden');
+    }
 }
+
+/**
+ * Show error message
+ */
+function showError(message) {
+    const loading = document.getElementById('loading');
+    if (loading) {
+        loading.innerHTML = `
+            <h2 style="color: #f44336;">Error Loading Editor</h2>
+            <p style="margin-top: 10px; color: var(--text-primary);">${message}</p>
+        `;
+    }
+    console.error('[Designer] Error:', message);
+}
+
+/**
+ * Theme support
+ */
+window.setTheme = function(theme) {
+    console.log('[Designer] Setting theme:', theme);
+    document.body.setAttribute('data-theme', theme);
+};
 
 // ========== Initialization ========== 
 
