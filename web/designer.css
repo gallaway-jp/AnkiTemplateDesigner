@@ -87,6 +87,12 @@ body, html {
 
 .panel__switcher {
     position: initial;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 8px 12px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .panel__right {
@@ -112,6 +118,48 @@ body, html {
 .gjs-four-color,
 .gjs-four-color-h:hover {
     color: #4CAF50;
+}
+
+/* Ensure all GrapeJS text is visible */
+.gjs-blocks-view,
+.gjs-block,
+.gjs-block-label,
+.gjs-block-category,
+.gjs-block-preview,
+.gjs-layer,
+.gjs-layer-label,
+.gjs-traits-view,
+.gjs-trait,
+.gjs-trait-label,
+.gjs-styles-view {
+    color: var(--text-primary) !important;
+    background-color: transparent;
+}
+
+/* Force text color on all elements in containers */
+.blocks-container *,
+.layers-container *,
+.styles-container *,
+.traits-container * {
+    color: var(--text-primary);
+}
+
+/* Light theme specifics */
+body[data-theme="light"] .blocks-container *,
+body[data-theme="light"] .layers-container *,
+body[data-theme="light"] .styles-container *,
+body[data-theme="light"] .traits-container * {
+    color: #333;
+    background-color: transparent;
+}
+
+/* Dark theme specifics */
+body[data-theme="dark"] .blocks-container *,
+body[data-theme="dark"] .layers-container *,
+body[data-theme="dark"] .styles-container *,
+body[data-theme="dark"] .traits-container * {
+    color: #ddd;
+    background-color: transparent;
 }
 
 /* ========== Container Styles ========== */
@@ -141,22 +189,26 @@ body, html {
 
 /* ========== Buttons ========== */
 .gjs-pn-btn {
-    border: none;
-    background: transparent;
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
     cursor: pointer;
     padding: 8px 12px;
     margin: 0 2px;
     font-size: 14px;
-    transition: background 0.2s;
+    transition: all 0.2s;
+    color: var(--text-primary);
+    border-radius: 4px;
 }
 
 .gjs-pn-btn:hover {
-    background: rgba(0, 0, 0, 0.05);
+    background: var(--bg-tertiary);
+    border-color: var(--text-secondary);
 }
 
 .gjs-pn-btn.gjs-pn-active {
     background: #4CAF50;
     color: white;
+    border-color: #2E7D32;
 }
 
 /* ========== Anki Field Markers ========== */
