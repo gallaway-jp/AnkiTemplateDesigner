@@ -40,12 +40,16 @@ body, html {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     color: var(--text-primary);
     background: var(--bg-secondary);
+    display: flex;
+    flex-direction: column;
 }
 
 /* ========== Editor Layout ========== */
 .editor-row {
     display: flex;
+    flex: 1;
     height: 100%;
+    overflow: hidden;
 }
 
 #gjs {
@@ -55,20 +59,30 @@ body, html {
 
 /* ========== Panels ========== */
 .panel__top {
-    padding: 0;
+    padding: 8px 12px;
     width: 100%;
     display: flex;
-    position: initial;
-    justify-content: center;
+    position: relative;
     justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+    height: auto;
 }
 
 .panel__basic-actions {
-    position: initial;
+    position: relative;
+    display: flex;
+    gap: 4px;
 }
 
 .panel__devices {
-    position: initial;
+    position: relative;
+    display: flex;
+    gap: 4px;
+    margin-left: auto;
 }
 
 .panel__switcher {
@@ -113,11 +127,16 @@ body, html {
     color: var(--text-primary);
 }
 
-/* Initially hide style, traits, blocks panels */
+/* Initially hide style, traits, selectors panels - show blocks by default */
+.layers-container,
 .styles-container,
 .traits-container,
-.blocks-container {
+.selectors-container {
     display: none;
+}
+
+.blocks-container {
+    display: block;
 }
 
 /* ========== Buttons ========== */
