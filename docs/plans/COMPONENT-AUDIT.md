@@ -190,16 +190,16 @@ Most are **wrappers for HTML semantics**, not visual components:
 
 ---
 
-### 8. NAVIGATION COMPONENTS (15 components) - **REMOVE MOST**
+### 8. NAVIGATION COMPONENTS (15 components) - **REMOVE MOST, ADD STUDY BAR**
 
 **File**: `04a-COMPONENT-LIBRARY-LAYOUT.md`
 
-Most navigation assumes app/website context, not flashcards:
+Most navigation assumes app/website context, not flashcards. However, a **study action bar** is useful for review sessions:
 
 | Component | Keep? | Reason |
 |-----------|-------|--------|
-| top-nav | ❌ | No top navigation bar in Anki cards |
-| bottom-nav | ❌ | No bottom nav in flashcards |
+| top-nav | ❌ | Generic app nav; replace with `study-action-bar` |
+| bottom-nav | ❌ | Generic app nav; replace with `study-action-bar` |
 | sidebar-nav | ❌ | No sidebars in card templates |
 | breadcrumbs | ❌ | No navigation hierarchy in cards |
 | tabs-nav | ⚠️ | Could work for front/back or card variants |
@@ -210,10 +210,82 @@ Most navigation assumes app/website context, not flashcards:
 | overflow-menu | ❌ | No action menu in templates |
 | tree-nav | ❌ | No hierarchical navigation in cards |
 | anchor-link | ⚠️ | Could link to sections within card |
-| floating-nav | ❌ | No persistent floating UI |
+| floating-nav | ❌ | Static placement preferred for study bars |
 | nav-rail | ❌ | Side rail navigation not applicable |
 
-**Recommendation**: Remove 11 components; keep only `tabs-nav` and `stepper` as conditional-display helpers.
+**New Component - Study Action Bar** ✅
+
+A specialized container for study session controls:
+
+```javascript
+bm.add('study-action-bar', {
+    label: 'Study Action Bar',
+    category: 'Anki Special',
+    attributes: { class: 'gjs-block-study-bar' },
+    content: {
+        type: 'study-action-bar',
+        tagName: 'div',
+        classes: ['atd-study-action-bar'],
+        style: {
+            display: 'flex',
+            'align-items': 'center',
+            'justify-content': 'space-between',
+            padding: '12px 16px',
+            background: '#f5f5f5',
+            border: '1px solid #e0e0e0',
+            'border-radius': '8px',
+            gap: '8px'
+        },
+        components: [
+            {
+                tagName: 'button',
+                content: '▶ Audio',
+                classes: ['study-btn'],
+                style: { padding: '8px 16px', background: '#1976d2', color: '#fff' }
+            },
+            {
+                tagName: 'button',
+                content: 'Show Answer',
+                classes: ['study-btn'],
+                style: { padding: '8px 16px', background: '#388e3c', color: '#fff' }
+            }
+        ],
+        traits: [
+            { name: 'placement', label: 'Position', type: 'select', 
+              options: [
+                { value: 'top', name: 'Top' },
+                { value: 'bottom', name: 'Bottom' },
+                { value: 'inline', name: 'Inline' }
+              ]
+            },
+            { name: 'direction', label: 'Direction', type: 'select',
+              options: [
+                { value: 'horizontal', name: 'Horizontal' },
+                { value: 'vertical', name: 'Vertical' }
+              ]
+            },
+            { name: 'sticky', label: 'Sticky/Fixed', type: 'checkbox',
+              value: false,
+              help: 'Keep bar visible when scrolling (if content overflows)'
+            },
+            { name: 'responsive', label: 'Stack on mobile', type: 'checkbox',
+              value: true,
+              help: 'Stack vertically on small screens'
+            }
+        ]
+    }
+});
+```
+
+**Use Cases**:
+- Custom action buttons (linked via AnkiJSApi behaviors)
+- Audio playback buttons
+- Study tools (timer, hint reveal, flag card)
+- Card rating/review buttons
+- Note-taking shortcuts
+- Bookmark/tag toggles
+
+**Recommendation**: Remove 11 generic navigation components; add `study-action-bar` as specialized replacement. Keep `tabs-nav` and `stepper` as helpers.
 
 ---
 
@@ -320,13 +392,15 @@ Too many button variants; only 3-4 needed:
 
 | Category | Original | Revised | Change |
 |----------|----------|---------|--------|
-| Layout & Navigation | 37 | 25 | -12 |
+| Layout & Navigation | 37 | 27 | -10 |
 | Inputs & Forms | 50 | 12 | -38 |
 | Data Display | 47 | 42 | -5 |
 | Search & Commerce | 20 | 0 | -20 |
 | Social & Charts | 24 | 18 | -6 |
 | Accessibility & System | 31 | 13 | -18 |
-| **TOTAL** | **209** | **110** | **-99** |
+| **TOTAL** | **209** | **112** | **-97** |
+
+**Note**: New `study-action-bar` component added (+1) to replace generic navigation components.
 
 ---
 
@@ -338,13 +412,20 @@ Too many button variants; only 3-4 needed:
 3. Delete all search/filter components (9)
 4. Delete form input components except text/helper (35)
 5. Delete system/debugging components (8)
+6. Delete generic navigation components (11) - replaced by `study-action-bar`
 
-### Phase 2: Consolidate (Near-term)
+### Phase 2: Add Study Bar (Immediate)
+1. Create `study-action-bar` component with positioning options
+2. Support horizontal/vertical layout
+3. Support static and sticky positioning
+4. Document AnkiJSApi behavior bindings for action buttons
+
+### Phase 3: Consolidate (Near-term)
 1. Consolidate button variants (8 → 5)
-2. Consolidate navigation components (15 → 4)
+2. Consolidate remaining navigation components (4 → 3: tabs, stepper, anchor-link)
 3. Consolidate motion components (6 → 3)
 
-### Phase 3: Mark Advanced (Documentation)
+### Phase 4: Mark Advanced (Documentation)
 1. Mark charts as requiring Chart.js
 2. Add AnkiJSApi behavior documentation
 3. Add animation performance warnings
@@ -376,18 +457,131 @@ const categories = {
     accessibility: { label: 'Accessibility', order: 10, open: false },
     
     // Anki specific
-    anki: { label: 'Anki Special', order: 0, open: true }
+    anki: { label: 'Anki Special', order: 0, open: true }  // Includes study-action-bar
 };
+```
+
+---
+
+## Study Action Bar - Design Details
+
+### Features
+
+**Placement Options**:
+- `top` - Fixed at top of card (with optional sticky behavior)
+- `bottom` - Fixed at bottom of card (with optional sticky behavior)  
+- `inline` - Placed within card flow at the component's position
+
+**Layout Options**:
+- `horizontal` - Buttons in a row (default)
+- `vertical` - Buttons in a column
+
+**Positioning Options**:
+- `sticky: true` - Bar stays visible when card content scrolls
+- `sticky: false` - Static positioning in card flow
+
+**Responsive Behavior**:
+- `responsive: true` - Automatically stack vertically on mobile
+- `responsive: false` - Maintain layout regardless of screen size
+
+### Example Usage
+
+```html
+<!-- Study action bar at top with horizontal layout -->
+<div class="atd-study-action-bar" style="position: sticky; top: 0;">
+    <button onclick="ankiapi.showAnswer()">Show Answer</button>
+    <button onclick="ankiapi.playAudio('audio')">Play Audio</button>
+    <button onclick="ankiapi.markCard()">Mark</button>
+    <button onclick="ankiapi.suspendCard()">Suspend</button>
+</div>
+```
+
+### Integration with AnkiJSApi
+
+The study action bar works seamlessly with AnkiJSApi behaviors:
+
+```javascript
+// Bind button to AnkiJSApi action
+button.addEventListener('click', () => {
+    ankiapi.showAnswer();
+});
+
+// Multiple actions on one button
+button.addEventListener('click', () => {
+    ankiapi.playAudio('field:Audio');
+    ankiapi.showAnswer();
+});
+
+// Custom study helpers
+button.addEventListener('click', () => {
+    const timerStart = Date.now();
+    document.getElementById('timer').textContent = '0s';
+    // User can implement custom timer logic
+});
+```
+
+### CSS Considerations
+
+```css
+.atd-study-action-bar {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    padding: 12px 16px;
+    background: #f5f5f5;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+}
+
+/* Sticky positioning */
+.atd-study-action-bar.sticky-top {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.atd-study-action-bar.sticky-bottom {
+    position: sticky;
+    bottom: 0;
+    z-index: 1000;
+    box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+}
+
+/* Vertical layout */
+.atd-study-action-bar.vertical {
+    flex-direction: column;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 600px) {
+    .atd-study-action-bar.responsive {
+        flex-direction: column;
+    }
+}
 ```
 
 ---
 
 ## Recommendations Summary
 
-1. **Remove ~99 components** that assume non-Anki features (commerce, social, advanced forms, etc.)
+1. **Remove ~97 components** that assume non-Anki features (commerce, social, advanced forms, generic navigation)
 2. **Consolidate ~15 components** that are redundant variants
-3. **Keep ~95 components** that work for flashcard templates
-4. **Document** which components require external JS libraries (charts, animations)
-5. **Create simpler component set** focused on learning card use cases
+3. **Add study-action-bar** as specialized replacement for generic navigation
+4. **Keep ~112 components** that work for flashcard templates
+5. **Document** which components require external JS libraries (charts, animations)
+6. **Create simpler component set** focused on learning card use cases
+
+### Key Addition: Study Action Bar
+
+The new `study-action-bar` component addresses the need for custom controls during Anki review:
+- ✅ Supports horizontal and vertical layouts
+- ✅ Can be placed at top, bottom, or inline
+- ✅ Optional sticky positioning to keep visible while scrolling
+- ✅ Responsive design (auto-stack on mobile)
+- ✅ Integrates with AnkiJSApi for custom behaviors
+- ✅ Supports arbitrary buttons with custom actions
+
+This allows template creators to build custom study interfaces while removing bloat from unnecessary web app navigation components.
 
 This reduces cognitive load for users and focuses the library on practical Anki template needs.
