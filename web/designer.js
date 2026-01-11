@@ -44,112 +44,6 @@ function initializeEditor() {
             scripts: []
         },
         
-        // Panels configuration
-        panels: {
-            defaults: [
-                {
-                    id: 'panel-top',
-                    el: '.panel__top'
-                },
-                {
-                    id: 'basic-actions',
-                    el: '.panel__basic-actions',
-                    buttons: [
-                        {
-                            id: 'visibility',
-                            active: true,
-                            className: 'btn-toggle-borders',
-                            label: '🔲',
-                            command: 'sw-visibility',
-                            attributes: { title: 'Toggle borders' }
-                        },
-                        {
-                            id: 'export',
-                            className: 'btn-export',
-                            label: '💾',
-                            command: 'export-template',
-                            attributes: { title: 'Export template' }
-                        },
-                        {
-                            id: 'preview',
-                            className: 'btn-preview',
-                            label: '👁',
-                            command: 'preview-card',
-                            attributes: { title: 'Preview card' }
-                        },
-                        {
-                            id: 'validate',
-                            className: 'btn-validate',
-                            label: '✓',
-                            command: 'validate-template',
-                            attributes: { title: 'Validate template' }
-                        }
-                    ]
-                },
-                {
-                    id: 'panel-devices',
-                    el: '.panel__devices',
-                    buttons: [
-                        {
-                            id: 'device-desktop',
-                            label: '🖥',
-                            command: 'set-device-desktop',
-                            active: true,
-                            togglable: false,
-                            attributes: { title: 'Desktop view' }
-                        },
-                        {
-                            id: 'device-mobile',
-                            label: '📱',
-                            command: 'set-device-mobile',
-                            togglable: false,
-                            attributes: { title: 'Mobile view' }
-                        }
-                    ]
-                },
-                {
-                    id: 'panel-switcher',
-                    el: '.panel__switcher',
-                    buttons: [
-                        {
-                            id: 'show-blocks',
-                            active: true,
-                            label: 'Blocks',
-                            command: 'show-blocks',
-                            togglable: false
-                        },
-                        {
-                            id: 'show-layers',
-                            label: 'Layers',
-                            command: 'show-layers',
-                            togglable: false
-                        },
-                        {
-                            id: 'show-style',
-                            label: 'Styles',
-                            command: 'show-styles',
-                            togglable: false
-                        },
-                        {
-                            id: 'show-traits',
-                            label: 'Settings',
-                            command: 'show-traits',
-                            togglable: false
-                        }
-                    ]
-                },
-                {
-                    id: 'layers',
-                    el: '.panel__right',
-                    resizable: {
-                        maxDim: 350,
-                        minDim: 200,
-                        tc: 0, cr: 0, bc: 0, cl: 1
-                    }
-                }
-            ]
-        },
-        
         // Layer Manager
         layerManager: {
             appendTo: '.layers-container'
@@ -229,6 +123,9 @@ function initializeEditor() {
         console.warn('[Designer] registerAnkiBlocks function not available');
     }
     
+    // Setup panels
+    setupPanels(editor);
+    
     // Register custom commands
     registerCommands();
     
@@ -285,6 +182,123 @@ function getStyleSectors() {
             buildProps: ['position', 'top', 'right', 'bottom', 'left', 'z-index']
         }
     ];
+}
+
+/**
+ * Setup editor panels and buttons
+ */
+function setupPanels(editor) {
+    const panels = editor.Panels;
+    
+    // Add top panel
+    panels.addPanel({
+        id: 'panel-top',
+        el: '.panel__top'
+    });
+    
+    // Add basic actions panel with buttons
+    panels.addPanel({
+        id: 'basic-actions',
+        el: '.panel__basic-actions',
+        buttons: [
+            {
+                id: 'visibility',
+                active: true,
+                className: 'btn-toggle-borders',
+                label: '🔲',
+                command: 'sw-visibility',
+                attributes: { title: 'Toggle borders' }
+            },
+            {
+                id: 'export',
+                className: 'btn-export',
+                label: '💾',
+                command: 'export-template',
+                attributes: { title: 'Export template' }
+            },
+            {
+                id: 'preview',
+                className: 'btn-preview',
+                label: '👁',
+                command: 'preview-card',
+                attributes: { title: 'Preview card' }
+            },
+            {
+                id: 'validate',
+                className: 'btn-validate',
+                label: '✓',
+                command: 'validate-template',
+                attributes: { title: 'Validate template' }
+            }
+        ]
+    });
+    
+    // Add device switcher panel
+    panels.addPanel({
+        id: 'panel-devices',
+        el: '.panel__devices',
+        buttons: [
+            {
+                id: 'device-desktop',
+                label: '🖥',
+                command: 'set-device-desktop',
+                active: true,
+                togglable: false,
+                attributes: { title: 'Desktop view' }
+            },
+            {
+                id: 'device-mobile',
+                label: '📱',
+                command: 'set-device-mobile',
+                togglable: false,
+                attributes: { title: 'Mobile view' }
+            }
+        ]
+    });
+    
+    // Add panel switcher (blocks/layers/styles/traits)
+    panels.addPanel({
+        id: 'panel-switcher',
+        el: '.panel__switcher',
+        buttons: [
+            {
+                id: 'show-blocks',
+                active: true,
+                label: 'Blocks',
+                command: 'show-blocks',
+                togglable: false
+            },
+            {
+                id: 'show-layers',
+                label: 'Layers',
+                command: 'show-layers',
+                togglable: false
+            },
+            {
+                id: 'show-style',
+                label: 'Styles',
+                command: 'show-styles',
+                togglable: false
+            },
+            {
+                id: 'show-traits',
+                label: 'Settings',
+                command: 'show-traits',
+                togglable: false
+            }
+        ]
+    });
+    
+    // Add right panel
+    panels.addPanel({
+        id: 'layers',
+        el: '.panel__right',
+        resizable: {
+            maxDim: 350,
+            minDim: 200,
+            tc: 0, cr: 0, bc: 0, cl: 1
+        }
+    });
 }
 
 /**

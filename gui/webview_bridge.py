@@ -116,7 +116,7 @@ class WebViewBridge(QObject):
         Returns:
             JSON string array of behavior objects
         """
-        from services.ankijsapi_service import AnkiJSApiService
+        from ..services.ankijsapi_service import AnkiJSApiService
         service = AnkiJSApiService()
         behaviors = service.get_available_behaviors()
         return json.dumps(behaviors)
