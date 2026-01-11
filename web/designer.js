@@ -21,6 +21,8 @@ function initializeEditor() {
             return;
         }
         
+        console.log('[Designer] GrapeJS library loaded, creating editor...');
+        
         // Initialize GrapeJS
         window.editor = grapesjs.init({
         container: '#gjs',
@@ -202,17 +204,29 @@ function initializeEditor() {
     
     // Register custom component types (must be FIRST)
     if (typeof registerComponentTypes === 'function') {
+        console.log('[Designer] Registering component types...');
         registerComponentTypes(editor);
+        console.log('[Designer] Component types registered');
+    } else {
+        console.warn('[Designer] registerComponentTypes function not available');
     }
     
     // Register custom traits (must be before blocks)
     if (typeof registerAnkiTraits === 'function') {
+        console.log('[Designer] Registering traits...');
         registerAnkiTraits(editor);
+        console.log('[Designer] Traits registered');
+    } else {
+        console.warn('[Designer] registerAnkiTraits function not available');
     }
     
     // Register custom blocks
     if (typeof registerAnkiBlocks === 'function') {
+        console.log('[Designer] Registering blocks...');
         registerAnkiBlocks(editor);
+        console.log('[Designer] Blocks registered');
+    } else {
+        console.warn('[Designer] registerAnkiBlocks function not available');
     }
     
     // Register custom commands

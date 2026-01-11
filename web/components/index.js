@@ -28,6 +28,9 @@ export function registerComponentTypes(editor) {
     registerStudyActionBarComponent(editor);
 }
 
+// Make available globally for non-module scripts
+window.registerComponentTypes = registerComponentTypes;
+
 /**
  * Register base layout component types
  */
