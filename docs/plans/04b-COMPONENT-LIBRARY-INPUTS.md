@@ -9,11 +9,13 @@
 ## Overview
 
 This document defines blocks for:
-- **Basic Inputs** (8 components)
-- **Selection Inputs** (10 components)
-- **Advanced Inputs** (11 components)
-- **Form Structure** (8 components)
-- **Buttons & Actions** (13 components)
+- **Basic Inputs** (3 components: text, textarea, helper)
+- **Selection Inputs** (4 components: checkbox, radio, toggle, dropdown)
+- **Advanced Inputs** (3 components: date, slider, rating)
+- **Form Structure** (3 components: form, field-group, required indicator)
+- **Buttons & Actions** (5 components: primary, secondary, icon, destructive, link)
+
+**Updated**: Based on COMPONENT-AUDIT.md - removed email/url/phone/search field variants (consolidate to text-field), removed advanced pickers (color, file, range-slider), removed redundant button variants (tertiary, text, ghost, FAB, loading, split, toggle, button-group)
 
 ---
 
@@ -70,77 +72,6 @@ export function registerInputBlocks(editor) {
             components: [
                 { tagName: 'label', content: 'Password', style: { display: 'block', 'margin-bottom': '4px', 'font-size': '14px', 'font-weight': '500' } },
                 { tagName: 'input', attributes: { type: 'password', placeholder: '••••••••' }, style: { width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', 'border-radius': '6px', 'font-size': '16px' } }
-            ]
-        }
-    });
-    
-    // Number Input
-    bm.add('number-input', {
-        label: 'Number Input',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-field'],
-            components: [
-                { tagName: 'label', content: 'Number', style: { display: 'block', 'margin-bottom': '4px', 'font-size': '14px', 'font-weight': '500' } },
-                { tagName: 'input', attributes: { type: 'number', min: '0', step: '1' }, style: { width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', 'border-radius': '6px', 'font-size': '16px' } }
-            ]
-        }
-    });
-    
-    // Search Field
-    bm.add('search-field', {
-        label: 'Search Field',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-search-field'],
-            style: { position: 'relative' },
-            components: [
-                { tagName: 'span', content: '🔍', style: { position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', 'font-size': '16px' } },
-                { tagName: 'input', attributes: { type: 'search', placeholder: 'Search...' }, style: { width: '100%', padding: '10px 12px 10px 40px', border: '1px solid #e0e0e0', 'border-radius': '20px', 'font-size': '16px' } }
-            ]
-        }
-    });
-    
-    // Email Input
-    bm.add('email-input', {
-        label: 'Email Input',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-field'],
-            components: [
-                { tagName: 'label', content: 'Email', style: { display: 'block', 'margin-bottom': '4px', 'font-size': '14px', 'font-weight': '500' } },
-                { tagName: 'input', attributes: { type: 'email', placeholder: 'email@example.com' }, style: { width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', 'border-radius': '6px', 'font-size': '16px' } }
-            ]
-        }
-    });
-    
-    // URL Input
-    bm.add('url-input', {
-        label: 'URL Input',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-field'],
-            components: [
-                { tagName: 'label', content: 'Website', style: { display: 'block', 'margin-bottom': '4px', 'font-size': '14px', 'font-weight': '500' } },
-                { tagName: 'input', attributes: { type: 'url', placeholder: 'https://' }, style: { width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', 'border-radius': '6px', 'font-size': '16px' } }
-            ]
-        }
-    });
-    
-    // Phone Input
-    bm.add('phone-input', {
-        label: 'Phone Input',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-field'],
-            components: [
-                { tagName: 'label', content: 'Phone', style: { display: 'block', 'margin-bottom': '4px', 'font-size': '14px', 'font-weight': '500' } },
-                { tagName: 'input', attributes: { type: 'tel', placeholder: '+1 (555) 000-0000' }, style: { width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', 'border-radius': '6px', 'font-size': '16px' } }
             ]
         }
     });
@@ -212,38 +143,6 @@ export function registerInputBlocks(editor) {
         }
     });
     
-    // Segmented Control
-    bm.add('segmented-control', {
-        label: 'Segmented Control',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-segmented'],
-            style: { display: 'inline-flex', border: '1px solid #e0e0e0', 'border-radius': '8px', overflow: 'hidden' },
-            components: [
-                { tagName: 'button', content: 'Day', style: { padding: '8px 16px', border: 'none', background: '#1976d2', color: '#fff', cursor: 'pointer' } },
-                { tagName: 'button', content: 'Week', style: { padding: '8px 16px', border: 'none', 'border-left': '1px solid #e0e0e0', background: '#fff', cursor: 'pointer' } },
-                { tagName: 'button', content: 'Month', style: { padding: '8px 16px', border: 'none', 'border-left': '1px solid #e0e0e0', background: '#fff', cursor: 'pointer' } }
-            ]
-        }
-    });
-    
-    // Chip Selector
-    bm.add('chip-selector', {
-        label: 'Chip Selector',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-chips'],
-            style: { display: 'flex', 'flex-wrap': 'wrap', gap: '8px' },
-            components: [
-                { tagName: 'button', content: 'Chip 1', style: { padding: '6px 16px', 'border-radius': '20px', border: '1px solid #1976d2', background: '#e3f2fd', color: '#1976d2', cursor: 'pointer' } },
-                { tagName: 'button', content: 'Chip 2', style: { padding: '6px 16px', 'border-radius': '20px', border: '1px solid #e0e0e0', background: '#fff', cursor: 'pointer' } },
-                { tagName: 'button', content: 'Chip 3', style: { padding: '6px 16px', 'border-radius': '20px', border: '1px solid #e0e0e0', background: '#fff', cursor: 'pointer' } }
-            ]
-        }
-    });
-    
     // ========== ADVANCED INPUTS ==========
     
     // Date Picker
@@ -260,52 +159,6 @@ export function registerInputBlocks(editor) {
         }
     });
     
-    // Time Picker
-    bm.add('time-picker', {
-        label: 'Time Picker',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-field'],
-            components: [
-                { tagName: 'label', content: 'Time', style: { display: 'block', 'margin-bottom': '4px', 'font-size': '14px', 'font-weight': '500' } },
-                { tagName: 'input', attributes: { type: 'time' }, style: { width: '100%', padding: '10px 12px', border: '1px solid #e0e0e0', 'border-radius': '6px', 'font-size': '16px' } }
-            ]
-        }
-    });
-    
-    // Color Picker
-    bm.add('color-picker', {
-        label: 'Color Picker',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-field'],
-            style: { display: 'flex', 'align-items': 'center', gap: '12px' },
-            components: [
-                { tagName: 'input', attributes: { type: 'color', value: '#1976d2' }, style: { width: '48px', height: '48px', border: 'none', 'border-radius': '8px', cursor: 'pointer' } },
-                { tagName: 'span', content: 'Choose color' }
-            ]
-        }
-    });
-    
-    // File Upload
-    bm.add('file-upload', {
-        label: 'File Upload',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-file-upload'],
-            style: { border: '2px dashed #e0e0e0', 'border-radius': '8px', padding: '24px', 'text-align': 'center' },
-            components: [
-                { tagName: 'div', content: '📁', style: { 'font-size': '32px', 'margin-bottom': '8px' } },
-                { tagName: 'p', content: 'Drop files here or click to upload', style: { margin: '0 0 12px', color: '#666' } },
-                { tagName: 'input', attributes: { type: 'file' }, style: { display: 'none' } },
-                { tagName: 'button', content: 'Browse Files', style: { padding: '8px 16px', border: '1px solid #1976d2', background: '#fff', color: '#1976d2', 'border-radius': '6px', cursor: 'pointer' } }
-            ]
-        }
-    });
-    
     // Slider
     bm.add('slider', {
         label: 'Slider',
@@ -316,23 +169,6 @@ export function registerInputBlocks(editor) {
             components: [
                 { tagName: 'label', content: 'Value: 50', style: { display: 'block', 'margin-bottom': '8px' } },
                 { tagName: 'input', attributes: { type: 'range', min: '0', max: '100', value: '50' }, style: { width: '100%' } }
-            ]
-        }
-    });
-    
-    // Range Slider
-    bm.add('range-slider', {
-        label: 'Range Slider',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-range-slider'],
-            components: [
-                { tagName: 'label', content: 'Range: 20 - 80', style: { display: 'block', 'margin-bottom': '8px' } },
-                { tagName: 'div', style: { display: 'flex', gap: '8px' }, components: [
-                    { tagName: 'input', attributes: { type: 'range', min: '0', max: '100', value: '20' }, style: { flex: '1' } },
-                    { tagName: 'input', attributes: { type: 'range', min: '0', max: '100', value: '80' }, style: { flex: '1' } }
-                ]}
             ]
         }
     });
@@ -371,6 +207,20 @@ export function registerInputBlocks(editor) {
         }
     });
     
+    // Form
+    bm.add('form', {
+        label: 'Form',
+        category,
+        content: {
+            tagName: 'form',
+            classes: ['atd-form'],
+            style: { padding: '20px' },
+            components: [
+                { tagName: 'div', classes: ['atd-form-group'], style: { 'margin-bottom': '16px' } }
+            ]
+        }
+    });
+    
     // Field Group
     bm.add('field-group', {
         label: 'Field Group',
@@ -382,30 +232,6 @@ export function registerInputBlocks(editor) {
             components: [
                 { tagName: 'legend', content: 'Group Label', style: { padding: '0 8px', 'font-weight': '600' } }
             ]
-        }
-    });
-    
-    // Helper Text
-    bm.add('helper-text', {
-        label: 'Helper Text',
-        category,
-        content: {
-            tagName: 'span',
-            classes: ['atd-helper-text'],
-            content: 'This is helper text',
-            style: { display: 'block', 'font-size': '12px', color: '#666', 'margin-top': '4px' }
-        }
-    });
-    
-    // Error Message
-    bm.add('error-message', {
-        label: 'Error Message',
-        category,
-        content: {
-            tagName: 'span',
-            classes: ['atd-error-message'],
-            content: 'This field is required',
-            style: { display: 'block', 'font-size': '12px', color: '#d32f2f', 'margin-top': '4px' }
         }
     });
     
@@ -425,20 +251,22 @@ export function registerInputBlocks(editor) {
 
 ---
 
-## 4. Buttons & Actions
+## Buttons & Actions
 
 ### `web/blocks/buttons.js`
 
+Consolidated button variants for Anki review workflow:
+
 ```javascript
 /**
- * Button & Action Component Blocks
+ * Button & Action Component Blocks (Consolidated)
  */
 
 export function registerButtonBlocks(editor) {
     const bm = editor.BlockManager;
     const category = 'Buttons & Actions';
     
-    // Primary Button
+    // Primary Button (Primary action, Answer reveal, etc.)
     bm.add('primary-button', {
         label: 'Primary Button',
         category,
@@ -459,7 +287,7 @@ export function registerButtonBlocks(editor) {
         }
     });
     
-    // Secondary Button
+    // Secondary Button (Alternative action)
     bm.add('secondary-button', {
         label: 'Secondary Button',
         category,
@@ -480,27 +308,7 @@ export function registerButtonBlocks(editor) {
         }
     });
     
-    // Tertiary Button
-    bm.add('tertiary-button', {
-        label: 'Tertiary Button',
-        category,
-        content: {
-            tagName: 'button',
-            classes: ['atd-btn', 'atd-btn-tertiary'],
-            content: 'Tertiary',
-            style: {
-                padding: '12px 24px',
-                border: 'none',
-                'border-radius': '8px',
-                background: 'transparent',
-                color: '#1976d2',
-                'font-size': '16px',
-                cursor: 'pointer'
-            }
-        }
-    });
-    
-    // Icon Button
+    // Icon Button (Compact action, settings, etc.)
     bm.add('icon-button', {
         label: 'Icon Button',
         category,
@@ -524,71 +332,7 @@ export function registerButtonBlocks(editor) {
         }
     });
     
-    // Floating Action Button (FAB)
-    bm.add('fab', {
-        label: 'FAB',
-        category,
-        content: {
-            tagName: 'button',
-            classes: ['atd-fab'],
-            content: '+',
-            style: {
-                width: '56px',
-                height: '56px',
-                border: 'none',
-                'border-radius': '50%',
-                background: '#1976d2',
-                color: '#ffffff',
-                'font-size': '24px',
-                cursor: 'pointer',
-                'box-shadow': '0 4px 12px rgba(0,0,0,0.2)',
-                position: 'fixed',
-                bottom: '24px',
-                right: '24px'
-            }
-        }
-    });
-    
-    // Text Button
-    bm.add('text-button', {
-        label: 'Text Button',
-        category,
-        content: {
-            tagName: 'button',
-            classes: ['atd-btn-text'],
-            content: 'Text Button',
-            style: {
-                padding: '8px 12px',
-                border: 'none',
-                background: 'transparent',
-                color: '#1976d2',
-                'font-size': '14px',
-                cursor: 'pointer'
-            }
-        }
-    });
-    
-    // Ghost Button
-    bm.add('ghost-button', {
-        label: 'Ghost Button',
-        category,
-        content: {
-            tagName: 'button',
-            classes: ['atd-btn-ghost'],
-            content: 'Ghost Button',
-            style: {
-                padding: '12px 24px',
-                border: '1px solid #e0e0e0',
-                'border-radius': '8px',
-                background: 'transparent',
-                color: '#333',
-                'font-size': '16px',
-                cursor: 'pointer'
-            }
-        }
-    });
-    
-    // Destructive Button
+    // Destructive Button (Delete, Hard, etc.)
     bm.add('destructive-button', {
         label: 'Destructive Button',
         category,
@@ -609,83 +353,7 @@ export function registerButtonBlocks(editor) {
         }
     });
     
-    // Loading Button
-    bm.add('loading-button', {
-        label: 'Loading Button',
-        category,
-        content: {
-            tagName: 'button',
-            classes: ['atd-btn', 'atd-btn-loading'],
-            style: {
-                padding: '12px 24px',
-                border: 'none',
-                'border-radius': '8px',
-                background: '#1976d2',
-                color: '#ffffff',
-                'font-size': '16px',
-                cursor: 'pointer',
-                display: 'flex',
-                'align-items': 'center',
-                gap: '8px'
-            },
-            components: [
-                { tagName: 'span', content: '⟳', classes: ['atd-spinner'], style: { animation: 'spin 1s linear infinite' } },
-                { tagName: 'span', content: 'Loading...' }
-            ]
-        }
-    });
-    
-    // Split Button
-    bm.add('split-button', {
-        label: 'Split Button',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-split-button'],
-            style: { display: 'inline-flex' },
-            components: [
-                { tagName: 'button', content: 'Save', style: { padding: '12px 20px', border: 'none', 'border-radius': '8px 0 0 8px', background: '#1976d2', color: '#fff', cursor: 'pointer' } },
-                { tagName: 'button', content: '▾', style: { padding: '12px 8px', border: 'none', 'border-radius': '0 8px 8px 0', background: '#1565c0', color: '#fff', cursor: 'pointer', 'border-left': '1px solid rgba(255,255,255,0.3)' } }
-            ]
-        }
-    });
-    
-    // Toggle Button
-    bm.add('toggle-button', {
-        label: 'Toggle Button',
-        category,
-        content: {
-            tagName: 'button',
-            classes: ['atd-btn-toggle'],
-            content: '🔔 Notifications',
-            attributes: { 'aria-pressed': 'false' },
-            style: {
-                padding: '10px 16px',
-                border: '1px solid #e0e0e0',
-                'border-radius': '8px',
-                background: '#fff',
-                cursor: 'pointer'
-            }
-        }
-    });
-    
-    // Button Group
-    bm.add('button-group', {
-        label: 'Button Group',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-btn-group'],
-            style: { display: 'inline-flex' },
-            components: [
-                { tagName: 'button', content: 'Left', style: { padding: '10px 16px', border: '1px solid #e0e0e0', background: '#fff', cursor: 'pointer', 'border-radius': '8px 0 0 8px' } },
-                { tagName: 'button', content: 'Center', style: { padding: '10px 16px', border: '1px solid #e0e0e0', 'border-left': 'none', background: '#e3f2fd', cursor: 'pointer' } },
-                { tagName: 'button', content: 'Right', style: { padding: '10px 16px', border: '1px solid #e0e0e0', 'border-left': 'none', background: '#fff', cursor: 'pointer', 'border-radius': '0 8px 8px 0' } }
-            ]
-        }
-    });
-    
-    // Link Button
+    // Link Button (Text-only link styled as button)
     bm.add('link-button', {
         label: 'Link Button',
         category,
@@ -711,7 +379,32 @@ export function registerButtonBlocks(editor) {
 
 ---
 
-## Traits for Input Components
+## Removed Components
+
+The following components are NOT needed for Anki templates:
+- **Email/URL/Phone inputs** (consolidate to text-field with type attribute)
+- **Search field** (can be done with text-field)
+- **Number input** (rarely needed in Anki)
+- **Segmented control** (use buttons or tabs)
+- **Chip selector** (not applicable to study flow)
+- **Time picker** (not commonly needed)
+- **Color picker** (no color selection in templates)
+- **File upload** (can't upload in review mode)
+- **Range slider** (single slider sufficient)
+
+**Button variants consolidated to 5 core types**:
+- ~~Tertiary~~ → Secondary handles this
+- ~~Text Button~~ → Use link styling or secondary
+- ~~Ghost Button~~ → Secondary variant
+- ~~FAB~~ → Use icon-button or primary in study action bar
+- ~~Loading Button~~ → Use state management
+- ~~Split Button~~ → Use separate buttons
+- ~~Toggle Button~~ → Use state management
+- ~~Button Group~~ → Use flexbox layout
+
+---
+
+## Component Traits (Properties)
 
 ### Input Traits
 

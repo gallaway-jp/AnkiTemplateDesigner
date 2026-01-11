@@ -1,16 +1,17 @@
 # 04a - Component Library: Layout & Navigation Blocks
 
-> **Purpose**: Define GrapeJS blocks for Layout, Structure, and Navigation components.
+> **Purpose**: Define GrapeJS blocks for Layout, Structure, and Study Action Bar components.
 > **Target Agent**: Claude Haiku 4.5 chat agent in VS Code
 > **Date**: January 11, 2026
+> **Updated**: Based on COMPONENT-AUDIT.md - removed generic navigation, added study-action-bar
 
 ---
 
 ## Overview
 
 This document defines the first set of GrapeJS blocks covering:
-- **Layout & Structure Elements** (22 components)
-- **Navigation Components** (15 components)
+- **Layout & Structure Elements** (25 components)
+- **Study Action Bar** (1 specialized component for review sessions)
 
 Each block includes HTML template, default styles, traits (properties), and Anki-specific attributes.
 
@@ -33,21 +34,25 @@ Each block includes HTML template, default styles, traits (properties), and Anki
     
     // Block category configuration
     const categories = {
+        // Core content
         layout: { label: 'Layout & Structure', order: 1, open: true },
-        navigation: { label: 'Navigation', order: 2, open: false },
-        inputs: { label: 'Inputs & Forms', order: 3, open: false },
-        buttons: { label: 'Buttons & Actions', order: 4, open: false },
-        data: { label: 'Data Display', order: 5, open: false },
-        feedback: { label: 'Feedback & Status', order: 6, open: false },
-        overlays: { label: 'Overlays & Popups', order: 7, open: false },
-        search: { label: 'Search & Filter', order: 8, open: false },
-        commerce: { label: 'Commerce', order: 9, open: false },
-        social: { label: 'Social', order: 10, open: false },
-        charts: { label: 'Charts', order: 11, open: false },
-        accessibility: { label: 'Accessibility', order: 12, open: false },
-        system: { label: 'System & Meta', order: 13, open: false },
-        motion: { label: 'Motion & Interaction', order: 14, open: false },
-        advanced: { label: 'Advanced', order: 15, open: false },
+        typography: { label: 'Text & Typography', order: 2, open: true },
+        
+        // Data display
+        data: { label: 'Data Display', order: 3, open: false },
+        charts: { label: 'Charts (Advanced)', order: 4, open: false },
+        
+        // UI elements
+        buttons: { label: 'Buttons', order: 5, open: false },
+        inputs: { label: 'Inputs', order: 6, open: false },
+        feedback: { label: 'Feedback & Status', order: 7, open: false },
+        overlays: { label: 'Overlays & Popups', order: 8, open: false },
+        
+        // Enhanced functionality
+        animations: { label: 'Animations', order: 9, open: false },
+        accessibility: { label: 'Accessibility', order: 10, open: false },
+        
+        // Anki specific
         anki: { label: 'Anki Special', order: 0, open: true }
     };
     
@@ -474,348 +479,171 @@ export function registerLayoutBlocks(editor) {
 
 ---
 
-## 2. Navigation Components
+## 2. Study Action Bar Component
 
-### `web/blocks/navigation.js`
+### `web/blocks/study-action-bar.js`
 
 ```javascript
 /**
- * Navigation Component Blocks
+ * Study Action Bar Component
+ * Specialized toolbar for Anki review session controls
  */
 
-export function registerNavigationBlocks(editor) {
+export function registerStudyActionBar(editor) {
     const bm = editor.BlockManager;
-    const category = 'Navigation';
+    const category = 'Anki Special';
     
-    // Top Navigation Bar
-    bm.add('top-nav', {
-        label: 'Top Nav Bar',
+    // Study Action Bar - Flexible control bar for review sessions
+    bm.add('study-action-bar', {
+        label: 'Study Action Bar',
         category,
         content: {
-            tagName: 'nav',
-            classes: ['atd-top-nav'],
-            style: {
-                display: 'flex',
-                'justify-content': 'space-between',
-                'align-items': 'center',
-                padding: '12px 20px',
-                background: '#1976d2',
-                color: '#ffffff'
-            },
-            components: [
-                { tagName: 'div', classes: ['atd-nav-brand'], components: [{ type: 'text', content: 'Brand' }] },
-                {
-                    tagName: 'div',
-                    classes: ['atd-nav-links'],
-                    style: { display: 'flex', gap: '20px' },
-                    components: [
-                        { tagName: 'a', content: 'Home', attributes: { href: '#' }, style: { color: '#fff', 'text-decoration': 'none' } },
-                        { tagName: 'a', content: 'About', attributes: { href: '#' }, style: { color: '#fff', 'text-decoration': 'none' } },
-                        { tagName: 'a', content: 'Contact', attributes: { href: '#' }, style: { color: '#fff', 'text-decoration': 'none' } }
-                    ]
-                }
-            ]
-        }
-    });
-    
-    // Bottom Navigation Bar
-    bm.add('bottom-nav', {
-        label: 'Bottom Nav Bar',
-        category,
-        content: {
-            tagName: 'nav',
-            classes: ['atd-bottom-nav'],
-            style: {
-                display: 'flex',
-                'justify-content': 'space-around',
-                'align-items': 'center',
-                padding: '8px 0',
-                background: '#ffffff',
-                'border-top': '1px solid #e0e0e0',
-                position: 'fixed',
-                bottom: '0',
-                left: '0',
-                right: '0'
-            },
-            components: [
-                { tagName: 'button', classes: ['atd-nav-item'], style: { border: 'none', background: 'none', padding: '8px 16px', 'text-align': 'center' }, components: [{ tagName: 'span', content: '🏠' }, { tagName: 'div', content: 'Home', style: { 'font-size': '12px' } }] },
-                { tagName: 'button', classes: ['atd-nav-item'], style: { border: 'none', background: 'none', padding: '8px 16px', 'text-align': 'center' }, components: [{ tagName: 'span', content: '🔍' }, { tagName: 'div', content: 'Search', style: { 'font-size': '12px' } }] },
-                { tagName: 'button', classes: ['atd-nav-item'], style: { border: 'none', background: 'none', padding: '8px 16px', 'text-align': 'center' }, components: [{ tagName: 'span', content: '👤' }, { tagName: 'div', content: 'Profile', style: { 'font-size': '12px' } }] }
-            ]
-        }
-    });
-    
-    // Sidebar Navigation
-    bm.add('sidebar-nav', {
-        label: 'Sidebar Nav',
-        category,
-        content: {
-            tagName: 'nav',
-            classes: ['atd-sidebar-nav'],
-            style: {
-                width: '240px',
-                padding: '16px 0',
-                background: '#f5f5f5'
-            },
-            components: [
-                { tagName: 'a', classes: ['atd-sidebar-item', 'active'], content: '📊 Dashboard', attributes: { href: '#' }, style: { display: 'block', padding: '12px 20px', 'text-decoration': 'none', color: '#333', background: '#e3f2fd' } },
-                { tagName: 'a', classes: ['atd-sidebar-item'], content: '📁 Projects', attributes: { href: '#' }, style: { display: 'block', padding: '12px 20px', 'text-decoration': 'none', color: '#333' } },
-                { tagName: 'a', classes: ['atd-sidebar-item'], content: '⚙️ Settings', attributes: { href: '#' }, style: { display: 'block', padding: '12px 20px', 'text-decoration': 'none', color: '#333' } }
-            ]
-        }
-    });
-    
-    // Breadcrumbs
-    bm.add('breadcrumbs', {
-        label: 'Breadcrumbs',
-        category,
-        content: {
-            tagName: 'nav',
-            classes: ['atd-breadcrumbs'],
-            attributes: { 'aria-label': 'Breadcrumb' },
-            style: {
-                padding: '8px 0',
-                'font-size': '14px'
-            },
-            components: [
-                {
-                    tagName: 'ol',
-                    style: { display: 'flex', 'list-style': 'none', padding: '0', margin: '0', gap: '8px' },
-                    components: [
-                        { tagName: 'li', components: [{ tagName: 'a', content: 'Home', attributes: { href: '#' }, style: { color: '#1976d2' } }] },
-                        { tagName: 'li', content: '/', style: { color: '#999' } },
-                        { tagName: 'li', components: [{ tagName: 'a', content: 'Category', attributes: { href: '#' }, style: { color: '#1976d2' } }] },
-                        { tagName: 'li', content: '/', style: { color: '#999' } },
-                        { tagName: 'li', content: 'Current Page', style: { color: '#666' } }
-                    ]
-                }
-            ]
-        }
-    });
-    
-    // Tabs Navigation
-    bm.add('tabs-nav', {
-        label: 'Tabs',
-        category,
-        content: {
+            type: 'study-action-bar',
             tagName: 'div',
-            classes: ['atd-tabs-nav'],
-            style: {
-                display: 'flex',
-                'border-bottom': '2px solid #e0e0e0'
-            },
-            components: [
-                { tagName: 'button', content: 'Tab 1', classes: ['atd-tab', 'active'], style: { padding: '12px 24px', border: 'none', background: 'transparent', 'border-bottom': '2px solid #1976d2', 'margin-bottom': '-2px', cursor: 'pointer' } },
-                { tagName: 'button', content: 'Tab 2', classes: ['atd-tab'], style: { padding: '12px 24px', border: 'none', background: 'transparent', cursor: 'pointer' } },
-                { tagName: 'button', content: 'Tab 3', classes: ['atd-tab'], style: { padding: '12px 24px', border: 'none', background: 'transparent', cursor: 'pointer' } }
-            ]
-        }
-    });
-    
-    // Stepper / Wizard
-    bm.add('stepper', {
-        label: 'Stepper',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-stepper'],
-            style: {
-                display: 'flex',
-                'justify-content': 'space-between',
-                'align-items': 'center',
-                padding: '20px'
-            },
-            components: [
-                { tagName: 'div', classes: ['atd-step', 'completed'], style: { 'text-align': 'center' }, components: [{ tagName: 'div', content: '✓', style: { width: '32px', height: '32px', 'border-radius': '50%', background: '#4caf50', color: '#fff', display: 'flex', 'align-items': 'center', 'justify-content': 'center', margin: '0 auto 8px' } }, { tagName: 'span', content: 'Step 1' }] },
-                { tagName: 'div', classes: ['atd-step-line'], style: { flex: '1', height: '2px', background: '#4caf50', margin: '0 8px' } },
-                { tagName: 'div', classes: ['atd-step', 'active'], style: { 'text-align': 'center' }, components: [{ tagName: 'div', content: '2', style: { width: '32px', height: '32px', 'border-radius': '50%', background: '#1976d2', color: '#fff', display: 'flex', 'align-items': 'center', 'justify-content': 'center', margin: '0 auto 8px' } }, { tagName: 'span', content: 'Step 2' }] },
-                { tagName: 'div', classes: ['atd-step-line'], style: { flex: '1', height: '2px', background: '#e0e0e0', margin: '0 8px' } },
-                { tagName: 'div', classes: ['atd-step'], style: { 'text-align': 'center' }, components: [{ tagName: 'div', content: '3', style: { width: '32px', height: '32px', 'border-radius': '50%', background: '#e0e0e0', color: '#666', display: 'flex', 'align-items': 'center', 'justify-content': 'center', margin: '0 auto 8px' } }, { tagName: 'span', content: 'Step 3' }] }
-            ]
-        }
-    });
-    
-    // Pagination
-    bm.add('pagination', {
-        label: 'Pagination',
-        category,
-        content: {
-            tagName: 'nav',
-            classes: ['atd-pagination'],
-            style: {
-                display: 'flex',
-                gap: '4px',
-                'justify-content': 'center'
-            },
-            components: [
-                { tagName: 'button', content: '←', style: { padding: '8px 12px', border: '1px solid #e0e0e0', background: '#fff', 'border-radius': '4px', cursor: 'pointer' } },
-                { tagName: 'button', content: '1', style: { padding: '8px 12px', border: '1px solid #1976d2', background: '#1976d2', color: '#fff', 'border-radius': '4px', cursor: 'pointer' } },
-                { tagName: 'button', content: '2', style: { padding: '8px 12px', border: '1px solid #e0e0e0', background: '#fff', 'border-radius': '4px', cursor: 'pointer' } },
-                { tagName: 'button', content: '3', style: { padding: '8px 12px', border: '1px solid #e0e0e0', background: '#fff', 'border-radius': '4px', cursor: 'pointer' } },
-                { tagName: 'button', content: '→', style: { padding: '8px 12px', border: '1px solid #e0e0e0', background: '#fff', 'border-radius': '4px', cursor: 'pointer' } }
-            ]
-        }
-    });
-    
-    // Back Button
-    bm.add('back-button', {
-        label: 'Back Button',
-        category,
-        content: {
-            tagName: 'button',
-            classes: ['atd-back-button'],
+            classes: ['atd-study-action-bar'],
             style: {
                 display: 'flex',
                 'align-items': 'center',
-                gap: '8px',
-                padding: '8px 16px',
-                border: 'none',
-                background: 'transparent',
-                cursor: 'pointer',
-                'font-size': '16px'
-            },
-            components: [
-                { tagName: 'span', content: '←' },
-                { tagName: 'span', content: 'Back' }
-            ]
-        }
-    });
-    
-    // Hamburger Menu
-    bm.add('hamburger-menu', {
-        label: 'Hamburger Menu',
-        category,
-        content: {
-            tagName: 'button',
-            classes: ['atd-hamburger'],
-            attributes: { 'aria-label': 'Menu' },
-            style: {
-                display: 'flex',
-                'flex-direction': 'column',
-                gap: '4px',
-                padding: '8px',
-                border: 'none',
-                background: 'transparent',
-                cursor: 'pointer'
-            },
-            components: [
-                { tagName: 'span', style: { width: '24px', height: '3px', background: '#333', 'border-radius': '2px' } },
-                { tagName: 'span', style: { width: '24px', height: '3px', background: '#333', 'border-radius': '2px' } },
-                { tagName: 'span', style: { width: '24px', height: '3px', background: '#333', 'border-radius': '2px' } }
-            ]
-        }
-    });
-    
-    // Overflow Menu
-    bm.add('overflow-menu', {
-        label: 'Overflow Menu',
-        category,
-        content: {
-            tagName: 'button',
-            classes: ['atd-overflow-menu'],
-            attributes: { 'aria-label': 'More options' },
-            content: '⋮',
-            style: {
-                padding: '8px 12px',
-                border: 'none',
-                background: 'transparent',
-                'font-size': '20px',
-                cursor: 'pointer'
-            }
-        }
-    });
-    
-    // Tree Navigation
-    bm.add('tree-nav', {
-        label: 'Tree Navigation',
-        category,
-        content: {
-            tagName: 'ul',
-            classes: ['atd-tree-nav'],
-            style: {
-                'list-style': 'none',
-                padding: '0',
-                margin: '0'
-            },
-            components: [
-                {
-                    tagName: 'li',
-                    classes: ['atd-tree-item'],
-                    components: [
-                        { tagName: 'details', attributes: { open: true }, components: [
-                            { tagName: 'summary', content: '📁 Parent Item', style: { padding: '8px', cursor: 'pointer' } },
-                            { tagName: 'ul', style: { 'padding-left': '20px', 'list-style': 'none' }, components: [
-                                { tagName: 'li', content: '📄 Child Item 1', style: { padding: '8px' } },
-                                { tagName: 'li', content: '📄 Child Item 2', style: { padding: '8px' } }
-                            ]}
-                        ]}
-                    ]
-                }
-            ]
-        }
-    });
-    
-    // Anchor Links
-    bm.add('anchor-link', {
-        label: 'Anchor Link',
-        category,
-        content: {
-            tagName: 'a',
-            classes: ['atd-anchor-link'],
-            content: 'Jump to section',
-            attributes: { href: '#section-id' },
-            style: {
-                color: '#1976d2',
-                'text-decoration': 'none'
-            }
-        }
-    });
-    
-    // Floating Navigation
-    bm.add('floating-nav', {
-        label: 'Floating Nav',
-        category,
-        content: {
-            tagName: 'nav',
-            classes: ['atd-floating-nav'],
-            style: {
-                position: 'fixed',
-                bottom: '20px',
-                right: '20px',
-                display: 'flex',
-                'flex-direction': 'column',
+                'justify-content': 'flex-start',
+                padding: '12px 16px',
+                background: '#f5f5f5',
+                border: '1px solid #e0e0e0',
+                'border-radius': '8px',
                 gap: '8px'
             },
             components: [
-                { tagName: 'button', content: '↑', style: { width: '48px', height: '48px', 'border-radius': '50%', border: 'none', background: '#1976d2', color: '#fff', cursor: 'pointer', 'font-size': '20px' } }
-            ]
-        }
-    });
-    
-    // Navigation Rail
-    bm.add('nav-rail', {
-        label: 'Navigation Rail',
-        category,
-        content: {
-            tagName: 'nav',
-            classes: ['atd-nav-rail'],
-            style: {
-                width: '72px',
-                padding: '8px 0',
-                background: '#f5f5f5',
-                display: 'flex',
-                'flex-direction': 'column',
-                'align-items': 'center',
-                gap: '4px'
-            },
-            components: [
-                { tagName: 'button', classes: ['atd-rail-item'], style: { width: '56px', height: '56px', border: 'none', background: 'transparent', 'border-radius': '16px', cursor: 'pointer', display: 'flex', 'flex-direction': 'column', 'align-items': 'center', 'justify-content': 'center', gap: '4px' }, components: [{ tagName: 'span', content: '🏠', style: { 'font-size': '20px' } }, { tagName: 'span', content: 'Home', style: { 'font-size': '10px' } }] },
-                { tagName: 'button', classes: ['atd-rail-item'], style: { width: '56px', height: '56px', border: 'none', background: 'transparent', 'border-radius': '16px', cursor: 'pointer', display: 'flex', 'flex-direction': 'column', 'align-items': 'center', 'justify-content': 'center', gap: '4px' }, components: [{ tagName: 'span', content: '⚙️', style: { 'font-size': '20px' } }, { tagName: 'span', content: 'Settings', style: { 'font-size': '10px' } }] }
+                {
+                    tagName: 'button',
+                    content: 'Action',
+                    classes: ['study-btn'],
+                    style: { padding: '8px 16px', background: '#1976d2', color: '#fff', border: 'none', 'border-radius': '4px', cursor: 'pointer' }
+                }
+            ],
+            traits: [
+                {
+                    name: 'placement',
+                    label: 'Position',
+                    type: 'select',
+                    options: [
+                        { value: 'top', name: 'Top' },
+                        { value: 'bottom', name: 'Bottom' },
+                        { value: 'inline', name: 'Inline' }
+                    ],
+                    value: 'inline'
+                },
+                {
+                    name: 'direction',
+                    label: 'Layout Direction',
+                    type: 'select',
+                    options: [
+                        { value: 'horizontal', name: 'Horizontal' },
+                        { value: 'vertical', name: 'Vertical' }
+                    ],
+                    value: 'horizontal'
+                },
+                {
+                    name: 'sticky',
+                    label: 'Sticky Positioning',
+                    type: 'checkbox',
+                    value: false
+                },
+                {
+                    name: 'responsive',
+                    label: 'Stack on Mobile',
+                    type: 'checkbox',
+                    value: true
+                }
             ]
         }
     });
 }
 ```
+
+**Use Cases**:
+- Custom action buttons (linked via AnkiJSApi behaviors)
+- Audio playback controls
+- Study helpers (timer, hint reveal, card flags)
+- Card rating/review buttons
+- Note-taking shortcuts
+- Field-specific actions
+
+---
+
+## Navigation Helper Components
+
+Remaining navigation components that support card flow:
+
+### Tabs Component
+Useful for showing multiple sections (e.g., Front/Back, Definition/Example):
+
+```javascript
+bm.add('tabs-nav', {
+    label: 'Tabs',
+    category: 'Layout & Structure',
+    content: {
+        tagName: 'div',
+        classes: ['atd-tabs-nav'],
+        style: { display: 'flex', 'border-bottom': '2px solid #e0e0e0' },
+        components: [
+            { tagName: 'button', content: 'Tab 1', classes: ['atd-tab', 'active'], style: { padding: '12px 24px', border: 'none', background: 'transparent', 'border-bottom': '2px solid #1976d2', 'margin-bottom': '-2px', cursor: 'pointer' } },
+            { tagName: 'button', content: 'Tab 2', classes: ['atd-tab'], style: { padding: '12px 24px', border: 'none', background: 'transparent', cursor: 'pointer' } }
+        ]
+    }
+});
+```
+
+### Stepper Component
+Useful for showing progress or step-by-step information:
+
+```javascript
+bm.add('stepper', {
+    label: 'Stepper',
+    category: 'Layout & Structure',
+    content: {
+        tagName: 'div',
+        classes: ['atd-stepper'],
+        style: { display: 'flex', 'justify-content': 'space-between', 'align-items': 'center', padding: '20px' },
+        components: [
+            { tagName: 'div', classes: ['atd-step', 'completed'], style: { 'text-align': 'center' }, components: [{ tagName: 'div', content: '✓', style: { width: '32px', height: '32px', 'border-radius': '50%', background: '#4caf50', color: '#fff', display: 'flex', 'align-items': 'center', 'justify-content': 'center', margin: '0 auto 8px' } }, { tagName: 'span', content: 'Step 1' }] },
+            { tagName: 'div', classes: ['atd-step-line'], style: { flex: '1', height: '2px', background: '#4caf50', margin: '0 8px' } },
+            { tagName: 'div', classes: ['atd-step', 'active'], style: { 'text-align': 'center' }, components: [{ tagName: 'div', content: '2', style: { width: '32px', height: '32px', 'border-radius': '50%', background: '#1976d2', color: '#fff', display: 'flex', 'align-items': 'center', 'justify-content': 'center', margin: '0 auto 8px' } }, { tagName: 'span', content: 'Step 2' }] }
+        ]
+    }
+});
+```
+
+### Anchor Link Component
+Useful for internal navigation within long card content:
+
+```javascript
+bm.add('anchor-link', {
+    label: 'Anchor Link',
+    category: 'Layout & Structure',
+    content: {
+        tagName: 'a',
+        classes: ['atd-anchor-link'],
+        content: 'Jump to section',
+        attributes: { href: '#section-id' },
+        style: { color: '#1976d2', 'text-decoration': 'none' }
+    }
+});
+```
+
+---
+
+## Removed Components
+
+The following generic navigation components are not applicable to Anki templates:
+- top-nav, bottom-nav (app navigation, not card-specific)
+- sidebar-nav (no sidebar space in card templates)
+- breadcrumbs (no hierarchical navigation in cards)
+- pagination (no multi-page cards in Anki)
+- back-button (Anki has built-in navigation)
+- hamburger-menu (no app-style menus needed)
+- overflow-menu (no action overflow menus)
+- tree-nav (complex navigation not useful in cards)
+- floating-nav (floating UI not appropriate for study)
+- nav-rail (sidebar navigation not applicable)
 
 ---
 

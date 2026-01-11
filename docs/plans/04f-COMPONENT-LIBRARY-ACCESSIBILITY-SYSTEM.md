@@ -1,12 +1,13 @@
-# 04f - Component Library: Accessibility, System, Motion & Advanced
+# 04f - Component Library: Accessibility
 
-> **Purpose**: Define GrapeJS blocks for Accessibility, System, Motion, and Advanced/Specialized components.
+> **Purpose**: Define GrapeJS blocks for Accessibility components.
 > **Target Agent**: Claude Haiku 4.5 chat agent in VS Code
 > **Date**: January 11, 2026
+> **Updated**: Based on COMPONENT-AUDIT.md - removed System, Motion, and Advanced components
 
 ---
 
-## 12. Accessibility Components
+## Accessibility Components
 
 ### `web/blocks/accessibility.js`
 
@@ -159,449 +160,115 @@ export function registerAccessibilityBlocks(editor) {
             content: 'Focus Me (Tab)',
             style: { padding: '12px 24px', border: '2px solid #1976d2', 'border-radius': '8px', background: '#fff', color: '#1976d2', cursor: 'pointer', outline: '3px solid transparent', 'outline-offset': '2px' }
         }
-    });
 }
 ```
 
 ---
 
-## 13. System Components
+## Removed Components
 
-### `web/blocks/system.js`
+The following components are **NOT** needed for Anki templates:
 
-```javascript
-/**
- * System & Utility Component Blocks
- */
+### System Components (REMOVED)
+- Loading Overlay
+- Maintenance Page
+- 404 Error Page
+- Cookie Consent Banner
+- Offline Indicator
+- Version Badge
+- Debug Panel
+- Print Area
 
-export function registerSystemBlocks(editor) {
-    const bm = editor.BlockManager;
-    const category = 'System';
-    
-    // Loading Overlay
-    bm.add('loading-overlay', {
-        label: 'Loading Overlay',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-loading-overlay'],
-            style: { position: 'fixed', top: '0', left: '0', right: '0', bottom: '0', background: 'rgba(255,255,255,0.9)', display: 'flex', 'flex-direction': 'column', 'align-items': 'center', 'justify-content': 'center', 'z-index': '9999' },
-            components: [
-                { tagName: 'div', content: '⟳', style: { 'font-size': '48px', color: '#1976d2', 'margin-bottom': '16px' } },
-                { tagName: 'p', content: 'Loading...', style: { margin: '0', color: '#666' } }
-            ]
-        }
-    });
-    
-    // Maintenance Page
-    bm.add('maintenance-page', {
-        label: 'Maintenance Page',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-maintenance'],
-            style: { 'min-height': '400px', display: 'flex', 'flex-direction': 'column', 'align-items': 'center', 'justify-content': 'center', 'text-align': 'center', padding: '40px' },
-            components: [
-                { tagName: 'div', content: '🔧', style: { 'font-size': '64px', 'margin-bottom': '24px' } },
-                { tagName: 'h1', content: 'Under Maintenance', style: { margin: '0 0 16px' } },
-                { tagName: 'p', content: 'We\'re making some improvements. Please check back soon.', style: { color: '#666', 'max-width': '400px' } }
-            ]
-        }
-    });
-    
-    // 404 Error Page
-    bm.add('error-404', {
-        label: '404 Page',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-404'],
-            style: { 'min-height': '400px', display: 'flex', 'flex-direction': 'column', 'align-items': 'center', 'justify-content': 'center', 'text-align': 'center', padding: '40px' },
-            components: [
-                { tagName: 'h1', content: '404', style: { 'font-size': '96px', margin: '0', color: '#e0e0e0' } },
-                { tagName: 'h2', content: 'Page Not Found', style: { margin: '0 0 16px' } },
-                { tagName: 'p', content: 'The page you\'re looking for doesn\'t exist.', style: { color: '#666', 'margin-bottom': '24px' } },
-                { tagName: 'a', content: 'Go Home', attributes: { href: '#' }, style: { padding: '12px 24px', background: '#1976d2', color: '#fff', 'text-decoration': 'none', 'border-radius': '6px' } }
-            ]
-        }
-    });
-    
-    // Cookie Consent Banner
-    bm.add('cookie-banner', {
-        label: 'Cookie Banner',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-cookie-banner'],
-            style: { position: 'fixed', bottom: '0', left: '0', right: '0', padding: '16px 20px', background: '#333', color: '#fff', display: 'flex', 'align-items': 'center', 'justify-content': 'space-between', 'flex-wrap': 'wrap', gap: '12px' },
-            components: [
-                { tagName: 'p', content: 'We use cookies to improve your experience. By continuing, you agree to our cookie policy.', style: { margin: '0', flex: '1' } },
-                { tagName: 'div', style: { display: 'flex', gap: '8px' }, components: [
-                    { tagName: 'button', content: 'Accept', style: { padding: '8px 16px', border: 'none', 'border-radius': '4px', background: '#4caf50', color: '#fff', cursor: 'pointer' } },
-                    { tagName: 'button', content: 'Decline', style: { padding: '8px 16px', border: '1px solid #fff', 'border-radius': '4px', background: 'transparent', color: '#fff', cursor: 'pointer' } }
-                ]}
-            ]
-        }
-    });
-    
-    // Offline Indicator
-    bm.add('offline-indicator', {
-        label: 'Offline Indicator',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-offline'],
-            style: { display: 'flex', 'align-items': 'center', 'justify-content': 'center', gap: '8px', padding: '8px 16px', background: '#ff9800', color: '#fff' },
-            components: [
-                { tagName: 'span', content: '📡' },
-                { tagName: 'span', content: 'You are currently offline' }
-            ]
-        }
-    });
-    
-    // Version Badge
-    bm.add('version-badge', {
-        label: 'Version Badge',
-        category,
-        content: {
-            tagName: 'span',
-            classes: ['atd-version'],
-            content: 'v2.1.0',
-            style: { padding: '4px 8px', background: '#e3f2fd', color: '#1976d2', 'border-radius': '4px', 'font-size': '12px', 'font-family': 'monospace' }
-        }
-    });
-    
-    // Debug Panel
-    bm.add('debug-panel', {
-        label: 'Debug Panel',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-debug'],
-            style: { padding: '16px', background: '#1e1e1e', color: '#d4d4d4', 'border-radius': '8px', 'font-family': 'monospace', 'font-size': '13px' },
-            components: [
-                { tagName: 'div', style: { display: 'flex', 'justify-content': 'space-between', 'margin-bottom': '12px' }, components: [{ tagName: 'span', content: 'DEBUG PANEL', style: { color: '#ff9800' } }, { tagName: 'button', content: '✕', style: { border: 'none', background: 'none', color: '#fff', cursor: 'pointer' } }] },
-                { tagName: 'pre', content: '{\n  "user": "john_doe",\n  "session": "abc123",\n  "timestamp": "2024-01-11T10:30:00Z"\n}', style: { margin: '0', 'white-space': 'pre-wrap' } }
-            ]
-        }
-    });
-    
-    // Print Area
-    bm.add('print-area', {
-        label: 'Print Area',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-print-area'],
-            attributes: { 'data-printable': 'true' },
-            style: { padding: '20px', border: '2px dashed #999', 'border-radius': '8px' },
-            components: [
-                { tagName: 'p', content: '🖨️ This content will be included when printing.', style: { margin: '0', color: '#666' } }
-            ]
-        }
-    });
-}
-```
+**Reason**: These are for web applications and admin interfaces, not flashcard templates.
+
+### Motion & Animation Components (REMOVED)
+- Fade Container
+- Slide Container
+- Scale Container
+- Rotate Container
+- Bounce Element
+- Pulse Effect
+- Shake Effect
+- Stagger Group
+- Parallax Container
+- Scroll Reveal
+- All animation utilities
+
+**Reason**: While CSS animations can be useful, dedicated animation containers are not needed. Use CSS animations directly on components instead.
+
+### Advanced Components (REMOVED)
+- Custom HTML Block
+- Embed Container
+- Script Placeholder
+
+**Reason**: These are development utilities, not user-facing components. Templates should use concrete components.
 
 ---
 
-## 14. Motion & Animation Components
+## Recommendations for Study Templates
 
-### `web/blocks/motion.js`
+### For Visual Feedback:
+Use **Accessibility components** (high-contrast buttons, focus indicators) combined with simple CSS transitions.
 
-```javascript
-/**
- * Motion & Animation Component Blocks
- * These provide visual structure for animated elements.
- * Actual animations should be added via CSS or JavaScript.
- */
+### For Progress Tracking:
+Use **Charts** (04e) to display study statistics.
 
-export function registerMotionBlocks(editor) {
-    const bm = editor.BlockManager;
-    const category = 'Motion';
-    
-    // Fade Container
-    bm.add('fade-container', {
-        label: 'Fade Container',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-fade'],
-            attributes: { 'data-animation': 'fade' },
-            style: { padding: '20px', background: '#f5f5f5', 'border-radius': '8px', border: '1px dashed #1976d2' },
-            components: [{ tagName: 'p', content: 'Content will fade in/out', style: { margin: '0', color: '#666' } }]
-        }
-    });
-    
-    // Slide Container
-    bm.add('slide-container', {
-        label: 'Slide Container',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-slide'],
-            attributes: { 'data-animation': 'slide', 'data-direction': 'left' },
-            style: { padding: '20px', background: '#e3f2fd', 'border-radius': '8px', border: '1px dashed #1976d2' },
-            components: [{ tagName: 'p', content: 'Content will slide in', style: { margin: '0', color: '#1976d2' } }]
-        }
-    });
-    
-    // Scale Container
-    bm.add('scale-container', {
-        label: 'Scale Container',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-scale'],
-            attributes: { 'data-animation': 'scale' },
-            style: { padding: '20px', background: '#fff3e0', 'border-radius': '8px', border: '1px dashed #ff9800' },
-            components: [{ tagName: 'p', content: 'Content will scale up/down', style: { margin: '0', color: '#ff9800' } }]
-        }
-    });
-    
-    // Rotate Container
-    bm.add('rotate-container', {
-        label: 'Rotate Container',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-rotate'],
-            attributes: { 'data-animation': 'rotate' },
-            style: { width: '100px', height: '100px', display: 'flex', 'align-items': 'center', 'justify-content': 'center', background: '#e8f5e9', 'border-radius': '8px', border: '1px dashed #4caf50' },
-            components: [{ tagName: 'span', content: '🔄', style: { 'font-size': '32px' } }]
-        }
-    });
-    
-    // Bounce Effect
-    bm.add('bounce-element', {
-        label: 'Bounce Element',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-bounce'],
-            attributes: { 'data-animation': 'bounce' },
-            style: { display: 'inline-block', padding: '16px 24px', background: '#1976d2', color: '#fff', 'border-radius': '8px' },
-            components: [{ tagName: 'span', content: 'Bouncing Element' }]
-        }
-    });
-    
-    // Pulse Effect
-    bm.add('pulse-element', {
-        label: 'Pulse Element',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-pulse'],
-            attributes: { 'data-animation': 'pulse' },
-            style: { width: '60px', height: '60px', 'border-radius': '50%', background: '#d32f2f', display: 'flex', 'align-items': 'center', 'justify-content': 'center' },
-            components: [{ tagName: 'span', content: '❤️', style: { 'font-size': '24px' } }]
-        }
-    });
-    
-    // Shake Effect
-    bm.add('shake-element', {
-        label: 'Shake Element',
-        category,
-        content: {
-            tagName: 'button',
-            classes: ['atd-shake'],
-            attributes: { 'data-animation': 'shake' },
-            content: '⚠️ Shake on Error',
-            style: { padding: '12px 24px', border: '2px solid #d32f2f', 'border-radius': '8px', background: '#fff', color: '#d32f2f', cursor: 'pointer' }
-        }
-    });
-    
-    // Stagger Group
-    bm.add('stagger-group', {
-        label: 'Stagger Group',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-stagger-group'],
-            attributes: { 'data-animation': 'stagger', 'data-delay': '100' },
-            style: { display: 'flex', gap: '8px' },
-            components: [
-                { tagName: 'div', classes: ['atd-stagger-item'], style: { width: '50px', height: '50px', background: '#1976d2', 'border-radius': '8px' } },
-                { tagName: 'div', classes: ['atd-stagger-item'], style: { width: '50px', height: '50px', background: '#42a5f5', 'border-radius': '8px' } },
-                { tagName: 'div', classes: ['atd-stagger-item'], style: { width: '50px', height: '50px', background: '#90caf9', 'border-radius': '8px' } },
-                { tagName: 'div', classes: ['atd-stagger-item'], style: { width: '50px', height: '50px', background: '#bbdefb', 'border-radius': '8px' } }
-            ]
-        }
-    });
-    
-    // Parallax Container
-    bm.add('parallax', {
-        label: 'Parallax',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-parallax'],
-            attributes: { 'data-parallax': 'true', 'data-speed': '0.5' },
-            style: { height: '200px', background: 'linear-gradient(135deg, #1976d2, #42a5f5)', display: 'flex', 'align-items': 'center', 'justify-content': 'center', color: '#fff' },
-            components: [{ tagName: 'h2', content: 'Parallax Section', style: { margin: '0' } }]
-        }
-    });
-    
-    // Reveal on Scroll
-    bm.add('scroll-reveal', {
-        label: 'Scroll Reveal',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-scroll-reveal'],
-            attributes: { 'data-reveal': 'true', 'data-threshold': '0.5' },
-            style: { padding: '40px', background: '#f5f5f5', 'border-radius': '12px', 'text-align': 'center' },
-            components: [
-                { tagName: 'h3', content: 'Revealed on Scroll', style: { margin: '0 0 8px' } },
-                { tagName: 'p', content: 'This content appears when scrolled into view.', style: { margin: '0', color: '#666' } }
-            ]
-        }
-    });
-}
-```
+### For Interaction:
+Use **Buttons** (04b) bound to AnkiJSApi behaviors with proper accessibility attributes.
 
 ---
 
-## 15. Advanced & Specialized Components
+## Component Registry
 
-### `web/blocks/advanced.js`
-
-```javascript
-/**
- * Advanced & Specialized Component Blocks
- * These are complex or niche components for specific use cases.
- */
-
-export function registerAdvancedBlocks(editor) {
-    const bm = editor.BlockManager;
-    const category = 'Advanced';
-    
-    // Custom HTML Block
-    bm.add('custom-html', {
-        label: 'Custom HTML',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-custom-html'],
-            style: { padding: '20px', background: '#fafafa', 'border-radius': '8px', border: '1px dashed #999' },
-            components: [
-                { tagName: 'p', content: '<!-- Add your custom HTML here -->', style: { margin: '0', 'font-family': 'monospace', color: '#666' } }
-            ]
-        }
-    });
-    
-    // Embed Container
-    bm.add('embed-container', {
-        label: 'Embed Container',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-embed'],
-            style: { position: 'relative', 'padding-bottom': '56.25%', height: '0', overflow: 'hidden', background: '#000', 'border-radius': '8px' },
-            components: [
-                { tagName: 'div', style: { position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: '#fff' }, components: [{ tagName: 'p', content: 'Embed content here (iframe, video, etc.)', style: { margin: '0' } }] }
-            ]
-        }
-    });
-    
-    // Script Placeholder
-    bm.add('script-placeholder', {
-        label: 'Script Placeholder',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-script-placeholder'],
-            attributes: { 'data-script-id': '' },
-            style: { padding: '16px', background: '#fff3e0', 'border-radius': '8px', border: '1px dashed #ff9800' },
-            components: [
-                { tagName: 'p', content: '⚠️ Script Placeholder - Configure script ID in properties', style: { margin: '0', color: '#e65100' } }
-            ]
-        }
-    });
-}
-```
-
----
-
-## Block Registration Summary
-
-### `web/blocks/index.js`
+Update the master block registration in `web/blocks/index.js`:
 
 ```javascript
 /**
  * Master Block Registration
- * Import and register all block categories
+ * Import and register block categories (Updated for Anki)
  */
 
-import { registerLayoutBlocks } from './layout.js';
-import { registerNavigationBlocks } from './navigation.js';
-import { registerInputBlocks } from './inputs.js';
-import { registerButtonBlocks } from './buttons.js';
-import { registerDataBlocks } from './data.js';
-import { registerFeedbackBlocks } from './feedback.js';
-import { registerOverlayBlocks } from './overlays.js';
-import { registerSearchBlocks } from './search.js';
-import { registerCommerceBlocks } from './commerce.js';
-import { registerSocialBlocks } from './social.js';
-import { registerChartBlocks } from './charts.js';
-import { registerAccessibilityBlocks } from './accessibility.js';
-import { registerSystemBlocks } from './system.js';
-import { registerMotionBlocks } from './motion.js';
-import { registerAdvancedBlocks } from './advanced.js';
+import { registerStudyActionBarBlocks } from './layout.js';         // 04a: Study-specific bar
+import { registerInputBlocks } from './inputs.js';                   // 04b: Consolidate: 3 + 4 + 3 + 3 + 5
+import { registerDataBlocks } from './data.js';                       // 04c: Data display, feedback, overlays
+import { registerChartBlocks } from './charts.js';                   // 04e: Charts & visualization
+import { registerAccessibilityBlocks } from './accessibility.js';    // 04f: Accessibility only
 
 /**
  * Register all blocks with the GrapeJS editor
  * @param {Object} editor - GrapeJS editor instance
  */
 export function registerAllBlocks(editor) {
-    registerLayoutBlocks(editor);
-    registerNavigationBlocks(editor);
+    registerStudyActionBarBlocks(editor);
     registerInputBlocks(editor);
-    registerButtonBlocks(editor);
     registerDataBlocks(editor);
-    registerFeedbackBlocks(editor);
-    registerOverlayBlocks(editor);
-    registerSearchBlocks(editor);
-    registerCommerceBlocks(editor);
-    registerSocialBlocks(editor);
     registerChartBlocks(editor);
     registerAccessibilityBlocks(editor);
-    registerSystemBlocks(editor);
-    registerMotionBlocks(editor);
-    registerAdvancedBlocks(editor);
     
-    console.log('[ATD] All blocks registered successfully');
+    console.log('[ATD] All Anki-optimized blocks registered successfully');
 }
 ```
 
 ---
 
-## Component Count Summary
+## Summary: Anki Component Library
 
-| Document | Category | Count |
-|----------|----------|-------|
-| 04a | Layout & Structure | 22 |
-| 04a | Navigation | 15 |
-| 04b | Basic Inputs | 8 |
-| 04b | Selection Inputs | 10 |
-| 04b | Advanced Inputs | 11 |
-| 04b | Form Structure | 8 |
-| 04b | Buttons & Actions | 13 |
-| 04c | Data Display | 20 |
-| 04c | Feedback & Status | 16 |
-| 04c | Overlays & Popups | 11 |
-| 04d | Search & Filter | 9 |
-| 04d | Commerce | 11 |
-| 04e | Social | 11 |
-| 04e | Charts & Data | 13 |
+**Final Count: 112 Components across 5 files**
+
+| Document | Components | Count |
+|----------|-----------|-------|
+| 04a | Study Action Bar, Layout, Tabs, Stepper, Anchor Link | 5 |
+| 04b | Text/Textarea/Password + Checkbox/Radio/Toggle/Dropdown + Date/Slider/Rating + Form/FieldGroup/Required + Btn Variants | 18 |
+| 04c | Data Display, Feedback, Overlays | ~45 |
+| 04e | Charts & Visualization | 13 |
 | 04f | Accessibility | 10 |
-| 04f | System | 8 |
-| 04f | Motion | 10 |
-| 04f | Advanced | 3 |
-| **Total** | | **209** |
+| **Total** | | **~112** |
 
----
-
-## Next Document
-
-See [05-CODE-STANDARDS.md](05-CODE-STANDARDS.md) for code review standards and quality guidelines.
+**Removed: 97 components**
+- Search & Filter (9)
+- Commerce (11)
+- Social (11)
+- System (8)
+- Motion (10)
+- Advanced (3)
+- Redundant inputs/buttons (45+)

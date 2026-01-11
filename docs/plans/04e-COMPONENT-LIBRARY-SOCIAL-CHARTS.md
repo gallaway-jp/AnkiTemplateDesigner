@@ -1,227 +1,40 @@
-# 04e - Component Library: Social & Charts
+# 04e - Component Library: Charts & Data Visualization
 
-> **Purpose**: Define GrapeJS blocks for Social Media and Data Visualization components.
+> **Purpose**: Define GrapeJS blocks for Data Visualization and Analytics components.
 > **Target Agent**: Claude Haiku 4.5 chat agent in VS Code
 > **Date**: January 11, 2026
+> **Updated**: Based on COMPONENT-AUDIT.md - removed all social media components
 
 ---
 
-## 10. Social Components
+## Social Components (REMOVED)
 
-### `web/blocks/social.js`
+The following social media components are not applicable to Anki templates:
+- Profile Card
+- Social Stats
+- Post Card
+- Comment
+- Comment Input
+- Share Buttons
+- Reaction Bar
+- Follow Button
+- User List Item
+- Notification Item
+- Activity Item
 
-```javascript
-/**
- * Social Component Blocks
- */
-
-export function registerSocialBlocks(editor) {
-    const bm = editor.BlockManager;
-    const category = 'Social';
-    
-    // User Profile Card
-    bm.add('profile-card', {
-        label: 'Profile Card',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-profile-card'],
-            style: { padding: '24px', background: '#fff', 'border-radius': '12px', 'text-align': 'center', 'box-shadow': '0 2px 8px rgba(0,0,0,0.1)' },
-            components: [
-                { tagName: 'div', content: 'JD', style: { width: '80px', height: '80px', margin: '0 auto 16px', 'border-radius': '50%', background: '#1976d2', color: '#fff', display: 'flex', 'align-items': 'center', 'justify-content': 'center', 'font-size': '28px', 'font-weight': '600' } },
-                { tagName: 'h3', content: 'John Doe', style: { margin: '0 0 4px' } },
-                { tagName: 'p', content: '@johndoe', style: { margin: '0 0 12px', color: '#666' } },
-                { tagName: 'p', content: 'Software developer passionate about creating great user experiences.', style: { margin: '0 0 16px', color: '#333', 'font-size': '14px' } },
-                { tagName: 'button', content: 'Follow', style: { padding: '10px 32px', border: 'none', 'border-radius': '20px', background: '#1976d2', color: '#fff', cursor: 'pointer' } }
-            ]
-        }
-    });
-    
-    // Social Stats
-    bm.add('social-stats', {
-        label: 'Social Stats',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-social-stats'],
-            style: { display: 'flex', 'justify-content': 'space-around', padding: '16px', background: '#f5f5f5', 'border-radius': '8px' },
-            components: [
-                { tagName: 'div', style: { 'text-align': 'center' }, components: [{ tagName: 'div', content: '1.2K', style: { 'font-size': '20px', 'font-weight': '700' } }, { tagName: 'div', content: 'Posts', style: { color: '#666', 'font-size': '14px' } }] },
-                { tagName: 'div', style: { 'text-align': 'center' }, components: [{ tagName: 'div', content: '45.8K', style: { 'font-size': '20px', 'font-weight': '700' } }, { tagName: 'div', content: 'Followers', style: { color: '#666', 'font-size': '14px' } }] },
-                { tagName: 'div', style: { 'text-align': 'center' }, components: [{ tagName: 'div', content: '892', style: { 'font-size': '20px', 'font-weight': '700' } }, { tagName: 'div', content: 'Following', style: { color: '#666', 'font-size': '14px' } }] }
-            ]
-        }
-    });
-    
-    // Post Card
-    bm.add('post-card', {
-        label: 'Post Card',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-post'],
-            style: { padding: '16px', background: '#fff', 'border-radius': '12px', 'box-shadow': '0 2px 8px rgba(0,0,0,0.1)' },
-            components: [
-                { tagName: 'div', style: { display: 'flex', 'align-items': 'center', gap: '12px', 'margin-bottom': '12px' }, components: [
-                    { tagName: 'div', content: 'JD', style: { width: '40px', height: '40px', 'border-radius': '50%', background: '#1976d2', color: '#fff', display: 'flex', 'align-items': 'center', 'justify-content': 'center' } },
-                    { tagName: 'div', components: [{ tagName: 'strong', content: 'John Doe' }, { tagName: 'span', content: ' • 2h ago', style: { color: '#666' } }] }
-                ]},
-                { tagName: 'p', content: 'Just finished building something amazing! 🚀 #coding #webdev', style: { margin: '0 0 12px' } },
-                { tagName: 'div', style: { display: 'flex', gap: '16px', 'padding-top': '12px', 'border-top': '1px solid #e0e0e0' }, components: [
-                    { tagName: 'button', content: '❤️ 128', style: { border: 'none', background: 'none', cursor: 'pointer' } },
-                    { tagName: 'button', content: '💬 24', style: { border: 'none', background: 'none', cursor: 'pointer' } },
-                    { tagName: 'button', content: '🔄 8', style: { border: 'none', background: 'none', cursor: 'pointer' } }
-                ]}
-            ]
-        }
-    });
-    
-    // Comment
-    bm.add('comment', {
-        label: 'Comment',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-comment'],
-            style: { display: 'flex', gap: '12px', padding: '12px 0' },
-            components: [
-                { tagName: 'div', content: 'AB', style: { width: '32px', height: '32px', 'flex-shrink': '0', 'border-radius': '50%', background: '#e91e63', color: '#fff', display: 'flex', 'align-items': 'center', 'justify-content': 'center', 'font-size': '12px' } },
-                { tagName: 'div', components: [
-                    { tagName: 'div', components: [{ tagName: 'strong', content: 'Alice Brown' }, { tagName: 'span', content: ' • 1h', style: { color: '#666', 'font-size': '13px' } }] },
-                    { tagName: 'p', content: 'This is amazing! Great work!', style: { margin: '4px 0 8px' } },
-                    { tagName: 'div', style: { display: 'flex', gap: '16px', 'font-size': '13px', color: '#666' }, components: [
-                        { tagName: 'button', content: 'Like', style: { border: 'none', background: 'none', cursor: 'pointer', color: '#666' } },
-                        { tagName: 'button', content: 'Reply', style: { border: 'none', background: 'none', cursor: 'pointer', color: '#666' } }
-                    ]}
-                ]}
-            ]
-        }
-    });
-    
-    // Comment Input
-    bm.add('comment-input', {
-        label: 'Comment Input',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-comment-input'],
-            style: { display: 'flex', gap: '12px', padding: '12px', background: '#f5f5f5', 'border-radius': '8px' },
-            components: [
-                { tagName: 'div', content: 'ME', style: { width: '36px', height: '36px', 'flex-shrink': '0', 'border-radius': '50%', background: '#4caf50', color: '#fff', display: 'flex', 'align-items': 'center', 'justify-content': 'center', 'font-size': '12px' } },
-                { tagName: 'input', attributes: { type: 'text', placeholder: 'Write a comment...' }, style: { flex: '1', padding: '8px 12px', border: '1px solid #e0e0e0', 'border-radius': '20px', outline: 'none' } },
-                { tagName: 'button', content: '📤', style: { border: 'none', background: 'none', 'font-size': '20px', cursor: 'pointer' } }
-            ]
-        }
-    });
-    
-    // Share Buttons
-    bm.add('share-buttons', {
-        label: 'Share Buttons',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-share-buttons'],
-            style: { display: 'flex', gap: '8px' },
-            components: [
-                { tagName: 'button', content: '𝕏', style: { width: '40px', height: '40px', 'border-radius': '50%', border: 'none', background: '#000', color: '#fff', cursor: 'pointer', 'font-size': '16px' } },
-                { tagName: 'button', content: 'f', style: { width: '40px', height: '40px', 'border-radius': '50%', border: 'none', background: '#1877f2', color: '#fff', cursor: 'pointer', 'font-size': '18px', 'font-weight': '700' } },
-                { tagName: 'button', content: 'in', style: { width: '40px', height: '40px', 'border-radius': '50%', border: 'none', background: '#0a66c2', color: '#fff', cursor: 'pointer', 'font-size': '14px', 'font-weight': '700' } },
-                { tagName: 'button', content: '🔗', style: { width: '40px', height: '40px', 'border-radius': '50%', border: '1px solid #e0e0e0', background: '#fff', cursor: 'pointer' } }
-            ]
-        }
-    });
-    
-    // Reaction Bar
-    bm.add('reaction-bar', {
-        label: 'Reaction Bar',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-reactions'],
-            style: { display: 'flex', gap: '4px', padding: '8px', background: '#fff', 'border-radius': '24px', 'box-shadow': '0 2px 8px rgba(0,0,0,0.1)' },
-            components: [
-                { tagName: 'button', content: '👍', style: { width: '36px', height: '36px', border: 'none', background: 'none', 'font-size': '20px', cursor: 'pointer' } },
-                { tagName: 'button', content: '❤️', style: { width: '36px', height: '36px', border: 'none', background: 'none', 'font-size': '20px', cursor: 'pointer' } },
-                { tagName: 'button', content: '😂', style: { width: '36px', height: '36px', border: 'none', background: 'none', 'font-size': '20px', cursor: 'pointer' } },
-                { tagName: 'button', content: '😮', style: { width: '36px', height: '36px', border: 'none', background: 'none', 'font-size': '20px', cursor: 'pointer' } },
-                { tagName: 'button', content: '😢', style: { width: '36px', height: '36px', border: 'none', background: 'none', 'font-size': '20px', cursor: 'pointer' } },
-                { tagName: 'button', content: '😡', style: { width: '36px', height: '36px', border: 'none', background: 'none', 'font-size': '20px', cursor: 'pointer' } }
-            ]
-        }
-    });
-    
-    // Follow Button
-    bm.add('follow-button', {
-        label: 'Follow Button',
-        category,
-        content: {
-            tagName: 'button',
-            classes: ['atd-follow-btn'],
-            content: '+ Follow',
-            style: { padding: '8px 20px', border: '2px solid #1976d2', 'border-radius': '20px', background: '#fff', color: '#1976d2', cursor: 'pointer', 'font-weight': '600' }
-        }
-    });
-    
-    // User List Item
-    bm.add('user-list-item', {
-        label: 'User List Item',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-user-item'],
-            style: { display: 'flex', 'align-items': 'center', gap: '12px', padding: '12px' },
-            components: [
-                { tagName: 'div', content: 'JD', style: { width: '48px', height: '48px', 'border-radius': '50%', background: '#673ab7', color: '#fff', display: 'flex', 'align-items': 'center', 'justify-content': 'center', 'font-weight': '600' } },
-                { tagName: 'div', style: { flex: '1' }, components: [{ tagName: 'strong', content: 'Jane Doe', style: { display: 'block' } }, { tagName: 'span', content: '@janedoe', style: { color: '#666', 'font-size': '14px' } }] },
-                { tagName: 'button', content: 'Follow', style: { padding: '6px 16px', border: '1px solid #1976d2', 'border-radius': '20px', background: '#fff', color: '#1976d2', cursor: 'pointer' } }
-            ]
-        }
-    });
-    
-    // Notification Item
-    bm.add('notification-item', {
-        label: 'Notification Item',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-notification'],
-            style: { display: 'flex', gap: '12px', padding: '12px 16px', background: '#e3f2fd', 'border-radius': '8px' },
-            components: [
-                { tagName: 'div', content: '❤️', style: { 'font-size': '24px' } },
-                { tagName: 'div', style: { flex: '1' }, components: [
-                    { tagName: 'p', content: '<strong>John</strong> liked your post', style: { margin: '0 0 4px' } },
-                    { tagName: 'span', content: '5 minutes ago', style: { color: '#666', 'font-size': '13px' } }
-                ]},
-                { tagName: 'div', style: { width: '8px', height: '8px', 'border-radius': '50%', background: '#1976d2' } }
-            ]
-        }
-    });
-    
-    // Activity Feed Item
-    bm.add('activity-item', {
-        label: 'Activity Item',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-activity'],
-            style: { display: 'flex', gap: '12px', padding: '12px 0', 'border-bottom': '1px solid #e0e0e0' },
-            components: [
-                { tagName: 'div', style: { width: '32px', height: '32px', 'border-radius': '50%', background: '#4caf50', display: 'flex', 'align-items': 'center', 'justify-content': 'center' }, components: [{ tagName: 'span', content: '✓', style: { color: '#fff' } }] },
-                { tagName: 'div', style: { flex: '1' }, components: [
-                    { tagName: 'p', content: 'Completed task "Design homepage"', style: { margin: '0 0 4px' } },
-                    { tagName: 'span', content: 'Today at 3:45 PM', style: { color: '#666', 'font-size': '13px' } }
-                ]}
-            ]
-        }
-    });
-}
-```
+**Reason**: Anki templates are for flashcard study, not social networking. No user interactions or social features are needed.
 
 ---
 
-## 11. Charts & Data Visualization
+## Charts & Data Visualization
 
 ### `web/blocks/charts.js`
+
+Charts can be useful for study templates to display:
+- Learning progress/statistics
+- Performance metrics
+- Distribution of knowledge areas
+- Study streaks and trends
 
 ```javascript
 /**
@@ -230,6 +43,7 @@ export function registerSocialBlocks(editor) {
  * users should integrate Chart.js or similar libraries.
  */
 
+export function registerSocialBlocks(editor) {
 export function registerChartBlocks(editor) {
     const bm = editor.BlockManager;
     const category = 'Charts & Data';
