@@ -742,15 +742,25 @@ export function registerStudyActionBar(editor) {
                     tagName: 'button',
                     content: 'Show Answer',
                     classes: ['study-btn'],
-                    attributes: { 'data-action': 'showAnswer' },
+                    attributes: { 'data-action': 'ankiShowAnswer' },
+                    script: 'onclick="api.ankiShowAnswer()"',
                     style: { padding: '8px 16px', background: '#1976d2', color: '#fff', border: 'none', 'border-radius': '4px', cursor: 'pointer' }
                 },
                 {
                     tagName: 'button',
-                    content: 'Play Audio',
+                    content: 'Mark Card',
                     classes: ['study-btn'],
-                    attributes: { 'data-action': 'playAudio' },
-                    style: { padding: '8px 16px', background: '#757575', color: '#fff', border: 'none', 'border-radius': '4px', cursor: 'pointer' }
+                    attributes: { 'data-action': 'ankiMarkCard' },
+                    script: 'onclick="api.ankiMarkCard()"',
+                    style: { padding: '8px 16px', background: '#ff9800', color: '#fff', border: 'none', 'border-radius': '4px', cursor: 'pointer' }
+                },
+                {
+                    tagName: 'button',
+                    content: 'Flag',
+                    classes: ['study-btn'],
+                    attributes: { 'data-action': 'ankiToggleFlag' },
+                    script: 'onclick="api.ankiToggleFlag(1)"',
+                    style: { padding: '8px 16px', background: '#f44336', color: '#fff', border: 'none', 'border-radius': '4px', cursor: 'pointer' }
                 }
             ]
             // Traits are inherited from component type definition

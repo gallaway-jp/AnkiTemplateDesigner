@@ -570,12 +570,16 @@ editor.DomComponents.addType('primary-button', {
                     label: 'Anki Behavior',
                     options: () => [
                         { id: '', name: '(none)' },
-                        { id: 'showAnswer', name: 'Show Answer' },
-                        { id: 'flipCard', name: 'Flip Card' },
-                        { id: 'playAudio', name: 'Play Audio' },
-                        { id: 'rateAgain', name: 'Rate: Again' },
-                        { id: 'rateGood', name: 'Rate: Good' },
-                        { id: 'rateEasy', name: 'Rate: Easy' }
+                        { id: 'ankiShowAnswer', name: 'Show Answer' },
+                        { id: 'ankiMarkCard', name: 'Mark Card' },
+                        { id: 'ankiSuspendCard', name: 'Suspend Card' },
+                        { id: 'ankiBuryCard', name: 'Bury Card' },
+                        { id: 'ankiAnswerEase1', name: 'Rate: Again' },
+                        { id: 'ankiAnswerEase2', name: 'Rate: Hard' },
+                        { id: 'ankiAnswerEase3', name: 'Rate: Good' },
+                        { id: 'ankiAnswerEase4', name: 'Rate: Easy' },
+                        { id: 'ankiToggleFlag', name: 'Toggle Flag' },
+                        { id: 'ankiTtsSpeak', name: 'Speak Text (TTS)' }
                     ]
                 },
                 { type: 'checkbox', name: 'disabled', label: 'Disabled' }

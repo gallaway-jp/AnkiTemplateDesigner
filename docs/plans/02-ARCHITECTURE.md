@@ -175,7 +175,7 @@ class CardSide(Enum):
 @dataclass
 class AnkiBehavior:
     """Represents an AnkiJSApi behavior binding."""
-    action: str                          # e.g., "showAnswer", "playAudio"
+    action: str                          # e.g., "ankiShowAnswer", "ankiMarkCard"
     trigger: str                         # e.g., "click", "load"
     target_selector: Optional[str] = None
     params: dict = field(default_factory=dict)
@@ -1087,45 +1087,53 @@ class GrapeJSDownloader:
 from typing import Optional
 
 class AnkiJSApiService:
-    """Service for AnkiJSApi behavior integration."""
+    """Service for AnkiDroidJS API integration.
     
-    # Available AnkiJSApi behaviors
+    Uses AnkiDroid JS API for Desktop v0.0.4 (MIT License).
+    Source: https://github.com/infinyte7/AnkiDroid-API-Desktop
+    """
+    
+    # Available AnkiDroidJS API behaviors
+    # Note: Audio playback uses HTML5 <audio> elements directly, not API methods
     BEHAVIORS = [
-        # Card Actions
-        {"name": "showAnswer", "category": "Card", "description": "Show the answer side of the card"},
-        {"name": "flipCard", "category": "Card", "description": "Flip between front and back"},
-        {"name": "markCard", "category": "Card", "description": "Toggle card marked status"},
-        {"name": "suspendCard", "category": "Card", "description": "Suspend the current card"},
-        {"name": "buryCard", "category": "Card", "description": "Bury the current card"},
+        # Card Actions (AnkiDroidJS API methods)
+        {"name": "ankiShowAnswer", "category": "Card", "description": "Show the answer side of the card"},
+        {"name": "ankiMarkCard", "category": "Card", "description": "Toggle card marked status"},
+        {"name": "ankiSuspendCard", "category": "Card", "description": "Suspend the current card"},
+        {"name": "ankiSuspendNote", "category": "Card", "description": "Suspend all cards from note"},
+        {"name": "ankiBuryCard", "category": "Card", "description": "Bury the current card"},
+        {"name": "ankiBuryNote", "category": "Card", "description": "Bury all cards from note"},
+        {"name": "ankiToggleFlag", "category": "Card", "description": "Toggle card flag (0-7 or color name)"},
+        {"name": "ankiResetProgress", "category": "Card", "description": "Reset card to new state"},
+        {"name": "ankiSetCardDue", "category": "Card", "description": "Set card due date (days from today)"},
         
-        # Rating Actions  
-        {"name": "rateAgain", "category": "Rating", "description": "Rate card as Again"},
-        {"name": "rateHard", "category": "Rating", "description": "Rate card as Hard"},
-        {"name": "rateGood", "category": "Rating", "description": "Rate card as Good"},
-        {"name": "rateEasy", "category": "Rating", "description": "Rate card as Easy"},
+        # Rating Actions (AnkiDroidJS API methods)
+        {"name": "ankiAnswerEase1", "category": "Rating", "description": "Answer: Again (ease 1)"},
+        {"name": "ankiAnswerEase2", "category": "Rating", "description": "Answer: Hard (ease 2)"},
+        {"name": "ankiAnswerEase3", "category": "Rating", "description": "Answer: Good (ease 3)"},
+        {"name": "ankiAnswerEase4", "category": "Rating", "description": "Answer: Easy (ease 4)"},
         
-        # Audio Actions
-        {"name": "playAudio", "category": "Audio", "description": "Play audio file"},
-        {"name": "replayAudio", "category": "Audio", "description": "Replay all audio"},
-        {"name": "pauseAudio", "category": "Audio", "description": "Pause audio playback"},
-        {"name": "recordAudio", "category": "Audio", "description": "Record audio (if supported)"},
+        # Text-to-Speech Actions (AnkiDroidJS API methods)
+        {"name": "ankiTtsSpeak", "category": "TTS", "description": "Speak text via TTS"},
+        {"name": "ankiTtsStop", "category": "TTS", "description": "Stop TTS playback"},
+        {"name": "ankiTtsSetLanguage", "category": "TTS", "description": "Set TTS language"},
+        {"name": "ankiTtsSetSpeechRate", "category": "TTS", "description": "Set TTS speech rate"},
+        {"name": "ankiTtsSetPitch", "category": "TTS", "description": "Set TTS pitch"},
         
-        # Navigation
-        {"name": "undoAction", "category": "Navigation", "description": "Undo last action"},
-        {"name": "editNote", "category": "Navigation", "description": "Open note editor"},
-        {"name": "showDeckOverview", "category": "Navigation", "description": "Show deck overview"},
+        # UI Control Actions (AnkiDroidJS API methods)
+        {"name": "ankiIsInNightMode", "category": "UI", "description": "Check if night mode active"},
+        {"name": "ankiShowToast", "category": "UI", "description": "Show toast notification"},
+        {"name": "ankiIsInFullscreen", "category": "UI", "description": "Check fullscreen status"},
         
-        # Display
-        {"name": "toggleNightMode", "category": "Display", "description": "Toggle night mode"},
-        {"name": "zoomIn", "category": "Display", "description": "Increase zoom level"},
-        {"name": "zoomOut", "category": "Display", "description": "Decrease zoom level"},
+        # Tag Management (AnkiDroidJS API methods)
+        {"name": "ankiGetNoteTags", "category": "Tags", "description": "Get note tags"},
+        {"name": "ankiAddTagToNote", "category": "Tags", "description": "Add tag to note"},
+        {"name": "ankiSetNoteTags", "category": "Tags", "description": "Set all note tags"},
         
-        # Timer
-        {"name": "startTimer", "category": "Timer", "description": "Start a timer"},
-        {"name": "stopTimer", "category": "Timer", "description": "Stop the timer"},
-        {"name": "resetTimer", "category": "Timer", "description": "Reset the timer"},
+        # Search
+        {"name": "ankiSearchCard", "category": "Navigation", "description": "Search cards in browser"},
         
-        # Custom
+        # Custom (non-API behaviors)
         {"name": "runCustomJS", "category": "Custom", "description": "Run custom JavaScript"},
         {"name": "showHint", "category": "Custom", "description": "Show hint content"},
         {"name": "hideElement", "category": "Custom", "description": "Hide an element"},
@@ -1162,21 +1170,38 @@ class AnkiJSApiService:
         return behaviors
     
     def generate_behavior_js(self, action: str, params: dict = None) -> str:
-        """Generate JavaScript code for a behavior."""
+        """Generate JavaScript code for a behavior.
+        
+        Note: AnkiDroidJS API requires initialization:
+        const api = AnkiDroidJS.init({version: '0.0.3', developer: 'your-email@example.com'});
+        """
         params = params or {}
         
-        if action == "showAnswer":
-            return "pycmd('ans')"
-        elif action == "flipCard":
-            return "if(typeof pycmd !== 'undefined') pycmd('ans')"
-        elif action.startswith("rate"):
-            ease_map = {"rateAgain": 1, "rateHard": 2, "rateGood": 3, "rateEasy": 4}
-            ease = ease_map.get(action, 3)
-            return f"pycmd('ease{ease}')"
+        # AnkiDroidJS API methods (Promise-based)
+        if action == "ankiShowAnswer":
+            return "api.ankiShowAnswer()"
+        elif action == "ankiMarkCard":
+            return "api.ankiMarkCard()"
+        elif action == "ankiSuspendCard":
+            return "api.ankiSuspendCard()"
+        elif action == "ankiBuryCard":
+            return "api.ankiBuryCard()"
+        elif action.startswith("ankiAnswerEase"):
+            # ankiAnswerEase1-4 methods
+            return f"api.{action}()"
+        elif action == "ankiToggleFlag":
+            flag_color = params.get("color", "1")  # Default red
+            return f"api.ankiToggleFlag({flag_color})"
+        elif action == "ankiTtsSpeak":
+            text = params.get("text", "''")
+            return f"api.ankiTtsSpeak({text})"
+        elif action == "ankiShowToast":
+            text = params.get("text", "''")
+            return f"api.ankiShowToast({text}, true)"
+        # Audio playback uses HTML5 (not API)
         elif action == "playAudio":
-            return "pycmd('play:q:0')"
-        elif action == "replayAudio":
-            return "pycmd('replay')"
+            url = params.get("url", "''")
+            return f"new Audio({url}).play()"
         elif action == "toggleElement":
             target = params.get("target", "this")
             return f"document.querySelector('{target}').classList.toggle('hidden')"

@@ -487,29 +487,47 @@ const categories = {
 ### Example Usage
 
 ```html
+<!-- Initialize AnkiDroidJS API first (in template head) -->
+<script>
+const api = AnkiDroidJS.init({
+    version: '0.0.3',
+    developer: 'template-designer@example.com'
+});
+</script>
+
 <!-- Study action bar at top with horizontal layout -->
 <div class="atd-study-action-bar" style="position: sticky; top: 0;">
-    <button onclick="ankiapi.showAnswer()">Show Answer</button>
-    <button onclick="ankiapi.playAudio('audio')">Play Audio</button>
-    <button onclick="ankiapi.markCard()">Mark</button>
-    <button onclick="ankiapi.suspendCard()">Suspend</button>
+    <button onclick="api.ankiShowAnswer()">Show Answer</button>
+    <button onclick="new Audio('audio.mp3').play()">Play Audio</button>
+    <button onclick="api.ankiMarkCard()">Mark</button>
+    <button onclick="api.ankiSuspendCard()">Suspend</button>
+    <button onclick="api.ankiToggleFlag(1)">Flag Red</button>
+    <button onclick="api.ankiBuryCard()">Bury</button>
 </div>
 ```
 
-### Integration with AnkiJSApi
+### Integration with AnkiDroidJS API
 
-The study action bar works seamlessly with AnkiJSApi behaviors:
+The study action bar works seamlessly with AnkiDroidJS API v0.0.4 (Promise-based):
 
 ```javascript
-// Bind button to AnkiJSApi action
-button.addEventListener('click', () => {
-    ankiapi.showAnswer();
+// Initialize API first
+const api = AnkiDroidJS.init({
+    version: '0.0.3',
+    developer: 'template-designer@example.com'
 });
 
-// Multiple actions on one button
-button.addEventListener('click', () => {
-    ankiapi.playAudio('field:Audio');
-    ankiapi.showAnswer();
+// Bind button to AnkiDroidJS action
+button.addEventListener('click', async () => {
+    const success = await api.ankiShowAnswer();
+    if (success) console.log('Answer shown');
+});
+
+// Multiple actions on one button with toast notification
+button.addEventListener('click', async () => {
+    new Audio('field:Audio').play();  // HTML5 audio
+    await api.ankiShowAnswer();
+    await api.ankiShowToast('Answer revealed!', true);
 });
 
 // Custom study helpers

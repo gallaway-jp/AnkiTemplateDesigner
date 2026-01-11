@@ -2,7 +2,8 @@
 
 > **Purpose**: Document technical constraints and requirements for Anki template generation
 > **Date**: January 11, 2026
-> **Status**: ⚠️ VERIFICATION REQUIRED - AnkiJSApi methods need validation against actual source
+> **Status**: ✅ VERIFIED - AnkiDroidJS API v0.0.4 validated against source code
+> **See Also**: [ANKIJSAPI-VERIFICATION.md](ANKIJSAPI-VERIFICATION.md) for complete API documentation
 
 ---
 
@@ -114,76 +115,142 @@ fetch('/api/data').then(r => r.json()); // Will fail
 
 ---
 
-## 3. AnkiJSApi Integration
+## 3. AnkiDroidJS API Integration
 
-### ⚠️ VERIFICATION REQUIRED
+### ✅ VERIFIED API Surface
 
-**Status**: The following AnkiJSApi methods are **ASSUMED** based on plan documentation but **NOT VERIFIED** against actual source code.
+**Source**: AnkiDroid JS API for Desktop v0.0.4 (MIT License)  
+**Repository**: https://github.com/infinyte7/AnkiDroid-API-Desktop  
+**Verification Date**: January 11, 2026  
+**Full Documentation**: See [ANKIJSAPI-VERIFICATION.md](ANKIJSAPI-VERIFICATION.md)
 
-**Source**: These methods are documented in `02-ARCHITECTURE.md` but the actual AnkiJSApi addon at `D:\Development\Python\AnkiJSApi` (outside this workspace) has not been validated.
+### Required Initialization
 
-### Assumed API Surface
+**CRITICAL**: The API requires initialization with a developer contract:
 
 ```javascript
-// ⚠️ UNVERIFIED - Assumed to exist based on 02-ARCHITECTURE.md
+// Must initialize before using any API methods
+const api = AnkiDroidJS.init({
+    version: '0.0.3',  // Required: API contract version
+    developer: 'your-email@example.com'  // Required: Developer contact
+});
 
-// Card Actions
-ankiapi.showAnswer()        // Show answer side
-ankiapi.flipCard()          // Flip between front/back
-ankiapi.markCard()          // Toggle marked status
-ankiapi.suspendCard()       // Suspend card
-ankiapi.buryCard()          // Bury card
-
-// Rating Actions
-ankiapi.rateAgain()         // Rate as Again
-ankiapi.rateHard()          // Rate as Hard
-ankiapi.rateGood()          // Rate as Good
-ankiapi.rateEasy()          // Rate as Easy
-
-// Audio Actions
-ankiapi.playAudio('field:Audio')  // Play audio from field
-ankiapi.replayAudio()             // Replay all audio
-ankiapi.pauseAudio()              // Pause playback
-ankiapi.recordAudio()             // Record audio (if supported)
-
-// Navigation
-ankiapi.undoAction()              // Undo last action
-ankiapi.editNote()                // Open note editor
-ankiapi.showDeckOverview()        // Show deck overview
-
-// Display
-ankiapi.toggleNightMode()         // Toggle night mode
-ankiapi.zoomIn()                  // Increase zoom
-ankiapi.zoomOut()                 // Decrease zoom
-
-// Timer
-ankiapi.startTimer()              // Start timer
-ankiapi.stopTimer()               // Stop timer
-ankiapi.resetTimer()              // Reset timer
-
-// Custom
-ankiapi.runCustomJS(code)         // Run custom JavaScript
-ankiapi.showHint()                // Show hint
-ankiapi.hideElement(selector)     // Hide element
-ankiapi.showElement(selector)     // Show element
-ankiapi.toggleElement(selector)   // Toggle visibility
+// Now API methods are available
+await api.ankiShowAnswer();
+await api.ankiMarkCard();
 ```
 
-### Required Verification Steps
+**Without initialization**: API will throw error: `"AnkiDroidJS: Developer contact required in contract"`
 
-**TODO**: Validate against actual AnkiJSApi source code
+### Verified API Methods (56 total)
 
-1. Access `D:\Development\Python\AnkiJSApi` repository
-2. Review actual API implementation
-3. Verify method names and signatures
-4. Check which methods are available in different Anki versions
-5. Update this documentation with actual API surface
-6. Update `02-ARCHITECTURE.md` with verified methods
-7. Update `COMPONENT-AUDIT.md` example code with verified methods
+#### Card Information (20 methods)
+```javascript
+await api.ankiGetNewCardCount()      // New cards remaining
+await api.ankiGetLrnCardCount()      // Learning cards remaining
+await api.ankiGetRevCardCount()      // Review cards remaining
+await api.ankiGetETA()               // Estimated time (minutes)
+await api.ankiGetCardMark()          // Card marked status
+await api.ankiGetCardFlag()          // Flag color (0-7)
+await api.ankiGetNextTime1()         // Next interval for ease 1-4
+await api.ankiGetCardId()            // Card ID
+await api.ankiGetCardNid()           // Note ID
+await api.ankiGetDeckName()          // Current deck name
+// + 10 more (see ANKIJSAPI-VERIFICATION.md)
+```
 
-### Fallback Strategy (if AnkiJSApi not available)
+#### Card Actions (9 methods)
+```javascript
+await api.ankiMarkCard()             // Toggle marked status
+await api.ankiToggleFlag(1)          // Set flag (0-7 or "red"/"blue"/etc.)
+await api.ankiBuryCard()             // Bury until tomorrow
+await api.ankiBuryNote()             // Bury all cards from note
+await api.ankiSuspendCard()          // Suspend card
+await api.ankiSuspendNote()          // Suspend all cards from note
+await api.ankiResetProgress()        // Reset card to new state
+await api.ankiSearchCard('query')    // Open browser with search
+await api.ankiSetCardDue(5)          // Set due date (days from today)
+```
 
-If AnkiJSApi is not installed or methods differ:
+#### Reviewer Control (6 methods)
+```javascript
+await api.ankiIsDisplayingAnswer()   // Check if answer showing
+await api.ankiShowAnswer()           // Flip to answer side
+await api.ankiAnswerEase1()          // Answer "Again"
+await api.ankiAnswerEase2()          // Answer "Hard"
+await api.ankiAnswerEase3()          // Answer "Good"
+await api.ankiAnswerEase4()          // Answer "Easy"
+await api.ankiGetDebugInfo()         // Reviewer state info
+
+// Alternative names for compatibility:
+await api.buttonAnswerEase1()        // Same as ankiAnswerEase1
+// Also: showAnswer() global function override
+```
+
+#### Text-to-Speech (7 methods)
+```javascript
+await api.ankiTtsSpeak('Hello', 0)   // Speak text (queueMode: 0=replace, 1=queue)
+await api.ankiTtsStop()              // Stop TTS
+await api.ankiTtsSetLanguage('en-US') // Set language
+await api.ankiTtsSetSpeechRate(1.0)  // Set rate (0.5-2.0)
+await api.ankiTtsSetPitch(1.0)       // Set pitch
+await api.ankiTtsIsSpeaking()        // Check if speaking
+await api.ankiTtsFieldModifierIsAvailable() // Check TTS field support
+```
+
+#### UI Control (8 methods)
+```javascript
+await api.ankiIsInNightMode()        // Check night mode
+await api.ankiShowToast('Hello!', true) // Show toast (text, shortLength)
+await api.ankiIsInFullscreen()       // Check fullscreen
+await api.ankiIsTopbarShown()        // Check topbar visibility
+await api.ankiEnableHorizontalScrollbar(true) // Toggle H scrollbar
+await api.ankiEnableVerticalScrollbar(true)   // Toggle V scrollbar
+await api.ankiShowNavigationDrawer() // Show nav drawer
+await api.ankiShowOptionsMenu()      // Show options menu
+```
+
+#### Tag Management (3 methods)
+```javascript
+await api.ankiGetNoteTags()          // Returns: ['tag1', 'tag2']
+await api.ankiAddTagToNote('difficult') // Add single tag
+await api.ankiSetNoteTags(['a', 'b']) // Replace all tags
+```
+
+#### Utilities (1 method)
+```javascript
+await api.ankiIsActiveNetworkMetered() // Check if network metered
+```
+
+### Methods NOT Available
+
+These assumed methods **do NOT exist** in the API:
+
+❌ `playAudio()` - **Use HTML5 `<audio>` element instead**
+❌ `flipCard()` - **Use `ankiShowAnswer()` instead**
+❌ `getCurrentCardId()` - **Use `ankiGetCardId()` instead**
+❌ Speech-to-text methods - **Not supported on desktop**
+
+### Audio Playback (HTML5)
+
+Audio is **not** handled by the API. Use standard HTML5:
+
+```javascript
+// ❌ WRONG - This method doesn't exist
+await api.playAudio('sound.mp3');
+
+// ✅ CORRECT - Use HTML5 Audio API
+const audio = new Audio('https://example.com/sound.mp3');
+audio.play();
+
+// Or reference Anki field
+const audio = new Audio('[sound:pronunciation.mp3]');
+audio.play();
+```
+
+### Fallback Strategy (API not installed)
+
+If AnkiDroidJS addon is not installed:
 
 ```javascript
 // Standard Anki template JavaScript (no addon required)
@@ -229,25 +296,47 @@ When exporting from GrapeJS to Anki templates:
 ### Required Transformations
 
 ```javascript
-// BEFORE (GrapeJS output)
+// BEFORE (GrapeJS output with old namespace)
 <div data-gjs-type="study-action-bar" class="atd-study-action-bar">
     <button onclick="ankiapi.showAnswer()">Show</button>
 </div>
 
-// AFTER (Anki template)
-<div class="atd-study-action-bar">
-    <button onclick="showAnswer()">Show</button>
-</div>
+// AFTER (Anki template with AnkiDroidJS API)
 <script>
+// Initialize AnkiDroidJS API
+const api = AnkiDroidJS.init({
+    version: '0.0.3',
+    developer: 'template-designer@example.com'
+});
+</script>
+
+<div class="atd-study-action-bar">
+    <button onclick="api.ankiShowAnswer()">Show</button>
+</div>
+
+// WITH FALLBACK (if API not installed)
+<script>
+let api = null;
+if (typeof AnkiDroidJS !== 'undefined') {
+    api = AnkiDroidJS.init({
+        version: '0.0.3',
+        developer: 'template-designer@example.com'
+    });
+}
+
 function showAnswer() {
-    if (typeof ankiapi !== 'undefined') {
-        ankiapi.showAnswer(); // Use AnkiJSApi if available
+    if (api) {
+        api.ankiShowAnswer();
     } else {
-        // Fallback implementation
+        // Fallback: toggle answer visibility
         document.getElementById('answer').style.display = 'block';
     }
 }
 </script>
+
+<div class="atd-study-action-bar">
+    <button onclick="showAnswer()">Show</button>
+</div>
 ```
 
 ### Anki Field Placeholders
@@ -286,10 +375,16 @@ function showAnswer() {
 ### JavaScript
 
 1. **Use ES5 syntax** for maximum compatibility
-2. **Avoid async/await** (not supported in older Anki versions)
-3. **Check for AnkiJSApi availability** before calling methods
-4. **Provide fallbacks** for when AnkiJSApi is not installed
+2. **Use Promises** (AnkiDroidJS API is Promise-based, supported in Anki 2.1.50+)
+3. **Check for AnkiDroidJS availability** before calling methods:
+   ```javascript
+   if (typeof AnkiDroidJS !== 'undefined') {
+       const api = AnkiDroidJS.init({version: '0.0.3', developer: 'email'});
+   }
+   ```
+4. **Provide fallbacks** for when API is not installed
 5. **Minimize JavaScript complexity** (debugging in Anki is difficult)
+6. **Always await API calls**: All AnkiDroidJS methods return Promises
 
 ### CSS
 
@@ -320,11 +415,12 @@ function showAnswer() {
 ### Validation Checklist
 
 - [ ] **No external resources** (all CSS/JS inline or in media folder)
-- [ ] **ES5 JavaScript** (no arrow functions, const/let, async/await)
+- [ ] **ES5 JavaScript** (arrow functions OK for Anki 2.1.50+, Promises supported)
 - [ ] **Anki field syntax** valid (no unmatched `{{` or `}}`)
 - [ ] **CSS compatibility** (tested on oldest target platform)
 - [ ] **Media references** point to files in media folder
-- [ ] **AnkiJSApi fallbacks** provided where used
+- [ ] **AnkiDroidJS API fallbacks** provided where used
+- [ ] **AnkiDroidJS initialization** included if API methods used
 
 ### Platform Testing
 
@@ -379,14 +475,29 @@ def validate_anki_template(html_content: str) -> List[str]:
 
 **Recommendation**: Target **Anki 2.1.50+** for modern features, provide fallbacks for older versions.
 
-### AnkiJSApi Version
+### AnkiDroidJS API Version Requirements
 
-⚠️ **UNKNOWN** - Version compatibility needs verification against actual addon.
+✅ **VERIFIED** against source code
 
-**TODO**:
-- Check minimum Anki version required by AnkiJSApi
-- Verify which methods are available in each version
-- Document breaking changes between versions
+**Current Version**: AnkiDroid JS API for Desktop v0.0.4  
+**License**: MIT  
+**Repository**: https://github.com/infinyte7/AnkiDroid-API-Desktop
+
+**Minimum Anki Version**: 2.1.50+
+- Uses internal methods `_showAnswer()` and `_answerCard()`
+- Compatible with all scheduler versions (V1, V2, V3)
+
+**API Contract Version**: 0.0.3 (required in `AnkiDroidJS.init()`)
+- Version mismatch shows console warning but continues
+- Forward compatible (newer API versions accepted)
+
+**Installation**: Requires AnkiDroid JS API Desktop addon installed in Anki
+
+**Compatibility Notes**:
+- ✅ Desktop: Full support (Windows, Mac, Linux)
+- ⚠️ AnkiMobile: May require different addon version
+- ⚠️ AnkiDroid: Originally designed for Android, desktop port available
+- ❌ Speech-to-text: Not supported on desktop (stubs only)
 
 ---
 
@@ -496,18 +607,28 @@ document.getElementById('my-btn').addEventListener('click', function() {
 - Use exact file name (case-sensitive)
 - Check file extension is correct
 
-### Issue: AnkiJSApi methods not found
+### Issue: AnkiDroidJS API methods not found
 
 **Causes**:
-- AnkiJSApi addon not installed
-- Addon disabled
-- Incorrect method name
+- AnkiDroid JS API Desktop addon not installed
+- Addon disabled or incompatible version
+- Incorrect method name (old `ankiapi.*` namespace)
+- Missing initialization (no `AnkiDroidJS.init()` call)
+- Missing developer contract in initialization
 
 **Solutions**:
-- Install AnkiJSApi addon
+- Install **AnkiDroid JS API for Desktop v0.0.4** addon
 - Enable addon in Anki preferences
-- Verify method name against actual API
-- Provide fallback implementation
+- Update method names from old `ankiapi.*` to new `api.*` pattern
+- Add initialization code:
+  ```javascript
+  const api = AnkiDroidJS.init({
+      version: '0.0.3',
+      developer: 'your-email@example.com'
+  });
+  ```
+- Verify method name against [ANKIJSAPI-VERIFICATION.md](ANKIJSAPI-VERIFICATION.md)
+- Provide fallback implementation for when addon not installed
 
 ---
 

@@ -375,9 +375,11 @@ function createMockBridge() {
         getAnkiBehaviors: function() {
             // Return mock behaviors
             return JSON.stringify([
-                { name: 'showAnswer', category: 'Card' },
-                { name: 'flipCard', category: 'Card' },
-                { name: 'playAudio', category: 'Audio' }
+                { name: 'ankiShowAnswer', category: 'Card' },
+                { name: 'ankiMarkCard', category: 'Card' },
+                { name: 'ankiSuspendCard', category: 'Card' },
+                { name: 'ankiAnswerEase3', category: 'Rating' },
+                { name: 'ankiTtsSpeak', category: 'TTS' }
             ]);
         }
     };
