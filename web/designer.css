@@ -3731,3 +3731,310 @@ body[data-theme="dark"] .model-change-notification {
 body[data-theme="dark"] .scope-code {
     background-color: var(--bg-tertiary);
 }
+
+/* ========== Performance Analytics Styles ========== */
+
+/* Performance Dashboard */
+.performance-dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+
+.perf-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.perf-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.perf-score {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.perf-score-value {
+    font-size: 32px;
+    font-weight: bold;
+    color: var(--accent-color);
+}
+
+.perf-score-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+/* Performance Metrics Grid */
+.perf-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+}
+
+.perf-metric {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    background-color: var(--panel-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.perf-metric:hover {
+    border-color: var(--accent-color);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.metric-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.metric-value {
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--text-primary);
+    font-family: 'Monaco', 'Menlo', monospace;
+}
+
+.metric-unit {
+    font-size: 11px;
+    color: var(--text-tertiary);
+}
+
+/* Performance Warnings */
+.perf-warnings {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.warnings-header {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.perf-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px 12px;
+    background-color: var(--bg-secondary);
+    border-left: 4px solid var(--warning-color);
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.perf-warning.error {
+    border-left-color: var(--error-color);
+    background-color: rgba(198, 40, 40, 0.05);
+}
+
+.perf-warning.info {
+    border-left-color: var(--accent-color);
+    background-color: rgba(25, 118, 210, 0.05);
+}
+
+.warning-icon {
+    font-size: 16px;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.warning-content {
+    flex: 1;
+}
+
+.warning-message {
+    color: var(--text-primary);
+}
+
+.warning-severity {
+    display: inline-block;
+    padding: 2px 6px;
+    background-color: var(--warning-color);
+    color: white;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    margin-left: 6px;
+    opacity: 0.8;
+}
+
+/* Performance Recommendations */
+.perf-recommendations {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.recommendations-header {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.perf-recommendation {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px 12px;
+    background-color: var(--bg-secondary);
+    border-left: 4px solid var(--success-color);
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.rec-icon {
+    font-size: 16px;
+    font-weight: bold;
+    flex-shrink: 0;
+    color: var(--success-color);
+}
+
+.rec-content {
+    flex: 1;
+}
+
+.rec-suggestion {
+    color: var(--text-primary);
+}
+
+.rec-impact {
+    display: inline-block;
+    padding: 2px 6px;
+    background-color: var(--accent-color);
+    color: white;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    margin-left: 6px;
+}
+
+/* Performance Trend */
+.perf-trend {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background-color: var(--bg-secondary);
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.trend-icon {
+    font-size: 18px;
+}
+
+.trend-icon.improving {
+    color: var(--success-color);
+}
+
+.trend-icon.degrading {
+    color: var(--error-color);
+}
+
+.trend-icon.stable {
+    color: var(--text-tertiary);
+}
+
+.trend-label {
+    color: var(--text-secondary);
+}
+
+.trend-value {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-left: auto;
+}
+
+/* No Warnings/Recommendations State */
+.empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background-color: var(--bg-secondary);
+    border: 1px dashed var(--border-color);
+    border-radius: 6px;
+    color: var(--text-tertiary);
+    font-size: 12px;
+    text-align: center;
+}
+
+.empty-state-icon {
+    font-size: 24px;
+    margin-right: 8px;
+}
+
+/* High Contrast Mode */
+body[data-theme="high-contrast"] .performance-dashboard {
+    border-width: 2px;
+}
+
+body[data-theme="high-contrast"] .perf-metric {
+    border-width: 2px;
+}
+
+body[data-theme="high-contrast"] .perf-metric:hover {
+    border-width: 2px;
+}
+
+body[data-theme="high-contrast"] .perf-warning {
+    border-left-width: 6px;
+}
+
+body[data-theme="high-contrast"] .perf-recommendation {
+    border-left-width: 6px;
+}
+
+/* Accessibility: Focus Indicators */
+.perf-metric:focus-within {
+    outline: var(--focus-outline);
+    outline-offset: 2px;
+}
+
+.perf-warning:focus-within,
+.perf-recommendation:focus-within {
+    outline: var(--focus-outline);
+    outline-offset: 2px;
+}
+
+/* Dark Mode Adjustments */
+body[data-theme="dark"] .perf-metrics {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+}
+
+body[data-theme="dark"] .perf-warning {
+    background-color: rgba(239, 83, 80, 0.08);
+}
+
+body[data-theme="dark"] .perf-warning.info {
+    background-color: rgba(144, 202, 249, 0.08);
+}
+
+body[data-theme="dark"] .perf-recommendation {
+    background-color: rgba(102, 187, 106, 0.08);
+}
