@@ -266,6 +266,15 @@ function registerCustomizations(editor) {
             registerAnkiBlocks(editor).then(() => {
                 console.log('[Designer] Blocks registered');
                 showDebug('Step 14: Blocks registered (async)');
+                
+                // Initialize component search system after blocks are loaded
+                if (typeof initializeComponentSearch === 'function') {
+                    console.log('[Designer] Initializing component search...');
+                    initializeComponentSearch(editor);
+                    showDebug('Step 14.1: Component search initialized');
+                } else {
+                    console.warn('[Designer] initializeComponentSearch function not available');
+                }
             }).catch(error => {
                 console.error('[Designer] Error registering blocks:', error);
                 showDebug('ERROR: Blocks registration failed');
