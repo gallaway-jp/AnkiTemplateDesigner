@@ -323,6 +323,15 @@ function registerCustomizations(editor) {
             console.warn('[Designer] initializeBackupManager function not available');
         }
         
+        // Initialize data loss prevention system
+        if (typeof initializeDataLossPrevention === 'function') {
+            console.log('[Designer] Initializing data loss prevention...');
+            initializeDataLossPrevention(editor);
+            showDebug('Step 19.3: Data loss prevention initialized');
+        } else {
+            console.warn('[Designer] initializeDataLossPrevention function not available');
+        }
+        
         // Initialize undo/redo manager
         initializeUndoRedo();
         showDebug('Step 20: Undo/Redo manager initialized');
