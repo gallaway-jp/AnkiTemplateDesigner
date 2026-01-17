@@ -16,6 +16,11 @@ An Anki add-on for building and previewing card templates for both Anki Desktop 
 - ✏️ Visual property editor (fonts, colors, spacing, alignment)
 - 🔀 Import and edit existing templates
 - 💾 Save directly to Anki
+- ✨ **Phase 3 New Features:**
+  - 📋 Template version history with one-click recovery
+  - 💡 Context-sensitive inline tooltips on all controls
+  - 🎯 Visual feedback for drag-and-drop operations
+  - ⚙️ Fully customizable interface layout and toolbar
 
 ## Requirements
 
@@ -96,6 +101,8 @@ For detailed documentation structure, see [docs/README.md](docs/README.md).
 For complete development setup and guidelines, see:
 - [Development Guide](docs/developer/DEVELOPMENT.md)
 - [Testing Guide](docs/developer/TESTING_GUIDE.md)
+- [Phase 3 Feature Overview](docs/PHASE3-COMPLETION.md)
+- [Phase 3 User Guide](docs/PHASE3-USER-GUIDE.md)
 
 ### Quick Start
 

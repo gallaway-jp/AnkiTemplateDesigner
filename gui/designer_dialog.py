@@ -1,6 +1,9 @@
 """Main designer dialog with QWebEngineView hosting GrapeJS."""
 
 from pathlib import Path
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Optional
 
 try:
     from aqt.qt import (
@@ -23,6 +26,39 @@ except ImportError:
 from .webview_bridge import WebViewBridge
 from ..services.downloader import GrapeJSDownloader
 from ..core.converter import AnkiTemplateParser, AnkiTemplateGenerator
+
+
+@dataclass
+class SaveState:
+    """Tracks the state of save operations."""
+    is_saving: bool = False
+    last_save_time: Optional[datetime] = None
+    save_success: bool = False
+    save_error: Optional[str] = None
+    last_saved_data: dict = field(default_factory=dict)
+    
+    def mark_saving(self):
+        """Mark that a save operation has started."""
+        self.is_saving = True
+        self.save_error = None
+        self.save_success = False
+    
+    def mark_success(self):
+        """Mark that a save operation completed successfully."""
+        self.is_saving = False
+        self.save_success = True
+        self.save_error = None
+        self.last_save_time = datetime.now()
+    
+    def mark_error(self, error_message: str):
+        """Mark that a save operation failed.
+        
+        Args:
+            error_message: Description of the error
+        """
+        self.is_saving = False
+        self.save_success = False
+        self.save_error = error_message
 
 
 class TemplateDesignerDialog(QDialog):
@@ -50,18 +86,48 @@ class TemplateDesignerDialog(QDialog):
         
         # Set size constraints but allow resizing
         self.setMinimumSize(QSize(self.MIN_WIDTH, self.MIN_HEIGHT))
-        self.resize(QSize(1400, 900))  # Default size
+        # Calculate and set optimal size based on available screen
+        self._set_optimal_size()
         
         self.parser = AnkiTemplateParser()
         self.generator = AnkiTemplateGenerator()
         self.bridge = WebViewBridge(self)
         self.webview: QWebEngineView = None
         self._theme_mode = self._detect_theme()
+        self.save_state = SaveState()  # Track save operation state
         
         self._setup_ui()
         self._setup_bridge()
         self._ensure_assets()
         self._load_editor()
+    
+    def _set_optimal_size(self):
+        """Calculate and set optimal dialog size based on available screen."""
+        screen = self.screen()
+        available_geom = screen.availableGeometry()
+        
+        # Use 85-90% of available space
+        # Minimum 1200x800, Maximum reasonable size
+        width = max(
+            self.MIN_WIDTH,
+            min(1400, int(available_geom.width() * 0.90))
+        )
+        height = max(
+            self.MIN_HEIGHT,
+            min(900, int(available_geom.height() * 0.85))
+        )
+        
+        self.resize(QSize(width, height))
+        
+        # Center dialog on screen
+        center_point = available_geom.center()
+        self.move(
+            center_point.x() - width // 2,
+            center_point.y() - height // 2
+        )
+        
+        print(f"[Designer] Dialog sized to {width}x{height}")
+        print(f"[Designer] Screen: {available_geom.width()}x{available_geom.height()}")
     
     def _detect_theme(self):
         """Detect if Anki is using light or dark theme.
@@ -229,22 +295,107 @@ class TemplateDesignerDialog(QDialog):
         )
     
     def _handle_save(self, grapejs_data: dict):
-        """Handle save callback from JS.
+        """Handle save callback from JS with user feedback.
         
         Args:
             grapejs_data: GrapeJS project data
         """
-        template = self.generator.generate(grapejs_data)
+        try:
+            # Mark save as in progress
+            self.save_state.mark_saving()
+            self._notify_save_start()
+            
+            # Validate template data
+            if not grapejs_data:
+                raise ValueError("No template data to save")
+            
+            if 'html' not in grapejs_data:
+                raise ValueError("Template missing HTML content")
+            
+            # Generate template
+            template = self.generator.generate(grapejs_data)
+            
+            # Store the successfully saved data
+            self.save_state.last_saved_data = grapejs_data.copy()
+            
+            print(f"[Save] Saving template: {template.name}")
+            print(f"[Save]   Cards: {len(template.cards)}")
+            print(f"[Save]   Fields: {template.fields}")
+            
+            # Mark save as successful
+            self.save_state.mark_success()
+            
+            if ANKI_AVAILABLE:
+                from aqt.utils import showInfo
+                showInfo(f"Template '{template.name}' saved successfully!")
+            
+            # Notify JS that save was successful
+            self._notify_save_success(template.name)
+            
+        except ValueError as e:
+            # Validation errors
+            error_msg = f"Template validation failed: {str(e)}"
+            self.save_state.mark_error(error_msg)
+            print(f"[Save] Error: {error_msg}")
+            self._notify_save_error(error_msg)
+            
+            if ANKI_AVAILABLE:
+                from aqt.utils import showWarning
+                showWarning(error_msg)
         
-        # Placeholder for saving to Anki
-        print(f"Saving template: {template.name}")
-        print(f"  Cards: {len(template.cards)}")
-        print(f"  Fields: {template.fields}")
+        except Exception as e:
+            # Unexpected errors
+            error_msg = f"Failed to save template: {str(e)}"
+            self.save_state.mark_error(error_msg)
+            print(f"[Save] Error: {error_msg}")
+            self._notify_save_error(error_msg)
+            
+            if ANKI_AVAILABLE:
+                from aqt.utils import showWarning
+                showWarning(error_msg)
+    
+    def _notify_save_start(self):
+        """Notify JS that save operation is starting."""
+        try:
+            self.bridge.execute_javascript(
+                "if (window.notifySaveStart) window.notifySaveStart();"
+            )
+        except Exception as e:
+            print(f"[Save] Failed to notify save start: {e}")
+    
+    def _notify_save_success(self, template_name: str):
+        """Notify JS that save operation succeeded.
         
-        if ANKI_AVAILABLE:
-            # Real implementation would save to note type
-            from aqt.utils import showInfo
-            showInfo(f"Template '{template.name}' saved successfully!")
+        Args:
+            template_name: Name of saved template
+        """
+        try:
+            js_code = f"""
+            if (window.notifySaveSuccess) {{
+                window.notifySaveSuccess('{template_name}');
+            }}
+            """
+            self.bridge.execute_javascript(js_code)
+        except Exception as e:
+            print(f"[Save] Failed to notify save success: {e}")
+    
+    def _notify_save_error(self, error_message: str):
+        """Notify JS that save operation failed.
+        
+        Args:
+            error_message: Description of the error
+        """
+        try:
+            # Escape quotes in error message
+            safe_error = error_message.replace('"', '\\"').replace("'", "\\'")
+            js_code = f"""
+            if (window.notifySaveError) {{
+                window.notifySaveError('{safe_error}');
+            }}
+            """
+            self.bridge.execute_javascript(js_code)
+        except Exception as e:
+            print(f"[Save] Failed to notify save error: {e}")
     
     def _handle_preview(self, grapejs_data: dict):
         """Handle preview callback from JS.
