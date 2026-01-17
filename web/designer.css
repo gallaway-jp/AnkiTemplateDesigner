@@ -3023,3 +3023,331 @@ body[data-theme="high-contrast"] .dlp-status {
 body[data-theme="high-contrast"] .dlp-status-details {
     border-width: 2px;
 }
+/* ========== PROJECT BROWSER STYLES (Issue #41) ========== */
+
+.project-browser {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    padding: 1rem;
+    gap: 1rem;
+}
+
+.browser-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--bg-tertiary);
+}
+
+.browser-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.btn-create-project {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.btn-create-project:hover {
+    background: var(--accent-hover, #0066cc);
+}
+
+.btn-create-project.secondary {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.btn-create-project.secondary:hover {
+    background: var(--bg-secondary);
+}
+
+.btn-create-project .icon {
+    font-size: 1.1em;
+}
+
+.browser-tabs {
+    display: flex;
+    gap: 0.5rem;
+    border-bottom: 1px solid var(--bg-tertiary);
+}
+
+.tab-btn {
+    padding: 0.5rem 1rem;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-secondary);
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+}
+
+.tab-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-secondary);
+}
+
+.tab-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+}
+
+.tab-btn .icon {
+    font-size: 1em;
+}
+
+.browser-search {
+    position: relative;
+}
+
+.search-input {
+    width: 100%;
+    padding: 0.75rem;
+    padding-left: 2rem;
+    border: 1px solid var(--bg-tertiary);
+    border-radius: 4px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    transition: border-color 0.2s;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: var(--bg-primary);
+}
+
+.search-icon {
+    position: absolute;
+    left: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    font-size: 1.1em;
+}
+
+.project-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.project-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--bg-tertiary);
+    border-radius: 6px;
+    transition: all 0.2s;
+    align-items: center;
+    cursor: pointer;
+}
+
+.project-item:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--accent);
+}
+
+.project-item.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+
+.project-item.active .project-name,
+.project-item.active .project-meta {
+    color: white;
+}
+
+.project-content {
+    min-width: 0;
+}
+
+.project-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.project-name {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+    word-break: break-word;
+}
+
+.btn-favorite {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2em;
+    padding: 0.25rem;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+}
+
+.btn-favorite:hover {
+    transform: scale(1.2);
+}
+
+.project-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.meta-item {
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+}
+
+.meta-label {
+    font-weight: 500;
+}
+
+.meta-value {
+    color: var(--text-secondary);
+}
+
+.project-actions {
+    display: flex;
+    gap: 0.25rem;
+    flex-shrink: 0;
+}
+
+.btn-action {
+    background: none;
+    border: 1px solid var(--bg-tertiary);
+    border-radius: 4px;
+    padding: 0.4rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: var(--text-primary);
+}
+
+.btn-action:hover {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    flex: 1;
+    padding: 2rem;
+}
+
+.empty-icon {
+    font-size: 3rem;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.browser-stats {
+    display: flex;
+    gap: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--bg-tertiary);
+}
+
+.stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 1;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--accent);
+}
+
+/* Dark theme adjustments */
+body[data-theme="dark"] .project-item {
+    background: var(--bg-secondary);
+    border-color: var(--bg-tertiary);
+}
+
+body[data-theme="dark"] .project-item:hover {
+    background: var(--bg-tertiary);
+}
+
+body[data-theme="dark"] .search-input {
+    background: var(--bg-secondary);
+    border-color: var(--bg-tertiary);
+}
+
+body[data-theme="dark"] .search-input:focus {
+    background: var(--bg-primary);
+}
+
+/* High contrast theme */
+body[data-theme="high-contrast"] .project-browser {
+    border: 2px solid var(--text-primary);
+}
+
+body[data-theme="high-contrast"] .browser-tabs {
+    border-bottom-width: 2px;
+}
+
+body[data-theme="high-contrast"] .tab-btn.active {
+    border-bottom-width: 3px;
+}
+
+body[data-theme="high-contrast"] .project-item {
+    border-width: 2px;
+}
+
+body[data-theme="high-contrast"] .btn-action {
+    border-width: 2px;
+}
+
+body[data-theme="high-contrast"] .search-input {
+    border-width: 2px;
+}
