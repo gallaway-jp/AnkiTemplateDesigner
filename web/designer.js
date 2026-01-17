@@ -260,12 +260,17 @@ function registerCustomizations(editor) {
             showDebug('WARNING: registerAnkiTraits not available');
         }
         
-        // Register custom blocks
+        // Register custom blocks (async)
         if (typeof registerAnkiBlocks === 'function') {
             console.log('[Designer] Registering blocks...');
-            registerAnkiBlocks(editor);
-            console.log('[Designer] Blocks registered');
-            showDebug('Step 14: Blocks registered');
+            registerAnkiBlocks(editor).then(() => {
+                console.log('[Designer] Blocks registered');
+                showDebug('Step 14: Blocks registered (async)');
+            }).catch(error => {
+                console.error('[Designer] Error registering blocks:', error);
+                showDebug('ERROR: Blocks registration failed');
+            });
+            showDebug('Step 14: Blocks registration started (async)');
         } else {
             console.warn('[Designer] registerAnkiBlocks function not available');
             showDebug('WARNING: registerAnkiBlocks not available');
