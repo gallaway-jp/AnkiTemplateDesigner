@@ -314,6 +314,15 @@ function registerCustomizations(editor) {
             console.warn('[Designer] initializeTemplateValidation function not available');
         }
         
+        // Initialize backup manager system
+        if (typeof initializeBackupManager === 'function') {
+            console.log('[Designer] Initializing backup manager...');
+            initializeBackupManager(editor);
+            showDebug('Step 19.2: Backup manager initialized');
+        } else {
+            console.warn('[Designer] initializeBackupManager function not available');
+        }
+        
         // Initialize undo/redo manager
         initializeUndoRedo();
         showDebug('Step 20: Undo/Redo manager initialized');
