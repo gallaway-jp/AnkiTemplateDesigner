@@ -305,6 +305,15 @@ function registerCustomizations(editor) {
         initializeComponentHelp();
         showDebug('Step 19: Component help system initialized');
         
+        // Initialize template validation system
+        if (typeof initializeTemplateValidation === 'function') {
+            console.log('[Designer] Initializing template validation...');
+            initializeTemplateValidation(editor);
+            showDebug('Step 19.1: Template validation initialized');
+        } else {
+            console.warn('[Designer] initializeTemplateValidation function not available');
+        }
+        
         // Initialize undo/redo manager
         initializeUndoRedo();
         showDebug('Step 20: Undo/Redo manager initialized');
