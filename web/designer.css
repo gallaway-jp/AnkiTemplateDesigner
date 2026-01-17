@@ -3351,3 +3351,383 @@ body[data-theme="high-contrast"] .btn-action {
 body[data-theme="high-contrast"] .search-input {
     border-width: 2px;
 }
+
+/* ========== Anki Integration Styles ========== */
+
+/* Model Information Panel */
+.anki-model-info {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+
+.model-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: space-between;
+}
+
+.model-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.model-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background-color: var(--success-color);
+    color: white;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.model-status.disconnected {
+    background-color: var(--error-color);
+}
+
+.model-status.warning {
+    background-color: var(--warning-color);
+}
+
+/* Fields Panel */
+.anki-fields-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.fields-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.fields-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.field-count {
+    background-color: var(--accent-color);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* Individual Field */
+.anki-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    background-color: var(--panel-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.anki-field:hover {
+    border-color: var(--accent-color);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.anki-field:focus-within {
+    outline: var(--focus-outline);
+}
+
+.field-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.field-meta {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.field-type {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    background-color: var(--bg-tertiary);
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.field-sticky {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    background-color: var(--warning-color);
+    color: white;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.field-rtl {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    background-color: var(--accent-color);
+    color: white;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+/* Field Validation */
+.field-validation {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background-color: var(--bg-secondary);
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.validation-icon {
+    font-size: 14px;
+}
+
+.validation-ok {
+    color: var(--success-color);
+}
+
+.validation-error {
+    color: var(--error-color);
+}
+
+.validation-warning {
+    color: var(--warning-color);
+}
+
+/* Template Validation */
+.template-validation {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+}
+
+.validation-result {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.validation-message {
+    flex: 1;
+    color: var(--text-secondary);
+}
+
+.validation-errors {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.error-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    background-color: rgba(198, 40, 40, 0.1);
+    border-radius: 4px;
+    color: var(--error-color);
+    font-size: 12px;
+}
+
+.error-item::before {
+    content: '⚠';
+    font-weight: bold;
+}
+
+/* Conditional Field Indicator */
+.conditional-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.conditional-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background-color: var(--accent-color);
+    color: white;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    width: fit-content;
+}
+
+.conditional-badge::before {
+    content: '◆';
+}
+
+/* Model Change Notification */
+.model-change-notification {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    background-color: rgba(25, 118, 210, 0.1);
+    border: 1px solid var(--accent-color);
+    border-radius: 6px;
+    margin-bottom: 16px;
+}
+
+.notification-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.notification-header::before {
+    content: 'ℹ';
+    font-size: 16px;
+    color: var(--accent-color);
+}
+
+.notification-content {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.change-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.change-added::before {
+    content: '+';
+    color: var(--success-color);
+    font-weight: bold;
+}
+
+.change-removed::before {
+    content: '−';
+    color: var(--error-color);
+    font-weight: bold;
+}
+
+/* Field CSS Scope */
+.field-css-scope {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 11px;
+}
+
+.scope-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.scope-code {
+    padding: 8px;
+    background-color: var(--panel-bg);
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    overflow-x: auto;
+}
+
+/* High Contrast Mode Enhancements */
+body[data-theme="high-contrast"] .anki-model-info {
+    border-width: 2px;
+}
+
+body[data-theme="high-contrast"] .anki-field {
+    border-width: 2px;
+}
+
+body[data-theme="high-contrast"] .anki-field:hover {
+    border-width: 2px;
+}
+
+body[data-theme="high-contrast"] .template-validation {
+    border-width: 2px;
+}
+
+body[data-theme="high-contrast"] .model-change-notification {
+    border-width: 2px;
+}
+
+body[data-theme="high-contrast"] .field-css-scope {
+    border-width: 2px;
+}
+
+/* Accessibility: Focus Indicators */
+.anki-field:focus-within {
+    outline: var(--focus-outline);
+    outline-offset: 2px;
+}
+
+.field-type:focus,
+.validation-result:focus {
+    outline: var(--focus-outline);
+    outline-offset: 2px;
+}
+
+/* Dark Mode Adjustments */
+body[data-theme="dark"] .anki-model-info {
+    background-color: var(--bg-secondary);
+}
+
+body[data-theme="dark"] .field-type {
+    background-color: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+body[data-theme="dark"] .error-item {
+    background-color: rgba(239, 83, 80, 0.15);
+}
+
+body[data-theme="dark"] .model-change-notification {
+    background-color: rgba(144, 202, 249, 0.1);
+    border-color: var(--accent-color);
+}
+
+body[data-theme="dark"] .scope-code {
+    background-color: var(--bg-tertiary);
+}
