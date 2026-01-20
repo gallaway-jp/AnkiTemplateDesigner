@@ -21,7 +21,6 @@ from datetime import datetime, timedelta
 from collections import defaultdict, deque
 from statistics import mean, stdev, quantiles
 import tempfile
-import pickle
 
 
 # ============================================================================
@@ -257,7 +256,7 @@ class CachingSystem:
         """Set value in memory cache"""
         with self.lock:
             # Calculate size
-            size = len(pickle.dumps(value))
+            size = len(json.dumps(value, default=str).encode('utf-8'))
             
             # Check if it exceeds max memory
             if self.memory_size + size > self.max_memory_bytes:
@@ -312,7 +311,7 @@ class CachingSystem:
                 if data[:2] == b'\x1f\x8b':  # gzip magic number
                     data = gzip.decompress(data)
                 
-                entry_data = pickle.loads(data)
+                entry_data = json.loads(data.decode('utf-8'))
                 
                 # Check expiration
                 if time.time() - entry_data['timestamp'] > entry_data['ttl_seconds']:
@@ -337,7 +336,7 @@ class CachingSystem:
                 'compressed': compress
             }
             
-            data = pickle.dumps(entry_data)
+            data = json.dumps(entry_data, default=str).encode('utf-8')
             
             if compress:
                 data = gzip.compress(data)
@@ -396,7 +395,7 @@ class CachingSystem:
             self.disk_cache_set(key, value, ttl_seconds)
         else:  # AUTO
             # Auto-select based on size
-            size = len(pickle.dumps(value))
+            size = len(json.dumps(value, default=str).encode('utf-8'))
             if self.memory_size + size <= self.max_memory_bytes:
                 self.memory_cache_set(key, value, ttl_seconds)
             else:
@@ -499,11 +498,11 @@ class CachingSystem:
 
     def compress_value(self, value: Any) -> bytes:
         """Compress value"""
-        return gzip.compress(pickle.dumps(value))
+        return gzip.compress(json.dumps(value, default=str).encode('utf-8'))
 
     def decompress_value(self, compressed: bytes) -> Any:
         """Decompress value"""
-        return pickle.loads(gzip.decompress(compressed))
+        return json.loads(gzip.decompress(compressed).decode('utf-8'))
 
     def get_compression_ratio(self) -> float:
         """Get average compression ratio"""
