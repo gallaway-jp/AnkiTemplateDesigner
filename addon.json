@@ -1,0 +1,25 @@
+{
+  "name": "Anki Template Designer",
+  "package": "anki_template_designer",
+  "mod": "template_designer",
+  "min_point_version": 45,
+  "max_point_version": 0,
+  "human_version": "1.0.0",
+  "homepage": "https://github.com/yourusername/AnkiTemplateDesigner",
+  "conflicts": [],
+  "depends_on": [],
+  "branch_index": 0,
+  "update_schedule": 7,
+  "tags": [
+    "templates",
+    "editor",
+    "visual",
+    "designer",
+    "craft"
+  ],
+  "type": "addon",
+  "description": "Professional visual template designer for Anki with drag-and-drop interface, code editor, preview, and template management. Completely offline, no setup required.",
+  "reviews": "",
+  "changelog": "1.0.0: Initial release. Full-featured visual template designer with Craft.js editor, code highlighting, validation, and management tools.",
+  "icon": "https://raw.githubusercontent.com/yourusername/AnkiTemplateDesigner/main/icon.png"
+}

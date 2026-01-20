@@ -1,0 +1,116 @@
+/* Validation Panel Styles */
+
+.validation-header-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.validation-export-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background-color: transparent;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #333;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.validation-export-btn:hover {
+    background-color: #f5f5f5;
+    border-color: #999;
+    color: #000;
+}
+
+.validation-export-btn:active {
+    background-color: #e8e8e8;
+}
+
+.validation-export-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* Export Toast Notification */
+.validation-export-toast {
+    position: fixed;
+    bottom: -50px;
+    right: 20px;
+    background-color: #4caf50;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 4px;
+    font-size: 14px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    z-index: 10000;
+    transition: bottom 0.3s ease;
+    animation: slideUp 0.3s ease forwards;
+}
+
+@keyframes slideUp {
+    from {
+        bottom: -50px;
+        opacity: 0;
+    }
+    to {
+        bottom: 20px;
+        opacity: 1;
+    }
+}
+
+.validation-export-toast.show {
+    bottom: 20px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .validation-export-toast {
+        right: 10px;
+        left: 10px;
+        width: auto;
+    }
+    
+    .validation-header-actions {
+        gap: 6px;
+    }
+    
+    .validation-export-btn {
+        width: 28px;
+        height: 28px;
+    }
+}
+
+/* Technical Message - Subtle styling for advanced details */
+.validation-item-technical {
+    font-size: 12px;
+    color: #888;
+    font-family: 'Monaco', 'Courier New', monospace;
+    margin-top: 6px;
+    padding: 4px 8px;
+    background-color: rgba(0, 0, 0, 0.03);
+    border-left: 2px solid rgba(0, 0, 0, 0.1);
+    border-radius: 2px;
+    max-height: 40px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+    cursor: help;
+}
+
+.validation-item-technical:hover {
+    opacity: 1;
+    background-color: rgba(0, 0, 0, 0.06);
+}
+
+.validation-item-technical::before {
+    content: 'Technical: ';
+    color: #999;
+    font-weight: 500;
+}

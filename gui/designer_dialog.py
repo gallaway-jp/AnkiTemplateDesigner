@@ -96,10 +96,17 @@ class TemplateDesignerDialog(QDialog):
         self._theme_mode = self._detect_theme()
         self.save_state = SaveState()  # Track save operation state
         
+        print("[Template Designer] Starting initialization...")
         self._setup_ui()
+        print("[Template Designer] UI setup complete")
         self._setup_bridge()
-        self._ensure_assets()
+        print("[Template Designer] Bridge setup complete")
+        # IMPORTANT: Load editor FIRST, then check assets async
+        # This allows the webview to start rendering immediately
         self._load_editor()
+        print("[Template Designer] Editor load initiated")
+        # Check assets asynchronously to avoid blocking the UI
+        self._check_assets_async()
     
     def _set_optimal_size(self):
         """Calculate and set optimal dialog size based on available screen."""
@@ -203,9 +210,36 @@ class TemplateDesignerDialog(QDialog):
         downloader = GrapeJSDownloader()
         if not downloader.assets_exist():
             try:
+                print("[Template Designer] GrapeJS assets missing, downloading...")
                 downloader.download_assets()
+                print("[Template Designer] ✓ GrapeJS assets downloaded successfully")
             except RuntimeError as e:
+                print(f"[Template Designer] ✗ Failed to download GrapeJS assets: {e}")
                 self.bridge.showError(f"Failed to download GrapeJS assets: {e}")
+        else:
+            print("[Template Designer] ✓ GrapeJS assets found")
+    
+    def _check_assets_async(self):
+        """Check and download GrapeJS assets asynchronously to avoid blocking UI."""
+        import threading
+        
+        def check_assets():
+            try:
+                downloader = GrapeJSDownloader()
+                if not downloader.assets_exist():
+                    print("[Template Designer] GrapeJS assets missing, downloading in background...")
+                    downloader.download_assets()
+                    print("[Template Designer] ✓ GrapeJS assets downloaded successfully")
+                else:
+                    print("[Template Designer] ✓ GrapeJS assets found")
+            except Exception as e:
+                print(f"[Template Designer] Warning: Could not download assets: {e}")
+                # This is not critical - GrapeJS can be served from CDN
+        
+        # Run asset check in background thread
+        asset_thread = threading.Thread(target=check_assets, daemon=True)
+        asset_thread.start()
+        print("[Template Designer] Asset check started in background thread")
     
     def _load_editor(self):
         """Load the GrapeJS editor HTML."""
@@ -213,6 +247,7 @@ class TemplateDesignerDialog(QDialog):
         html_path = addon_path / "web" / "index.html"
         
         print(f"[Template Designer] Loading editor from: {html_path}")
+        print(f"[Template Designer] HTML exists: {html_path.exists()}")
         print(f"[Template Designer] Theme mode: {self._theme_mode}")
         
         if not html_path.exists():
@@ -228,6 +263,7 @@ class TemplateDesignerDialog(QDialog):
         
         # Connect load finished signal for debugging
         self.webview.loadFinished.connect(self._on_load_finished)
+        print(f"[Template Designer] Load started for: {url.toString()}")
     
     def _on_load_finished(self, ok):
         """Handle page load completion."""

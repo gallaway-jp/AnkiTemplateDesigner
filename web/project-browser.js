@@ -20,17 +20,32 @@ class ProjectBrowser {
         this.manager = manager;
         this.currentView = 'list';
         this.searchQuery = '';
+        this.lastProjectIds = new Set(); // Track projects for highlighting new ones
+        this.newlyAddedProjects = new Set(); // Projects added in current session
+        this.isRefreshingFromProjectChange = false; // Flag to prevent search loss
         
         this.render();
         this.attachEventListeners();
         
-        // Listen for project manager events
-        document.addEventListener('projects:projectCreated', () => this.refresh());
-        document.addEventListener('projects:projectDeleted', () => this.refresh());
-        document.addEventListener('projects:projectRenamed', () => this.refresh());
-        document.addEventListener('projects:favoriteToggled', () => this.refresh());
-        document.addEventListener('projects:projectSwitched', () => this.refresh());
-        document.addEventListener('projects:projectCloned', () => this.refresh());
+        // Listen for project manager events with special handling
+        document.addEventListener('projects:projectCreated', (e) => {
+            this.handleProjectCreated(e);
+        });
+        document.addEventListener('projects:projectDeleted', () => {
+            this.handleProjectDeleted();
+        });
+        document.addEventListener('projects:projectRenamed', () => {
+            this.handleProjectRenamed();
+        });
+        document.addEventListener('projects:favoriteToggled', () => {
+            this.refresh();
+        });
+        document.addEventListener('projects:projectSwitched', () => {
+            this.refresh();
+        });
+        document.addEventListener('projects:projectCloned', (e) => {
+            this.handleProjectCloned(e);
+        });
         
         console.log('[ProjectBrowser] Initialized');
     }
@@ -119,11 +134,21 @@ class ProjectBrowser {
             });
         });
         
-        // Search
+        // Search with debouncing to maintain query during list updates
         const searchInput = this.container.querySelector('.search-input');
+        let searchTimeout;
         searchInput.addEventListener('input', (e) => {
             this.searchQuery = e.target.value;
-            this.refresh();
+            
+            // Clear existing timeout
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+            
+            // Debounce the search refresh
+            searchTimeout = setTimeout(() => {
+                this.refresh();
+            }, 300);
         });
     }
     
@@ -168,8 +193,15 @@ class ProjectBrowser {
         
         emptyState.style.display = 'none';
         
-        listContainer.innerHTML = projects.map(project => `
-            <div class="project-item ${this.isCurrentProject(project.id) ? 'active' : ''}" 
+        // Track current projects for future comparisons
+        const currentIds = new Set(projects.map(p => p.id));
+        
+        listContainer.innerHTML = projects.map(project => {
+            const isNew = this.newlyAddedProjects.has(project.id);
+            const newBadgeHtml = isNew ? `<span class="new-project-badge" title="New project added">NEW</span>` : '';
+            
+            return `
+            <div class="project-item ${this.isCurrentProject(project.id) ? 'active' : ''} ${isNew ? 'newly-added' : ''}" 
                  data-project-id="${project.id}" 
                  role="listitem">
                 
@@ -177,7 +209,10 @@ class ProjectBrowser {
                 <div class="project-content" style="flex: 1;">
                     <!-- Name and favorite -->
                     <div class="project-header">
-                        <h3 class="project-name">${this.escapeHtml(project.name)}</h3>
+                        <h3 class="project-name">
+                            ${this.escapeHtml(project.name)}
+                            ${newBadgeHtml}
+                        </h3>
                         <button class="btn-favorite" 
                                 data-project-id="${project.id}"
                                 title="${project.isFavorite ? 'Remove from favorites' : 'Add to favorites'}"
@@ -232,10 +267,16 @@ class ProjectBrowser {
                     </button>
                 </div>
             </div>
-        `).join('');
+        `;}).join('');
         
         // Attach action listeners
         this.attachProjectActions();
+        
+        // Clear new project indicators after a delay
+        this.scheduleNewProjectIndicatorClear();
+        
+        // Update last seen project IDs
+        this.lastProjectIds = currentIds;
     }
     
     /**
@@ -307,8 +348,17 @@ class ProjectBrowser {
         const name = prompt('Project name:');
         if (name === null) return; // Cancel
         
-        this.manager.createProject(name.trim() || 'Untitled Project');
-        this.refresh();
+        const trimmedName = name.trim() || 'Untitled Project';
+        
+        try {
+            showToast(`Creating project "${trimmedName}"...`, 'info', 2000);
+            this.manager.createProject(trimmedName);
+            showToast(`✓ Project "${trimmedName}" created successfully!`, 'success', 3000);
+            this.refresh();
+        } catch (error) {
+            console.error('[ProjectBrowser] Error creating project:', error);
+            showToast(`✗ Failed to create project: ${error.message}`, 'error', 4000);
+        }
     }
     
     /**
@@ -316,11 +366,22 @@ class ProjectBrowser {
      * @param {string} projectId - Project ID
      */
     openProject(projectId) {
-        const success = this.manager.setCurrentProject(projectId);
-        if (success) {
-            console.log('[ProjectBrowser] Opened project:', projectId);
-            this.emit('projectOpened', { projectId });
-            this.refresh();
+        try {
+            const project = this.manager.getProject(projectId);
+            showToast(`Opening project "${project?.name}"...`, 'info', 2000);
+            
+            const success = this.manager.setCurrentProject(projectId);
+            if (success) {
+                console.log('[ProjectBrowser] Opened project:', projectId);
+                showToast(`✓ Opened "${project?.name}"`, 'success', 2000);
+                this.emit('projectOpened', { projectId });
+                this.refresh();
+            } else {
+                showToast(`✗ Failed to open project`, 'error', 3000);
+            }
+        } catch (error) {
+            console.error('[ProjectBrowser] Error opening project:', error);
+            showToast(`✗ Error: ${error.message}`, 'error', 4000);
         }
     }
     
@@ -330,13 +391,25 @@ class ProjectBrowser {
      */
     renameProject(projectId) {
         const project = this.manager.getProject(projectId);
-        if (!project) return;
+        if (!project) {
+            showToast('Project not found', 'error', 3000);
+            return;
+        }
         
         const newName = prompt('New project name:', project.name);
         if (newName === null) return; // Cancel
         
-        this.manager.renameProject(projectId, newName.trim() || project.name);
-        this.refresh();
+        const trimmedName = newName.trim() || project.name;
+        
+        try {
+            showToast(`Renaming project to "${trimmedName}"...`, 'info', 2000);
+            this.manager.renameProject(projectId, trimmedName);
+            showToast(`✓ Project renamed to "${trimmedName}"`, 'success', 3000);
+            this.refresh();
+        } catch (error) {
+            console.error('[ProjectBrowser] Error renaming project:', error);
+            showToast(`✗ Failed to rename: ${error.message}`, 'error', 4000);
+        }
     }
     
     /**
@@ -345,13 +418,25 @@ class ProjectBrowser {
      */
     cloneProject(projectId) {
         const project = this.manager.getProject(projectId);
-        if (!project) return;
+        if (!project) {
+            showToast('Project not found', 'error', 3000);
+            return;
+        }
         
         const newName = prompt('Clone name:', `${project.name} (Copy)`);
         if (newName === null) return; // Cancel
         
-        this.manager.cloneProject(projectId, newName.trim());
-        this.refresh();
+        const trimmedName = newName.trim();
+        
+        try {
+            showToast(`Creating clone "${trimmedName}"...`, 'info', 2000);
+            this.manager.cloneProject(projectId, trimmedName);
+            showToast(`✓ Project cloned to "${trimmedName}"`, 'success', 3000);
+            this.refresh();
+        } catch (error) {
+            console.error('[ProjectBrowser] Error cloning project:', error);
+            showToast(`✗ Failed to clone: ${error.message}`, 'error', 4000);
+        }
     }
     
     /**
@@ -359,35 +444,115 @@ class ProjectBrowser {
      * @param {string} projectId - Project ID
      */
     exportProject(projectId) {
-        const jsonData = this.manager.exportProject(projectId);
-        if (!jsonData) return;
-        
-        const blob = new Blob([jsonData], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${projectId}.json`;
-        a.click();
-        
-        URL.revokeObjectURL(url);
-        console.log('[ProjectBrowser] Exported project:', projectId);
+        try {
+            const project = this.manager.getProject(projectId);
+            showToast(`Exporting project "${project?.name}"...`, 'info', 2000);
+            
+            const jsonData = this.manager.exportProject(projectId);
+            if (!jsonData) {
+                showToast('Failed to export project', 'error', 3000);
+                return;
+            }
+            
+            const blob = new Blob([jsonData], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${project?.name || projectId}.json`;
+            a.click();
+            
+            URL.revokeObjectURL(url);
+            
+            console.log('[ProjectBrowser] Exported project:', projectId);
+            showToast(`✓ Project "${project?.name}" exported successfully!`, 'success', 3000);
+        } catch (error) {
+            console.error('[ProjectBrowser] Error exporting project:', error);
+            showToast(`✗ Export failed: ${error.message}`, 'error', 4000);
+        }
     }
     
     /**
-     * Delete a project
+     * Delete a project with confirmation
      * @param {string} projectId - Project ID
      */
     deleteProject(projectId) {
         const project = this.manager.getProject(projectId);
-        if (!project) return;
-        
-        if (!confirm(`Delete "${project.name}"? This cannot be undone.`)) {
+        if (!project) {
+            showToast('Project not found', 'error', 3000);
             return;
         }
         
-        this.manager.deleteProject(projectId);
+        // Show confirmation dialog
+        const confirmed = confirm(`🗑️ Delete "${project.name}"?\n\nThis action cannot be undone. All templates and data will be permanently deleted.`);
+        if (!confirmed) {
+            return; // User cancelled
+        }
+        
+        try {
+            showToast(`Deleting project "${project.name}"...`, 'warning', 2000);
+            this.manager.deleteProject(projectId);
+            showToast(`✓ Project "${project.name}" deleted`, 'success', 3000);
+            this.refresh();
+        } catch (error) {
+            console.error('[ProjectBrowser] Error deleting project:', error);
+            showToast(`✗ Failed to delete: ${error.message}`, 'error', 4000);
+        }
+    }
+    
+    /**
+     * Handle project creation event
+     * @param {CustomEvent} e - Event with project details
+     */
+    handleProjectCreated(e) {
+        const projectId = e.detail?.projectId;
+        if (projectId) {
+            this.newlyAddedProjects.add(projectId);
+        }
+        // Maintain search query and refresh
         this.refresh();
+    }
+    
+    /**
+     * Handle project deletion event
+     */
+    handleProjectDeleted() {
+        // Clear new project indicators if deleted project was new
+        this.newlyAddedProjects.clear();
+        this.refresh();
+    }
+    
+    /**
+     * Handle project rename event
+     */
+    handleProjectRenamed() {
+        // Keep search query, just refresh the display
+        this.refresh();
+    }
+    
+    /**
+     * Handle project clone event
+     * @param {CustomEvent} e - Event with cloned project details
+     */
+    handleProjectCloned(e) {
+        const projectId = e.detail?.projectId;
+        if (projectId) {
+            this.newlyAddedProjects.add(projectId);
+        }
+        // Maintain search query and refresh
+        this.refresh();
+    }
+    
+    /**
+     * Schedule clearing of new project indicators after delay
+     */
+    scheduleNewProjectIndicatorClear() {
+        // Clear after 5 seconds or when user interacts with list
+        setTimeout(() => {
+            this.newlyAddedProjects.clear();
+            // Re-render without "new" badges
+            this.renderProjectList();
+        }, 5000);
     }
     
     /**

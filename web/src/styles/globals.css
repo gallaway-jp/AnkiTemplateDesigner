@@ -1,0 +1,222 @@
+/**
+ * Global Styles
+ * Base styles for the entire application
+ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --color-bg-primary: #1e1e1e;
+  --color-bg-secondary: #2d2d2d;
+  --color-bg-tertiary: #3d3d3d;
+  
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #aaaaaa;
+  --color-text-tertiary: #7a7a7a;
+  
+  --color-accent: #4dabf7;
+  --color-accent-hover: #5bb8f9;
+  --color-accent-dark: #339af0;
+  
+  --color-error: #ff6b6b;
+  --color-warning: #fcc419;
+  --color-success: #51cf66;
+  
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-size-sm: 12px;
+  --font-size-base: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+  
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+  
+  --z-dropdown: 100;
+  --z-sticky: 500;
+  --z-fixed: 1000;
+  --z-modal: 2000;
+  --z-tooltip: 3000;
+}
+
+html {
+  font-size: 16px;
+  font-family: var(--font-family);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  line-height: 1.5;
+  overflow: hidden;
+}
+
+#root {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Loading Screen */
+.loading-screen {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-lg);
+  background: var(--color-bg-primary);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--color-bg-tertiary);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Error Screen */
+.error-screen {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  background: var(--color-bg-primary);
+  padding: var(--spacing-xl);
+  text-align: center;
+}
+
+.error-screen h1 {
+  color: var(--color-error);
+  font-size: var(--font-size-xl);
+}
+
+.error-screen p {
+  color: var(--color-text-secondary);
+  max-width: 500px;
+}
+
+.error-screen .hint {
+  font-size: var(--font-size-sm);
+  margin-top: var(--spacing-md);
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-bg-tertiary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-tertiary);
+}
+
+/* Buttons */
+button {
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-accent);
+  color: var(--color-text-primary);
+  transition: background-color 0.2s;
+}
+
+button:hover {
+  background: var(--color-accent-hover);
+}
+
+button:active {
+  background: var(--color-accent-dark);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Input Fields */
+input,
+textarea,
+select {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-bg-tertiary);
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-sm);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px rgba(77, 171, 247, 0.2);
+}
+
+/* Cards */
+.card {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-bg-tertiary);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-md);
+}
+
+/* Panels */
+.panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-secondary);
+  border-right: 1px solid var(--color-bg-tertiary);
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--color-bg-tertiary);
+  font-weight: 600;
+}
+
+.panel-content {
+  flex: 1;
+  overflow: auto;
+  padding: var(--spacing-md);
+}

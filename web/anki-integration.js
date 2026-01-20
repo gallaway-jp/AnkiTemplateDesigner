@@ -43,9 +43,15 @@ class AnkiIntegration {
    * Start real-time sync with Anki
    */
   startSync() {
+    // DISABLED: This tries to fetch from an API endpoint that doesn't exist in development
+    // The error "Failed to fetch" was being logged repeatedly every 2 seconds
+    // Re-enable this when running within Anki with proper backend API
+    /*
     this.syncInterval = setInterval(() => {
       this.syncCurrentModel();
     }, 2000); // Sync every 2 seconds
+    */
+    console.log('[AnkiIntegration] Sync disabled in this environment (no backend API available)');
   }
 
   /**

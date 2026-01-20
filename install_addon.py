@@ -37,30 +37,30 @@ def install_addon():
     
     # Check if Anki addons directory exists
     if not ANKI_ADDONS_DIR.exists():
-        print(f"❌ Error: Anki addons directory not found at:")
+        print(f"[ERROR] Anki addons directory not found at:")
         print(f"   {ANKI_ADDONS_DIR}")
         print("\nPlease ensure Anki is installed and has been run at least once.")
         return False
     
-    print(f"✓ Anki addons directory found: {ANKI_ADDONS_DIR}")
+    print(f"[OK] Anki addons directory found: {ANKI_ADDONS_DIR}")
     
     # Create addon directory
     if ADDON_DIR.exists():
-        print(f"\n⚠ Addon directory already exists: {ADDON_DIR}")
+        print(f"\n[WARN] Addon directory already exists: {ADDON_DIR}")
         response = input("  Remove and reinstall? (y/n): ")
         if response.lower() == 'y':
             print(f"  Removing existing addon...")
             shutil.rmtree(ADDON_DIR)
-            print(f"  ✓ Removed")
+            print(f"  [REMOVED]")
         else:
             print("  Installation cancelled.")
             return False
     
-    print(f"\n📁 Creating addon directory: {ADDON_DIR}")
+    print(f"\n[INFO] Creating addon directory: {ADDON_DIR}")
     ADDON_DIR.mkdir(parents=True, exist_ok=True)
     
     # Copy files
-    print(f"\n📋 Copying addon files...")
+    print(f"\n[INFO] Copying addon files...")
     copied_count = 0
     
     for item_name in ITEMS_TO_COPY:
@@ -75,16 +75,16 @@ def install_addon():
             if src.is_dir():
                 shutil.copytree(src, dst, dirs_exist_ok=True)
                 file_count = sum(1 for _ in dst.rglob('*') if _.is_file())
-                print(f"  ✓ {item_name}/ ({file_count} files)")
+                print(f"  [OK] {item_name}/ ({file_count} files)")
             else:
                 shutil.copy2(src, dst)
-                print(f"  ✓ {item_name}")
+                print(f"  [OK] {item_name}")
             copied_count += 1
         except Exception as e:
-            print(f"  ❌ Error copying {item_name}: {e}")
+            print(f"  [ERROR] Error copying {item_name}: {e}")
             return False
     
-    print(f"\n✅ Installation complete!")
+    print(f"\n[SUCCESS] Installation complete!")
     print(f"   {copied_count}/{len(ITEMS_TO_COPY)} items copied")
     print(f"   Location: {ADDON_DIR}")
     
@@ -108,15 +108,15 @@ def uninstall_addon():
     print(f"{'='*70}\n")
     
     if not ADDON_DIR.exists():
-        print(f"✓ Addon not installed (directory doesn't exist)")
+        print(f"[OK] Addon not installed (directory doesn't exist)")
         return True
     
-    print(f"📁 Addon location: {ADDON_DIR}")
+    print(f"[INFO] Addon location: {ADDON_DIR}")
     response = input("\nAre you sure you want to uninstall? (y/n): ")
     
     if response.lower() == 'y':
         shutil.rmtree(ADDON_DIR)
-        print(f"✅ Addon uninstalled successfully")
+        print(f"[SUCCESS] Addon uninstalled successfully")
         return True
     else:
         print("Uninstall cancelled")

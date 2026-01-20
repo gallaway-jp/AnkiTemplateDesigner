@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anki Template Designer</title>
+    
+    <!-- GrapeJS CSS (loaded locally) -->
+    <link rel="stylesheet" href="grapesjs/grapes.min.css">
+    
+    <!-- Custom Designer Styles -->
+    <link rel="stylesheet" href="designer.css">
+    
+    <style>
+        /* Loading indicator */
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #1e1e1e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        
+        .loading-container {
+            text-align: center;
+            max-width: 400px;
+            padding: 40px;
+            background: #2d2d2d;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+        
+        .loading-container h2 {
+            margin: 0 0 30px 0;
+            color: #ffffff;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background: #444444;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #66BB6A);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 4px;
+        }
+        
+        .progress-text {
+            display: block;
+            font-size: 12px;
+            color: #999999;
+            margin-top: 8px;
+            font-family: monospace;
+        }
+        
+        .loading-status {
+            color: #cccccc;
+            font-size: 14px;
+            margin-top: 20px;
+            height: 20px;
+            min-height: 20px;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        
+        .spinner {
+            border: 4px solid #444444;
+            border-top: 4px solid #4CAF50;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto 0;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        #loading.hidden {
+            display: none !important;
+        }
+        
+        #gjs {
+            flex: 1;
+            background: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Indicator with Progress -->
+    <div id="loading">
+        <div class="loading-container">
+            <h2>Loading Template Designer</h2>
+            
+            <!-- Progress bar -->
+            <div class="progress-bar-container">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
+            <span id="progress-text" class="progress-text">0%</span>
+            
+            <!-- Status message -->
+            <p id="loading-status" class="loading-status">Initializing...</p>
+            
+            <!-- Visual spinner -->
+            <div class="spinner"></div>
+        </div>
+    </div>
+    
+    <!-- Top Toolbar Panels -->
+    <div class="panel__top">
+        <div class="panel__basic-actions"></div>
+        <div class="panel__devices"></div>
+    </div>
+    
+    <!-- Editor Layout -->
+    <div class="editor-row">
+        <!-- Main Editor Container -->
+        <div id="gjs"></div>
+        
+        <!-- Right Sidebar -->
+        <div class="panel__right">
+            <div class="panel__switcher"></div>
+            <div class="blocks-container"></div>
+            <div class="layers-container" style="display: none;"></div>
+            <div class="styles-container" style="display: none;"></div>
+            <div class="traits-container" style="display: none;"></div>
+        </div>
+    </div>
+    
+    <!-- Debug Panel - Shows initialization logs -->
+    <div id="debug-panel" style="
+        position: fixed;
+        bottom: 0;
+        right: 0;
+        width: 500px;
+        max-height: 400px;
+        background: #1e1e1e;
+        color: #00ff00;
+        border: 2px solid #00ff00;
+        border-radius: 8px;
+        padding: 10px;
+        font-family: monospace;
+        font-size: 11px;
+        overflow-y: auto;
+        z-index: 9999;
+        box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+    ">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #00ff00; padding-bottom: 5px;">
+            <strong>🔍 Debug Output</strong>
+            <div>
+                <button id="debug-minimize" title="Minimize/Show" style="
+                    background: #00ff00;
+                    color: #1e1e1e;
+                    border: none;
+                    padding: 2px 6px;
+                    cursor: pointer;
+                    border-radius: 3px;
+                    font-weight: bold;
+                    font-size: 11px;
+                    margin-right: 4px;
+                ">▼</button>
+                <button id="debug-close" title="Close" style="
+                    background: #00ff00;
+                    color: #1e1e1e;
+                    border: none;
+                    padding: 2px 8px;
+                    cursor: pointer;
+                    border-radius: 3px;
+                    font-weight: bold;
+                    font-size: 11px;
+                ">✕</button>
+            </div>
+        </div>
+        <div id="debug-status" style="
+            background: #0d3d0d;
+            padding: 8px;
+            margin-bottom: 8px;
+            border-left: 3px solid #00ff00;
+            border-radius: 3px;
+            font-weight: bold;
+        ">
+            <div>🔄 Status: <span id="status-text">Initializing...</span></div>
+            <div id="blocks-count" style="margin-top: 5px; font-size: 10px;"></div>
+        </div>
+        <div id="debug-logs" style="
+            max-height: 300px;
+            overflow-y: auto;
+            line-height: 1.4;
+        "></div>
+    </div>
+    
+    <!-- CRITICAL: Simple initialization script that MUST run -->
+    <script>
+        console.log('[INIT] Script execution started');
+        
+        // Status update function
+        function setDebugStatus(status) {
+            const statusEl = document.getElementById('status-text');
+            if (statusEl) {
+                statusEl.textContent = status;
+            }
+        }
+        
+        // Block count update function
+        function updateBlockCount(count) {
+            const countEl = document.getElementById('blocks-count');
+            if (countEl) {
+                countEl.textContent = `📦 Blocks Registered: ${count}`;
+                if (count > 0) {
+                    countEl.style.color = '#00ff00';
+                }
+            }
+        }
+        
+        // Function to add log to debug panel
+        function addDebugLog(message) {
+            const logsDiv = document.getElementById('debug-logs');
+            if (logsDiv) {
+                const line = document.createElement('div');
+                line.style.color = '#00ff00';
+                line.style.wordBreak = 'break-word';
+                line.textContent = message;
+                logsDiv.appendChild(line);
+                logsDiv.scrollTop = logsDiv.scrollHeight;
+            }
+        }
+        
+        // Capture all console logs for display since F12 isn't accessible
+        window.consoleLogs = [];
+        
+        // Debug panel toggle button in top-right
+        (function setupDebugButton() {
+            const setupBtn = function() {
+                if (!document.getElementById('debug-toggle-btn')) {
+                    let debugToggleBtn = document.createElement('button');
+                    debugToggleBtn.id = 'debug-toggle-btn';
+                    debugToggleBtn.textContent = '🐛 Logs';
+                    debugToggleBtn.title = 'Toggle debug panel (Logs)';
+                    debugToggleBtn.style.cssText = `
+                        position: fixed;
+                        top: 10px;
+                        right: 10px;
+                        z-index: 9998;
+                        padding: 8px 12px;
+                        background: #00ff00;
+                        color: #1e1e1e;
+                        border: 1px solid #333;
+                        border-radius: 4px;
+                        font-weight: bold;
+                        cursor: pointer;
+                        font-size: 12px;
+                    `;
+                    
+                    debugToggleBtn.addEventListener('click', function() {
+                        const panel = document.getElementById('debug-panel');
+                        if (panel) {
+                            const isHidden = panel.style.display === 'none';
+                            panel.style.display = isHidden ? 'block' : 'none';
+                        }
+                    });
+                    
+                    document.body.appendChild(debugToggleBtn);
+                }
+            };
+            
+            if (document.body) {
+                setupBtn();
+            } else {
+                document.addEventListener('DOMContentLoaded', setupBtn);
+            }
+        })();
+        window.setDebugStatus = setDebugStatus;
+        window.updateBlockCount = updateBlockCount;
+        
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        
+        console.log = function(...args) {
+            const msg = args.join(' ');
+            window.consoleLogs.push('[LOG] ' + msg);
+            addDebugLog('[LOG] ' + msg);
+            originalLog.apply(console, args);
+        };
+        console.error = function(...args) {
+            const msg = args.join(' ');
+            window.consoleLogs.push('[ERROR] ' + msg);
+            const line = document.createElement('div');
+            const logsDiv = document.getElementById('debug-logs');
+            if (logsDiv) {
+                line.style.color = '#ff6b6b';
+                line.style.wordBreak = 'break-word';
+                line.textContent = '[ERROR] ' + msg;
+                logsDiv.appendChild(line);
+                logsDiv.scrollTop = logsDiv.scrollHeight;
+            }
+            originalError.apply(console, args);
+        };
+        console.warn = function(...args) {
+            const msg = args.join(' ');
+            window.consoleLogs.push('[WARN] ' + msg);
+            const line = document.createElement('div');
+            const logsDiv = document.getElementById('debug-logs');
+            if (logsDiv) {
+                line.style.color = '#ffbb33';
+                line.style.wordBreak = 'break-word';
+                line.textContent = '[WARN] ' + msg;
+                logsDiv.appendChild(line);
+                logsDiv.scrollTop = logsDiv.scrollHeight;
+            }
+            originalWarn.apply(console, args);
+        };
+        
+        // Add close button functionality
+        const closeBtn = document.getElementById('debug-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                document.getElementById('debug-panel').style.display = 'none';
+            });
+        }
+        
+        // Add minimize button functionality
+        const minimizeBtn = document.getElementById('debug-minimize');
+        if (minimizeBtn) {
+            minimizeBtn.addEventListener('click', () => {
+                const logsDiv = document.getElementById('debug-logs');
+                const statusDiv = document.getElementById('debug-status');
+                const panel = document.getElementById('debug-panel');
+                
+                if (logsDiv.style.display === 'none') {
+                    logsDiv.style.display = 'block';
+                    statusDiv.style.display = 'block';
+                    minimizeBtn.textContent = '▼';
+                    panel.style.maxHeight = '400px';
+                } else {
+                    logsDiv.style.display = 'none';
+                    statusDiv.style.display = 'none';
+                    minimizeBtn.textContent = '▶';
+                    panel.style.maxHeight = '35px';
+                }
+            });
+        }
+        
+        // Add debug toggle button to top-right
+        let debugToggleBtn = document.createElement('button');
+        debugToggleBtn.id = 'debug-toggle-btn';
+        debugToggleBtn.textContent = '🐛 Logs';
+        debugToggleBtn.title = 'Toggle debug panel';
+        debugToggleBtn.style.cssText = `
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 9998;
+            padding: 8px 12px;
+            background: #00ff00;
+            color: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 12px;
+        `;
+        
+        debugToggleBtn.addEventListener('click', function() {
+            const panel = document.getElementById('debug-panel');
+            if (panel) {
+                const isHidden = panel.style.display === 'none';
+                panel.style.display = isHidden ? 'block' : 'none';
+            }
+        });
+        
+        document.body.appendChild(debugToggleBtn);
+        
+        // Update progress function
+        function updateProgress(percent, message) {
+            const bar = document.getElementById('progress-bar');
+            const text = document.getElementById('progress-text');
+            const status = document.getElementById('loading-status');
+            
+            if (bar) {
+                bar.style.width = percent + '%';
+                console.log('[PROGRESS] Bar: ' + percent + '%');
+            }
+            if (text) {
+                text.textContent = percent + '%';
+            }
+            if (status && message) {
+                status.textContent = message;
+                console.log('[STATUS] ' + message);
+            }
+        }
+        
+        // Hide loading function
+        function hideLoading() {
+            const loading = document.getElementById('loading');
+            if (loading) {
+                loading.classList.add('hidden');
+                console.log('[INIT] Loading overlay hidden');
+            }
+        }
+        
+        // Make globally available
+        window.updateProgress = updateProgress;
+        window.hideLoading = hideLoading;
+        
+        console.log('[INIT] Basic functions installed');
+        setDebugStatus('Loading...');
+        updateProgress(5, 'Initializing...');
+    </script>
+    
+    <!-- QWebChannel for Python bridge -->
+    <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+    <script>
+        console.log('[QWebChannel] Script tag executed');
+        updateProgress(10, 'Connecting to Python...');
+    </script>
+    
+    <!-- GrapeJS Library (loaded locally) -->
+    <script>
+        console.log('[GrapeJS] About to load grapes.min.js');
+        console.log('[GrapeJS] Current page URL:', window.location.href);
+        console.log('[GrapeJS] Expected file path:', window.location.pathname);
+        updateProgress(15, 'Loading GrapeJS library...');
+    </script>
+    <script src="grapesjs/grapes.min.js" onerror="
+        console.error('[ERROR] Failed to load GrapeJS');
+        console.error('[ERROR] Script src would be:', new URL('grapesjs/grapes.min.js', window.location.href).href);
+    "></script>
+    <script>
+        console.log('[GrapeJS] Script tag executed');
+        if (typeof grapesjs !== 'undefined') {
+            console.log('[GrapeJS] Library is available');
+            console.log('[GrapeJS] grapesjs type:', typeof grapesjs);
+            console.log('[GrapeJS] grapesjs.init type:', typeof grapesjs.init);
+            updateProgress(20, 'GrapeJS loaded');
+        } else {
+            console.error('[ERROR] GrapeJS not defined after script load');
+            console.error('[ERROR] window object keys:', Object.keys(window).filter(k => k.startsWith('grape') || k.startsWith('GrapeJS')));
+        }
+    </script>
+    
+    <!-- Python Bridge Setup -->
+    <script src="bridge.js"></script>
+    <script>
+        console.log('[Bridge] Bridge script loaded');
+        updateProgress(30, 'Bridge setup...');
+    </script>
+    
+    <!-- Component Search System -->
+    <script src="search.js"></script>
+    <script>
+        console.log('[Search] Search system loaded');
+        updateProgress(40, 'Component search...');
+    </script>
+    
+    <!-- Template Validation Engine -->
+    <script src="validation.js"></script>
+    <script>
+        console.log('[Validation] Validation system loaded');
+        updateProgress(50, 'Template validation...');
+    </script>
+    
+    <!-- Backup Manager System -->
+    <script src="backup.js"></script>
+    <script>
+        console.log('[Backup] Backup system loaded');
+        updateProgress(60, 'Backup manager...');
+    </script>
+    
+    <!-- Data Loss Prevention System -->
+    <script src="dlp.js"></script>
+    <script>
+        console.log('[DLP] Data loss prevention loaded');
+        updateProgress(70, 'Data loss prevention...');
+    </script>
+    
+    <!-- Project Manager -->
+    <script src="projects.js"></script>
+    <script>
+        console.log('[Projects] Projects system loaded');
+        updateProgress(75, 'Project browser...');
+    </script>
+    <script src="project-browser.js"></script>
+    <script>
+        console.log('[ProjectBrowser] Project browser loaded');
+        updateProgress(80, 'Anki integration...');
+    </script>
+    
+    <!-- Anki Integration -->
+    <script src="anki-integration.js"></script>
+    <script>
+        console.log('[AnkiIntegration] Anki integration loaded');
+        updateProgress(85, 'UI customization...');
+    </script>
+    
+    <!-- UI Customization -->
+    <script src="ui-customization.js"></script>
+    <script>
+        console.log('[UICustom] UI customization loaded');
+        updateProgress(90, 'Designer setup...');
+    </script>
+    
+    <!-- Block Module - MUST load before designer.js -->
+    <script src="blocks/index.js" onerror="console.error('[ERROR] Failed to load blocks/index.js')"></script>
+    
+    <!-- GrapeJS Designer Configuration -->
+    <script src="designer.js" onerror="console.error('[ERROR] Failed to load designer.js')"></script>
+    <script>
+        console.log('[Designer] Designer script executed');
+        console.log('[Designer] Checking if startEditorInit is available:', typeof startEditorInit);
+        
+        updateProgress(100, 'Ready!');
+        
+        // Call startEditorInit after a brief delay to ensure all scripts are loaded
+        setTimeout(() => {
+            console.log('[INIT] Calling startEditorInit after 100ms delay');
+            if (typeof startEditorInit === 'function') {
+                console.log('[INIT] startEditorInit found, calling it now');
+                startEditorInit();
+            } else {
+                console.error('[INIT] CRITICAL: startEditorInit is not a function!');
+                console.error('[INIT] startEditorInit type:', typeof startEditorInit);
+            }
+        }, 100);
+        
+        // Check editor after initialization delay
+        setTimeout(() => {
+            console.log('[INIT] Checking editor status after initialization');
+            hideLoading();
+            console.log('[INIT] Initialization check complete');
+            
+            // If editor didn't init, show detailed error message with console logs
+            if (!window.editor) {
+                const container = document.getElementById('gjs');
+                const containerMsg = container ? 'FOUND' : 'NOT FOUND';
+                const containerSize = container ? ` (${container.clientWidth}x${container.clientHeight}px)` : '';
+                
+                const errorDiv = document.createElement('div');
+                errorDiv.style.cssText = 'position: fixed; top: 5%; left: 5%; right: 5%; background: #ffe6e6; padding: 20px; border: 3px solid red; border-radius: 8px; font-family: monospace; z-index: 9999; max-height: 90%; overflow-y: auto;';
+                
+                let errorContent = '<h2 style="margin: 0 0 10px 0; color: red;">🔴 EDITOR INITIALIZATION FAILED</h2>' +
+                    '<p style="margin: 5px 0;"><strong>Page URL:</strong> ' + window.location.href + '</p>' +
+                    '<p style="margin: 5px 0;"><strong>GrapeJS Library:</strong> ' + (typeof window.grapesjs) + '</p>' +
+                    '<p style="margin: 5px 0;"><strong>Editor Instance:</strong> ' + (typeof window.editor) + '</p>' +
+                    '<p style="margin: 5px 0;"><strong>Container #gjs:</strong> ' + containerMsg + containerSize + '</p>';
+                
+                if (window.editorInitError) {
+                    errorContent += '<p style="margin: 5px 0; color: red;"><strong>Exception Caught:</strong></p>' +
+                        '<pre style="background: #fff; padding: 10px; overflow: auto; margin: 5px 0; max-height: 150px;">' + 
+                        window.editorInitError.message + '\n' + window.editorInitError.stack + '</pre>';
+                } else {
+                    errorContent += '<p style="margin: 5px 0; color: #666;"><strong>No exception thrown.</strong> grapesjs.init() returned falsy value.</p>';
+                }
+                
+                // Show console logs
+                errorContent += '<p style="margin: 10px 0 5px 0;"><strong>Console Logs:</strong></p>' +
+                    '<pre style="background: #fff; padding: 10px; overflow: auto; margin: 5px 0; max-height: 250px; font-size: 11px;">' + 
+                    (window.consoleLogs && window.consoleLogs.length > 0 ? window.consoleLogs.join('\n') : 'No logs captured') + 
+                    '</pre>';
+                
+                errorDiv.innerHTML = errorContent;
+                document.body.appendChild(errorDiv);
+                console.error('[FATAL] Editor initialization failed. See red box above for details.');
+            }
+        }, 500);
+    </script>
+</body>
+</html>

@@ -123,7 +123,7 @@ class PanelSyncUI {
         dialog.innerHTML = `
             <div class="dialog-header">
                 <h3>Panel Synchronization</h3>
-                <button class="close-btn">×</button>
+                <button class="close-btn" title="Close dialog">× Close</button>
             </div>
             <div class="dialog-content">
                 <div class="sync-info">
@@ -160,7 +160,7 @@ class PanelSyncUI {
         dialog.innerHTML = `
             <div class="dialog-header">
                 <h3>Consistency Check</h3>
-                <button class="close-btn">×</button>
+                <button class="close-btn" title="Close dialog">× Close</button>
             </div>
             <div class="dialog-content">
                 <div class="consistency-status">

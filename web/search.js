@@ -123,19 +123,55 @@ class ComponentSearchIndex {
         } = options;
         
         if (!query || query.trim().length === 0) {
-            // Return all components or filtered by category
+            // Return all components or filtered by category, sorted by popularity
             let results = this.index;
             if (category) {
                 results = results.filter(c => c.category === category);
             }
-            return results.slice(0, limit);
+            // Sort by popularity (highest first)
+            return results
+                .sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
+                .slice(0, limit);
         }
         
-        // Score and filter results
+        // Score and filter results with advanced ranking
         const results = this.index
             .map(item => {
-                const score = this.fuzzyScore(query, item.searchText);
-                return { ...item, score };
+                // Base fuzzy score
+                const fuzzyScore = this.fuzzyScore(query, item.searchText);
+                
+                // Label match bonus (exact/prefix matches score higher)
+                let labelScore = 0;
+                const labelLower = item.label.toLowerCase();
+                const queryLower = query.toLowerCase();
+                
+                if (labelLower === queryLower) {
+                    labelScore = 0.5; // Exact match
+                } else if (labelLower.startsWith(queryLower)) {
+                    labelScore = 0.35; // Prefix match
+                } else if (labelLower.includes(queryLower)) {
+                    labelScore = 0.2; // Contains
+                }
+                
+                // Popularity bonus (0-0.2 additional points)
+                const popularityBonus = Math.min(0.2, (item.popularity || 0) * 0.01);
+                
+                // Tag match bonus - if query matches a tag exactly
+                const tagMatch = item.tags.some(tag => 
+                    tag.toLowerCase() === queryLower
+                ) ? 0.15 : 0;
+                
+                // Combined score: fuzzy + label + popularity + tags
+                const totalScore = fuzzyScore + labelScore + popularityBonus + tagMatch;
+                
+                return {
+                    ...item,
+                    score: totalScore,
+                    fuzzyScore,
+                    labelScore,
+                    popularityBonus,
+                    tagMatch
+                };
             })
             .filter(item => {
                 if (item.score < minScore) return false;
@@ -143,10 +179,15 @@ class ComponentSearchIndex {
                 return true;
             })
             .sort((a, b) => {
-                // Sort by score (descending), then by label (ascending)
+                // Primary: total score (descending)
                 if (a.score !== b.score) {
                     return b.score - a.score;
                 }
+                // Secondary: popularity (descending)
+                if ((b.popularity || 0) !== (a.popularity || 0)) {
+                    return (b.popularity || 0) - (a.popularity || 0);
+                }
+                // Tertiary: label alphabetically
                 return a.label.localeCompare(b.label);
             })
             .slice(0, limit);
@@ -575,17 +616,52 @@ window.initializeComponentSearch = function(editor) {
         searchUI.initialize();
         searchUI.show();
         
-        // Store globally for debugging
+        // Store globally for debugging and access
         window.componentSearch = {
             index: searchIndex,
-            ui: searchUI
+            ui: searchUI,
+            getFrequentComponents: (limit = 10) => {
+                return searchIndex.index
+                    .sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
+                    .slice(0, limit)
+                    .map(c => ({ ...c, uses: c.popularity || 0 }));
+            },
+            getSearchMetrics: () => {
+                const totalUses = searchIndex.index.reduce((sum, c) => sum + (c.popularity || 0), 0);
+                const mostUsed = searchIndex.index.reduce((max, c) => 
+                    ((c.popularity || 0) > (max.popularity || 0)) ? c : max
+                );
+                return {
+                    totalComponents: searchIndex.index.length,
+                    totalUses,
+                    mostUsedComponent: mostUsed.label,
+                    mostUsedCount: mostUsed.popularity || 0
+                };
+            }
         };
         
         console.log('[Search] Component search initialized successfully');
         
-        // Track block usage
+        // Track block usage on drag
         editor.on('block:drag:stop', (e) => {
             const blockId = e.block?.id;
+            if (blockId) {
+                searchIndex.trackUsage(blockId);
+                console.log(`[Search] Tracked usage of component: ${blockId}`);
+            }
+        });
+        
+        // Track block addition
+        editor.on('component:add', (component) => {
+            const blockId = component.get('type');
+            if (blockId) {
+                searchIndex.trackUsage(blockId);
+            }
+        });
+        
+        // Track block duplication
+        editor.on('component:clone', (clonedComponent) => {
+            const blockId = clonedComponent.get('type');
             if (blockId) {
                 searchIndex.trackUsage(blockId);
             }

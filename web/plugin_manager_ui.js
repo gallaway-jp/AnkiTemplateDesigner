@@ -8,6 +8,17 @@ class PluginManagerUI {
     this.plugins = [];
     this.marketplace = [];
     this.selectedTab = 'installed';
+    
+    // Marketplace optimization
+    this.marketplaceCache = null;
+    this.marketplaceCacheTime = 0;
+    this.cacheDuration = 5 * 60 * 1000; // 5 minutes
+    
+    // Pagination
+    this.marketplacePageSize = 12;
+    this.marketplaceCurrentPage = 1;
+    this.marketplaceFiltered = [];
+    
     this.init();
   }
 
@@ -42,6 +53,25 @@ class PluginManagerUI {
           <div class="plugin-search">
             <input type="text" id="search-installed" placeholder="Search plugins..." class="search-input">
           </div>
+          <div class="plugin-filters">
+            <div class="filter-group">
+              <label>Status:</label>
+              <select id="filter-status" class="filter-select">
+                <option value="">All</option>
+                <option value="enabled">Enabled</option>
+                <option value="disabled">Disabled</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label>Rating:</label>
+              <select id="filter-rating" class="filter-select">
+                <option value="">All</option>
+                <option value="5">5 stars</option>
+                <option value="4">4+ stars</option>
+                <option value="3">3+ stars</option>
+              </select>
+            </div>
+          </div>
           <div class="plugins-list" id="installed-list">
             <p class="empty-state">Loading plugins...</p>
           </div>
@@ -56,8 +86,46 @@ class PluginManagerUI {
           <div class="plugin-search">
             <input type="text" id="search-marketplace" placeholder="Search marketplace..." class="search-input">
           </div>
+          <div class="plugin-filters">
+            <div class="filter-group">
+              <label>Category:</label>
+              <select id="filter-category" class="filter-select">
+                <option value="">All Categories</option>
+                <option value="utility">Utility</option>
+                <option value="ui">UI/UX</option>
+                <option value="data">Data</option>
+                <option value="integration">Integration</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label>Rating:</label>
+              <select id="filter-marketplace-rating" class="filter-select">
+                <option value="">All</option>
+                <option value="5">5 stars</option>
+                <option value="4">4+ stars</option>
+                <option value="3">3+ stars</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label>Sort:</label>
+              <select id="filter-sort" class="filter-select">
+                <option value="downloads">Most Downloaded</option>
+                <option value="rating">Highest Rated</option>
+                <option value="newest">Newest</option>
+              </select>
+            </div>
+          </div>
           <div class="marketplace-list" id="marketplace-list">
             <p class="empty-state">Loading marketplace...</p>
+          </div>
+          
+          <!-- Pagination Controls -->
+          <div class="marketplace-pagination" id="marketplace-pagination" style="display: none;">
+            <button class="pagination-btn" id="pagination-prev">← Previous</button>
+            <span class="pagination-info">
+              Page <span id="current-page">1</span> of <span id="total-pages">1</span>
+            </span>
+            <button class="pagination-btn" id="pagination-next">Next →</button>
           </div>
         </div>
 
@@ -129,8 +197,21 @@ class PluginManagerUI {
     });
 
     // Search
-    document.getElementById('search-installed')?.addEventListener('input', (e) => this.filterPlugins(e.target.value, 'installed'));
-    document.getElementById('search-marketplace')?.addEventListener('input', (e) => this.filterPlugins(e.target.value, 'marketplace'));
+    document.getElementById('search-installed')?.addEventListener('input', (e) => this.applyFilters('installed'));
+    document.getElementById('search-marketplace')?.addEventListener('input', (e) => this.applyFilters('marketplace'));
+
+    // Installed filters
+    document.getElementById('filter-status')?.addEventListener('change', () => this.applyFilters('installed'));
+    document.getElementById('filter-rating')?.addEventListener('change', () => this.applyFilters('installed'));
+
+    // Marketplace filters
+    document.getElementById('filter-category')?.addEventListener('change', () => this.applyFilters('marketplace'));
+    document.getElementById('filter-marketplace-rating')?.addEventListener('change', () => this.applyFilters('marketplace'));
+    document.getElementById('filter-sort')?.addEventListener('change', () => this.applyFilters('marketplace'));
+
+    // Pagination controls
+    document.getElementById('pagination-prev')?.addEventListener('click', () => this.previousPage());
+    document.getElementById('pagination-next')?.addEventListener('click', () => this.nextPage());
 
     // Modal
     document.getElementById('btn-close-modal')?.addEventListener('click', () => this.closeModal());
@@ -148,55 +229,32 @@ class PluginManagerUI {
   }
 
   loadPlugins() {
-    // Simulate plugin data
-    this.plugins = [
-      {
-        id: 'syntax.highlighter',
-        name: 'Advanced Syntax Highlighter',
-        version: '1.2.0',
-        author: 'Plugin Dev',
-        description: 'Enhanced syntax highlighting with theme support',
-        enabled: true,
-        rating: 4.8,
-        downloads: 1250,
-      },
-      {
-        id: 'export.pdf',
-        name: 'PDF Export',
-        version: '2.0.1',
-        author: 'Export Team',
-        description: 'Professional PDF export with templates',
-        enabled: true,
-        rating: 4.5,
-        downloads: 890,
-      },
-      {
-        id: 'ai.assistant',
-        name: 'AI Assistant',
-        version: '1.0.0',
-        author: 'AI Lab',
-        description: 'AI-powered template suggestions',
-        enabled: false,
-        rating: 4.2,
-        downloads: 450,
-      },
-    ];
+    // Fetch plugins from backend API
+    if (window.bridge && window.bridge.getPlugins) {
+      try {
+        const pluginsJson = window.bridge.getPlugins();
+        this.plugins = JSON.parse(pluginsJson);
+      } catch (e) {
+        console.error('Failed to load plugins:', e);
+        // Fallback to empty list
+        this.plugins = [];
+      }
+    } else {
+      // Fallback for development without bridge
+      this.plugins = [];
+    }
 
-    this.marketplace = [
-      ...this.plugins,
-      {
-        id: 'theme.dark',
-        name: 'Dark Theme Pro',
-        version: '1.5.0',
-        author: 'Design Team',
-        description: 'Premium dark theme with customization',
-        enabled: false,
-        rating: 4.9,
-        downloads: 3200,
-      },
-    ];
-
+    // Load marketplace with pagination
+    this.loadMarketplaceData();
     this.updateUI();
+  }
+
+  loadMarketplaceData() {
+    // Get marketplace data using caching system
+    const data = this.getMarketplaceData();
+    this.marketplace = data;
+    this.marketplaceFiltered = data;
+    this.marketplaceCurrentPage = 1;
   }
 
   updateUI() {
@@ -239,25 +297,8 @@ class PluginManagerUI {
   }
 
   updateMarketplaceList() {
-    const list = document.getElementById('marketplace-list');
-    if (!list) return;
-
-    list.innerHTML = this.marketplace.map(plugin => `
-      <div class="marketplace-card">
-        <div class="card-header">
-          <h4>${plugin.name}</h4>
-          <span class="rating-badge">${plugin.rating}/5</span>
-        </div>
-        <p class="card-description">${plugin.description}</p>
-        <div class="card-stats">
-          <span>${plugin.downloads} downloads</span>
-          <span>${plugin.author}</span>
-        </div>
-        <button class="btn-primary" onclick="pluginUI.installPlugin('${plugin.id}')">
-          ${this.plugins.some(p => p.id === plugin.id) ? 'Installed' : 'Install'}
-        </button>
-      </div>
-    `).join('');
+    // Use pagination rendering for marketplace
+    this.renderMarketplaceWithPagination();
   }
 
   updateStats() {
@@ -318,15 +359,71 @@ class PluginManagerUI {
     const filtered = query === '' ? list : 
       list.filter(p => 
         p.name.toLowerCase().includes(query.toLowerCase()) ||
-        p.description.toLowerCase().includes(query.toLowerCase())
+        p.description.toLowerCase().includes(query.toLowerCase()) ||
+        (p.author && p.author.toLowerCase().includes(query.toLowerCase()))
       );
 
+    return filtered;
+  }
+
+  applyFilters(type) {
+    const query = type === 'installed' 
+      ? document.getElementById('search-installed')?.value || ''
+      : document.getElementById('search-marketplace')?.value || '';
+
+    let filtered = this.filterPlugins(query, type);
+
+    if (type === 'installed') {
+      // Apply status filter
+      const statusFilter = document.getElementById('filter-status')?.value;
+      if (statusFilter === 'enabled') {
+        filtered = filtered.filter(p => p.enabled);
+      } else if (statusFilter === 'disabled') {
+        filtered = filtered.filter(p => !p.enabled);
+      }
+
+      // Apply rating filter
+      const ratingFilter = parseFloat(document.getElementById('filter-rating')?.value || '0');
+      if (ratingFilter > 0) {
+        filtered = filtered.filter(p => (p.rating || 0) >= ratingFilter);
+      }
+    } else {
+      // Marketplace filters
+      const categoryFilter = document.getElementById('filter-category')?.value;
+      if (categoryFilter) {
+        filtered = filtered.filter(p => (p.category || '').toLowerCase() === categoryFilter.toLowerCase());
+      }
+
+      // Apply rating filter
+      const ratingFilter = parseFloat(document.getElementById('filter-marketplace-rating')?.value || '0');
+      if (ratingFilter > 0) {
+        filtered = filtered.filter(p => (p.rating || 0) >= ratingFilter);
+      }
+
+      // Apply sorting
+      const sortBy = document.getElementById('filter-sort')?.value || 'downloads';
+      if (sortBy === 'downloads') {
+        filtered.sort((a, b) => (b.downloads || 0) - (a.downloads || 0));
+      } else if (sortBy === 'rating') {
+        filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      } else if (sortBy === 'newest') {
+        filtered.sort((a, b) => new Date(b.published_date || 0) - new Date(a.published_date || 0));
+      }
+
+      // Reset to first page and apply pagination
+      this.marketplaceFiltered = filtered;
+      this.marketplaceCurrentPage = 1;
+      this.renderMarketplaceWithPagination();
+      return;
+    }
+
+    // Render filtered results
     const containerId = type === 'installed' ? 'installed-list' : 'marketplace-list';
     const container = document.getElementById(containerId);
     if (!container) return;
 
     if (filtered.length === 0) {
-      container.innerHTML = '<p class="empty-state">No plugins found</p>';
+      container.innerHTML = '<p class="empty-state">No plugins found matching your filters</p>';
       return;
     }
 
@@ -353,11 +450,244 @@ class PluginManagerUI {
           </div>
         </div>
       `).join('');
+    } else {
+      container.innerHTML = filtered.map(plugin => `
+        <div class="marketplace-card">
+          <div class="card-header">
+            <h4>${plugin.name}</h4>
+            <span class="rating-badge">${plugin.rating}/5</span>
+            ${plugin.category ? `<span class="category-badge">${plugin.category}</span>` : ''}
+          </div>
+          <p class="card-description">${plugin.description}</p>
+          <div class="card-meta">
+            <span>By ${plugin.author}</span>
+            <span>${plugin.downloads} downloads</span>
+          </div>
+          <div class="card-actions">
+            <button class="btn-primary" onclick="pluginUI.installPlugin('${plugin.id}')">
+              ${this.plugins.some(p => p.id === plugin.id) ? 'Installed' : 'Install'}
+            </button>
+            <button class="btn-secondary" onclick="pluginUI.showPluginDetails('${plugin.id}')">
+              View
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+
+  togglePlugin(pluginId) {
+    const plugin = this.plugins.find(p => p.id === pluginId);
+    if (!plugin) return;
+
+    // Call backend API to toggle plugin state
+    if (window.bridge && window.bridge.togglePlugin) {
+      try {
+        const success = window.bridge.togglePlugin(pluginId);
+        if (success) {
+          // Update local state
+          plugin.enabled = !plugin.enabled;
+          this.updateUI();
+          
+          const action = plugin.enabled ? 'enabled' : 'disabled';
+          console.log(`[Plugin] ${plugin.name} ${action}`);
+          showToast(`${plugin.name} ${action}`, 'success', 3000);
+        } else {
+          showToast(`Failed to toggle ${plugin.name}`, 'error', 3000);
+        }
+      } catch (e) {
+        console.error('Failed to toggle plugin:', e);
+        showToast(`Error toggling plugin: ${e.message}`, 'error', 3000);
+      }
+    } else {
+      console.warn('Bridge not available for toggling plugin');
+      showToast('Plugin manager not ready', 'error', 3000);
+    }
+  }
+
+  showPluginDetails(pluginId) {
+    const plugin = this.plugins.find(p => p.id === pluginId) || this.marketplace.find(p => p.id === pluginId);
+    if (!plugin) return;
+
+    const modal = document.getElementById('plugin-modal');
+    if (!modal) return;
+
+    // Set modal title
+    const title = document.getElementById('modal-title');
+    if (title) title.textContent = plugin.name;
+
+    // Set plugin details
+    const details = document.getElementById('plugin-details');
+    if (details) {
+      details.innerHTML = `
+        <div class="plugin-detail-view">
+          <div class="detail-row">
+            <span class="detail-label">Version:</span>
+            <span class="detail-value">${plugin.version}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Author:</span>
+            <span class="detail-value">${plugin.author}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Description:</span>
+            <span class="detail-value">${plugin.description}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Status:</span>
+            <span class="detail-value">${plugin.enabled ? 'Enabled' : 'Disabled'}</span>
+          </div>
+          ${plugin.rating ? `
+            <div class="detail-row">
+              <span class="detail-label">Rating:</span>
+              <span class="detail-value">${plugin.rating}/5</span>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    // Set action button
+    const actionBtn = document.getElementById('btn-plugin-action');
+    if (actionBtn) {
+      actionBtn.textContent = plugin.enabled ? 'Disable' : 'Enable';
+      actionBtn.onclick = () => {
+        this.togglePlugin(pluginId);
+        this.closeModal();
+      };
+    }
+
+    // Show modal
+    modal.style.display = 'block';
+  }
+
+  installPlugin(pluginId) {
+    const plugin = this.marketplace.find(p => p.id === pluginId);
+    if (!plugin) return;
+
+    if (window.bridge && window.bridge.installPlugin) {
+      try {
+        const success = window.bridge.installPlugin(pluginId);
+        if (success) {
+          // Add to installed list
+          if (!this.plugins.find(p => p.id === pluginId)) {
+            this.plugins.push({...plugin});
+          }
+          this.updateUI();
+          showToast(`${plugin.name} installed`, 'success', 3000);
+        } else {
+          showToast(`Failed to install ${plugin.name}`, 'error', 3000);
+        }
+      } catch (e) {
+        console.error('Failed to install plugin:', e);
+        showToast(`Error installing plugin: ${e.message}`, 'error', 3000);
+      }
     }
   }
 
   closeModal() {
     document.getElementById('plugin-modal').style.display = 'none';
+  }
+
+  /**
+   * Get cached marketplace data or fetch fresh
+   */
+  getMarketplaceData() {
+    const now = Date.now();
+    if (this.marketplaceCache && (now - this.marketplaceCacheTime) < this.cacheDuration) {
+      console.log('[PluginManager] Using cached marketplace data');
+      return this.marketplaceCache;
+    }
+
+    // Fetch from bridge if available
+    if (window.bridge && window.bridge.getMarketplacePlugins) {
+      try {
+        const marketplaceJson = window.bridge.getMarketplacePlugins();
+        this.marketplaceCache = JSON.parse(marketplaceJson);
+        this.marketplaceCacheTime = now;
+        console.log('[PluginManager] Fetched fresh marketplace data:', this.marketplaceCache.length, 'plugins');
+        return this.marketplaceCache;
+      } catch (e) {
+        console.error('Failed to load marketplace:', e);
+        return [];
+      }
+    }
+
+    return [];
+  }
+
+  /**
+   * Navigate to next page
+   */
+  nextPage() {
+    const totalPages = Math.ceil(this.marketplaceFiltered.length / this.marketplacePageSize);
+    if (this.marketplaceCurrentPage < totalPages) {
+      this.marketplaceCurrentPage++;
+      this.renderMarketplaceWithPagination();
+    }
+  }
+
+  /**
+   * Navigate to previous page
+   */
+  previousPage() {
+    if (this.marketplaceCurrentPage > 1) {
+      this.marketplaceCurrentPage--;
+      this.renderMarketplaceWithPagination();
+    }
+  }
+
+  /**
+   * Render marketplace with pagination
+   */
+  renderMarketplaceWithPagination() {
+    const startIndex = (this.marketplaceCurrentPage - 1) * this.marketplacePageSize;
+    const endIndex = startIndex + this.marketplacePageSize;
+    const pageItems = this.marketplaceFiltered.slice(startIndex, endIndex);
+
+    const list = document.getElementById('marketplace-list');
+    if (!list) return;
+
+    if (pageItems.length === 0) {
+      list.innerHTML = '<p class="empty-state">No plugins found</p>';
+      return;
+    }
+
+    list.innerHTML = pageItems.map(plugin => `
+      <div class="marketplace-card">
+        <div class="card-header">
+          <h4>${plugin.name}</h4>
+          <span class="rating-badge">${plugin.rating}/5</span>
+          ${plugin.category ? `<span class="category-badge">${plugin.category}</span>` : ''}
+        </div>
+        <p class="card-description">${plugin.description}</p>
+        <div class="card-meta">
+          <span>By ${plugin.author}</span>
+          <span>${plugin.downloads} downloads</span>
+        </div>
+        <div class="card-actions">
+          <button class="btn-primary" onclick="pluginUI.installPlugin('${plugin.id}')">
+            ${this.plugins.some(p => p.id === plugin.id) ? 'Installed' : 'Install'}
+          </button>
+          <button class="btn-secondary" onclick="pluginUI.showPluginDetails('${plugin.id}')">
+            View
+          </button>
+        </div>
+      </div>
+    `).join('');
+
+    // Update pagination controls
+    const totalPages = Math.ceil(this.marketplaceFiltered.length / this.marketplacePageSize);
+    const pagination = document.getElementById('marketplace-pagination');
+    if (pagination) {
+      pagination.style.display = totalPages > 1 ? 'flex' : 'none';
+      document.getElementById('current-page').textContent = this.marketplaceCurrentPage;
+      document.getElementById('total-pages').textContent = totalPages;
+
+      // Disable buttons at boundaries
+      document.getElementById('pagination-prev').disabled = this.marketplaceCurrentPage === 1;
+      document.getElementById('pagination-next').disabled = this.marketplaceCurrentPage === totalPages;
+    }
   }
 }
 

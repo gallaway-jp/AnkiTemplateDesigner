@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anki Template Designer</title>
+    
+    <!-- GrapeJS CSS (loaded locally) -->
+    <link rel="stylesheet" href="grapesjs/grapes.min.css">
+    
+    <!-- Custom Designer Styles -->
+    <link rel="stylesheet" href="designer.css">
+    
+    <!-- Validation Panel Styles -->
+    <link rel="stylesheet" href="validation_styles.css">
+    
+    <style>
+        /* Loading indicator */
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        
+        .loading-container {
+            text-align: center;
+            max-width: 400px;
+            padding: 40px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .loading-container h2 {
+            margin-bottom: 30px;
+            color: var(--text-primary);
+        }
+        
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #66BB6A);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 4px;
+        }
+        
+        .progress-text {
+            display: block;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+        
+        .loading-status {
+            color: var(--text-primary);
+            font-size: 14px;
+            margin-top: 20px;
+            height: 20px;
+            min-height: 20px;
+        }
+        
+        .spinner {
+            border: 4px solid var(--bg-tertiary);
+            border-top: 4px solid #4CAF50;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto 0;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        #loading.hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Indicator with Progress -->
+    <div id="loading">
+        <div class="loading-container">
+            <h2>Loading Template Designer</h2>
+            
+            <!-- Progress bar -->
+            <div class="progress-bar-container">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
+            <span id="progress-text" class="progress-text">0%</span>
+            
+            <!-- Status message -->
+            <p id="loading-status" class="loading-status">Initializing...</p>
+            
+            <!-- Visual spinner -->
+            <div class="spinner"></div>
+        </div>
+    </div>
+    
+    <!-- Top Toolbar Panels -->
+    <div class="panel__top">
+        <div class="panel__basic-actions"></div>
+        <div class="panel__devices"></div>
+    </div>
+    
+    <!-- Editor Layout -->
+    <div class="editor-row">
+        <!-- Main Editor Container -->
+        <div id="gjs"></div>
+        
+        <!-- Right Sidebar -->
+        <div class="panel__right">
+            <div class="panel__switcher"></div>
+            <div class="blocks-container"></div>
+            <div class="layers-container" style="display: none;"></div>
+            <div class="styles-container" style="display: none;"></div>
+            <div class="traits-container" style="display: none;"></div>
+        </div>
+    </div>
+    
+    <!-- QWebChannel for Python bridge -->
+    <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+    
+    <!-- Early logging setup -->
+    <script>
+        console.log('[EARLY] index.html loaded - starting script initialization');
+        window.initStartTime = Date.now();
+        window.lastLogTime = window.initStartTime;
+        
+        function logWithTimestamp(msg) {
+            const now = Date.now();
+            const elapsed = now - window.lastLogTime;
+            console.log(`[+${elapsed}ms] ${msg}`);
+            window.lastLogTime = now;
+        }
+        
+        logWithTimestamp('Setting up error handlers...');
+        
+        // Catch all errors
+        window.addEventListener('error', (e) => {
+            console.error('[ERROR] Script error:', e.message, 'at', e.filename, ':', e.lineno);
+        });
+        
+        window.addEventListener('unhandledrejection', (e) => {
+            console.error('[ERROR] Unhandled promise rejection:', e.reason);
+        });
+        
+        logWithTimestamp('Error handlers installed');
+    </script>
+    
+    <!-- GrapeJS Library (loaded locally) -->
+    <script>logWithTimestamp('Loading GrapeJS...')</script>
+    <script src="grapesjs/grapes.min.js"></script>
+    <script>logWithTimestamp('GrapeJS loaded')</script>
+    
+    <!-- Custom Component Types (must load before traits/blocks) -->
+    <script>logWithTimestamp('Loading input components...')</script>
+    <script src="components/inputs.js"></script>
+    <script>logWithTimestamp('Input components loaded')</script>
+    
+    <script>logWithTimestamp('Loading component types...')</script>
+    <script src="components/index.js"></script>
+    <script>logWithTimestamp('Component types loaded')</script>
+    
+    <!-- Custom Traits -->
+    <script>logWithTimestamp('Loading traits...')</script>
+    <script src="traits/index.js"></script>
+    <script>logWithTimestamp('Traits loaded')</script>
+    
+    <!-- Custom Blocks (with async dynamic loading) -->
+    <script>logWithTimestamp('Loading blocks...')</script>
+    <script src="blocks/index.js"></script>
+    <script>logWithTimestamp('Blocks loaded')</script>
+    
+    <!-- Anki Plugin -->
+    <script>logWithTimestamp('Loading anki-plugin...')</script>
+    <script src="plugins/anki-plugin.js"></script>
+    <script>logWithTimestamp('Anki plugin loaded')</script>
+    
+    <!-- Python Bridge Setup -->
+    <script>logWithTimestamp('Loading bridge...')</script>
+    <script src="bridge.js"></script>
+    <script>logWithTimestamp('Bridge loaded')</script>
+    
+    <!-- Component Search System -->
+    <script>logWithTimestamp('Loading search system...')</script>
+    <script src="search.js"></script>
+    <script>logWithTimestamp('Search system loaded')</script>
+    
+    <!-- Template Validation Engine -->
+    <script>logWithTimestamp('Loading validation...')</script>
+    <script src="validation.js"></script>
+    <script>logWithTimestamp('Validation loaded')</script>
+    
+    <!-- Backup Manager System -->
+    <script>logWithTimestamp('Loading backup...')</script>
+    <script src="backup.js"></script>
+    <script>logWithTimestamp('Backup loaded')</script>
+    
+    <!-- Data Loss Prevention System -->
+    <script>logWithTimestamp('Loading DLP...')</script>
+    <script src="dlp.js"></script>
+    <script>logWithTimestamp('DLP loaded')</script>
+    <style>
+        .settings-button-floating {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+            transition: all 0.2s;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .settings-button-floating:hover {
+            background: var(--accent-hover);
+            transform: scale(1.1);
+        }
+        
+        .settings-button-floating:focus {
+            outline: var(--focus-outline);
+            outline-offset: 2px;
+        }
+    </style>
+    
+    <button id="settings-button" class="settings-button-floating" aria-label="UI Settings" title="Customize interface layout">⚙️</button>
+
+    <!-- Welcome/Onboarding Overlay -->
+    <div id="welcome-overlay" class="welcome-overlay hidden">
+        <div class="welcome-modal">
+            <button id="close-welcome" class="close-button">✕</button>
+            
+            <h2>Welcome to Anki Template Designer! 👋</h2>
+            
+            <div class="welcome-content">
+                <p class="intro-text">
+                    Create beautiful Anki card templates with a visual drag-and-drop builder.
+                    No coding required!
+                </p>
+                
+                <div class="quick-start-steps">
+                    <h3>Quick Start Guide:</h3>
+                    
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <p><strong>Find Components</strong></p>
+                            <p>Expand categories in the left panel to see available components</p>
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <p><strong>Drag to Canvas</strong></p>
+                            <p>Drag components from the left panel to the canvas in the center</p>
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <p><strong>Customize Properties</strong></p>
+                            <p>Select a component and edit its properties in the right panel</p>
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <p><strong>Save & Export</strong></p>
+                            <p>Click the Save button to save your template</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="help-links">
+                    <p>Need more help?</p>
+                    <a href="#" onclick="handleHelpClick(); return false;">Keyboard Shortcuts (?) • </a>
+                    <a href="#" onclick="alert('See the documentation at: https://github.com/'); return false;">Documentation</a>
+                </div>
+                
+                <div class="welcome-footer">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="show-welcome-again">
+                        Show this again next time
+                    </label>
+                    <button id="get-started" class="button-primary">Get Started!</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Issue #41: Project Manager -->
+    <script src="projects.js"></script>
+    <script src="project-browser.js"></script>
+    
+    <!-- Issue #42: Anki Integration -->
+    <script src="anki-integration.js"></script>
+    
+    <!-- UI Customization -->
+    <script>logWithTimestamp('Loading UI customization...')</script>
+    <script src="ui-customization.js"></script>
+    <script>logWithTimestamp('UI customization loaded')</script>
+    
+    <!-- Tooltips System -->
+    <script>logWithTimestamp('Loading tooltips...')</script>
+    <script src="tooltips.js"></script>
+    <script>logWithTimestamp('Tooltips loaded')</script>
+    
+    <!-- GrapeJS Designer Configuration -->
+    <script>logWithTimestamp('Loading designer.js...')</script>
+    <script src="designer.js"></script>
+    <script>
+        logWithTimestamp('Designer.js script tag completed');
+        setTimeout(() => {
+            logWithTimestamp('Checking initialization status (delayed)');
+            if (window.editor) {
+                logWithTimestamp('Editor instance exists!');
+            } else {
+                logWithTimestamp('No editor instance yet');
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

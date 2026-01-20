@@ -8,21 +8,31 @@
  * This file must be loaded and called BEFORE block registration.
  */
 
-import { registerInputComponentTypes } from './inputs.js';
+// Load input components if available
+function loadInputComponents() {
+    // Check if registerInputComponentTypes is already loaded
+    if (typeof registerInputComponentTypes === 'function') {
+        return true;
+    }
+    // Otherwise, we'll use a no-op
+    return false;
+}
 
 /**
  * Register all custom component types
  * MUST be called before block registration
  */
-export function registerComponentTypes(editor) {
+function registerComponentTypes(editor) {
     // Register in order: generic first, specific last
     // (GrapeJS checks in reverse order)
     
     // 1. Base layout components (generic)
     registerBaseComponents(editor);
     
-    // 2. Input components
-    registerInputComponentTypes(editor);
+    // 2. Input components (if available)
+    if (typeof registerInputComponentTypes === 'function') {
+        registerInputComponentTypes(editor);
+    }
     
     // 3. Anki-specific components (checked first)
     registerStudyActionBarComponent(editor);

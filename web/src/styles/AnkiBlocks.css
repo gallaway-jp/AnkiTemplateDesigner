@@ -1,0 +1,334 @@
+/* Anki-Specific Block Styling */
+
+.anki-field,
+.anki-cloze,
+.anki-hint,
+.anki-conditional,
+.anki-field-reference,
+.anki-syntax-highlight,
+.anki-behavior-block {
+  position: relative;
+  margin: 8px 0;
+  padding: 12px;
+  border-radius: 4px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  font-family: 'Courier New', monospace;
+}
+
+/* Anki Field Block */
+.anki-field {
+  background: rgba(63, 81, 181, 0.08);
+  border-left: 3px solid #3f51b5;
+}
+
+.anki-field .anki-syntax {
+  color: #3f51b5;
+  font-weight: 600;
+  padding: 4px 8px;
+  background: rgba(63, 81, 181, 0.1);
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.anki-field .anki-fallback {
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding-left: 8px;
+  border-left: 2px solid var(--border-color);
+}
+
+/* Anki Cloze */
+.anki-cloze {
+  background: rgba(255, 152, 0, 0.08);
+  border-left: 3px solid #ff9800;
+  display: inline-block;
+}
+
+.anki-cloze .anki-syntax {
+  color: #ff9800;
+  font-weight: 600;
+  padding: 2px 6px;
+  background: rgba(255, 152, 0, 0.1);
+  border-radius: 3px;
+}
+
+.anki-cloze::before {
+  content: '🔳 ';
+  font-size: 14px;
+  margin-right: 4px;
+}
+
+/* Anki Hint */
+.anki-hint {
+  background: rgba(76, 175, 80, 0.08);
+  border-left: 3px solid #4caf50;
+  padding: 0;
+}
+
+.anki-hint-button {
+  width: 100%;
+  padding: 12px;
+  background: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px 4px 0 0;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.anki-hint-button:hover {
+  background: #45a049;
+}
+
+.anki-hint-content {
+  padding: 12px;
+  display: none;
+}
+
+.anki-hint:hover .anki-hint-content {
+  display: block;
+}
+
+.anki-hint .anki-syntax {
+  color: #4caf50;
+  font-weight: 600;
+  padding: 4px 8px;
+  background: rgba(76, 175, 80, 0.1);
+  border-radius: 3px;
+  display: inline-block;
+}
+
+/* Anki Conditional */
+.anki-conditional {
+  background: rgba(244, 67, 54, 0.08);
+  border-left: 3px solid #f44336;
+  margin: 12px 0;
+}
+
+.anki-conditional-label {
+  padding: 8px 12px;
+  background: rgba(244, 67, 54, 0.1);
+  margin-bottom: 8px;
+  border-radius: 3px;
+}
+
+.anki-conditional-label:last-of-type {
+  margin-bottom: 0;
+  margin-top: 8px;
+}
+
+.anki-conditional-label .anki-syntax {
+  color: #f44336;
+  font-weight: 600;
+}
+
+.anki-conditional-content {
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 3px;
+  min-height: 40px;
+}
+
+.night_mode .anki-conditional-content {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Field Reference */
+.anki-field-reference {
+  background: rgba(33, 150, 243, 0.08);
+  border-left: 3px solid #2196f3;
+  padding: 8px;
+}
+
+.anki-field-select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.anki-field-select:focus {
+  outline: none;
+  border-color: #2196f3;
+  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+}
+
+/* Syntax Highlight */
+.anki-syntax-highlight {
+  background: rgba(103, 58, 183, 0.08);
+  border-left: 3px solid #673ab7;
+}
+
+.anki-syntax-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #673ab7;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.anki-syntax-code {
+  display: block;
+  padding: 8px 12px;
+  background: rgba(103, 58, 183, 0.1);
+  border-radius: 3px;
+  color: #673ab7;
+  font-size: 13px;
+  overflow-x: auto;
+}
+
+/* Behavior Block */
+.anki-behavior-block {
+  background: var(--bg-secondary);
+  border-left: 3px solid #757575;
+  padding: 0;
+  overflow: hidden;
+}
+
+.anki-behavior-header {
+  padding: 12px;
+  background: rgba(117, 117, 117, 0.1);
+  font-weight: 600;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.anki-behavior-content {
+  margin: 0;
+  padding: 12px;
+  background: var(--bg-primary);
+  font-size: 12px;
+  line-height: 1.5;
+  max-height: 200px;
+  overflow-y: auto;
+  color: var(--text-primary);
+}
+
+/* Script behavior */
+.anki-behavior-script .anki-behavior-header {
+  color: #e91e63;
+}
+
+.anki-behavior-script {
+  border-left-color: #e91e63;
+}
+
+/* Style behavior */
+.anki-behavior-style .anki-behavior-header {
+  color: #9c27b0;
+}
+
+.anki-behavior-style {
+  border-left-color: #9c27b0;
+}
+
+/* Template behavior */
+.anki-behavior-template .anki-behavior-header {
+  color: #009688;
+}
+
+.anki-behavior-template {
+  border-left-color: #009688;
+}
+
+/* Common syntax styling */
+.anki-syntax {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* Selection states */
+.anki-field:focus,
+.anki-cloze:focus,
+.anki-hint:focus,
+.anki-conditional:focus,
+.anki-field-reference:focus,
+.anki-syntax-highlight:focus,
+.anki-behavior-block:focus {
+  outline: 2px solid #2196f3;
+  outline-offset: 2px;
+}
+
+/* Drag states */
+.anki-field.dragging,
+.anki-cloze.dragging,
+.anki-hint.dragging,
+.anki-conditional.dragging,
+.anki-field-reference.dragging,
+.anki-syntax-highlight.dragging,
+.anki-behavior-block.dragging {
+  opacity: 0.6;
+  cursor: move;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .anki-field,
+  .anki-cloze,
+  .anki-hint,
+  .anki-conditional,
+  .anki-field-reference,
+  .anki-syntax-highlight,
+  .anki-behavior-block {
+    padding: 8px;
+  }
+
+  .anki-syntax-code {
+    font-size: 11px;
+  }
+
+  .anki-behavior-content {
+    max-height: 150px;
+  }
+}
+
+/* Dark mode */
+.night_mode .anki-field,
+.night_mode .anki-cloze,
+.night_mode .anki-hint,
+.night_mode .anki-conditional,
+.night_mode .anki-field-reference,
+.night_mode .anki-syntax-highlight,
+.night_mode .anki-behavior-block {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.night_mode .anki-field {
+  background: rgba(63, 81, 181, 0.15);
+  border-left-color: #5c6bc0;
+}
+
+.night_mode .anki-cloze {
+  background: rgba(255, 152, 0, 0.15);
+  border-left-color: #ffb74d;
+}
+
+.night_mode .anki-hint {
+  background: rgba(76, 175, 80, 0.15);
+  border-left-color: #81c784;
+}
+
+.night_mode .anki-hint-button {
+  background: #66bb6a;
+}
+
+.night_mode .anki-hint-button:hover {
+  background: #81c784;
+}
+
+.night_mode .anki-conditional {
+  background: rgba(244, 67, 54, 0.15);
+  border-left-color: #ef5350;
+}

@@ -97,7 +97,7 @@ class SelectionClarityUI {
             div.innerHTML = `
                 <span class="item-name">${item.name}</span>
                 <span class="item-type">${item.type}</span>
-                <button class="item-remove" data-id="${item.id}">×</button>
+                <button class="item-remove" data-id="${item.id}" title="Remove item">× Remove</button>
             `;
             
             div.querySelector('.item-remove').addEventListener('click', () => {

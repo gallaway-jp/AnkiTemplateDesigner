@@ -42,7 +42,7 @@ class ShortcutsUI {
                     <h3>Keyboard Shortcuts</h3>
                     <div class="profile-selector">
                         <select class="profile-select"></select>
-                        <button class="new-profile-btn">+</button>
+                        <button class="new-profile-btn" title="Create new shortcut profile">+ New Profile</button>
                     </div>
                 </div>
                 
@@ -143,7 +143,8 @@ class ShortcutsUI {
                            data-shortcut-id="${shortcut.id}"
                            ${shortcut.is_customizable ? '' : 'disabled'}>
                     <button class="shortcut-reset" data-shortcut-id="${shortcut.id}" 
-                            ${shortcut.is_customizable ? '' : 'disabled'}>↻</button>
+                            title="Reset to default"
+                            ${shortcut.is_customizable ? '' : 'disabled'}>↻ Reset</button>
                 </div>
                 <div class="shortcut-actions">
                     <label class="toggle-switch">

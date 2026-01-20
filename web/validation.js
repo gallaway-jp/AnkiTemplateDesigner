@@ -843,11 +843,91 @@ class ValidationUI {
      */
     initialize() {
         this.createPanel();
+        this.createValidationBadge();
         this.attachEventListeners();
     }
     
     /**
-     * Create validation panel
+     * Create validation indicator badge for editor
+     */
+    createValidationBadge() {
+        // Check if badge already exists
+        if (document.getElementById('validation-indicator-badge')) {
+            return;
+        }
+
+        const badge = document.createElement('div');
+        badge.id = 'validation-indicator-badge';
+        badge.className = 'validation-indicator-badge';
+        badge.innerHTML = `
+            <div class="badge-content">
+                <span class="badge-icon">✓</span>
+                <span class="badge-text">Valid</span>
+            </div>
+        `;
+        badge.title = 'Template validation status';
+
+        // Insert badge in a position visible to user (top toolbar area)
+        const toolbar = document.querySelector('[data-toolbar], .gjs-editor-toolbar, .editor-toolbar');
+        if (toolbar) {
+            toolbar.appendChild(badge);
+        } else {
+            // Fallback: add to body
+            document.body.appendChild(badge);
+        }
+
+        // Add click listener to show validation panel
+        badge.addEventListener('click', () => this.show());
+    }
+
+    /**
+     * Update validation badge with latest results
+     */
+    updateValidationBadge(result) {
+        const badge = document.getElementById('validation-indicator-badge');
+        if (!badge) return;
+
+        const errorCount = result.errors?.length || 0;
+        const warningCount = result.warnings?.length || 0;
+        const totalIssues = errorCount + warningCount;
+
+        if (totalIssues === 0) {
+            // All valid
+            badge.className = 'validation-indicator-badge valid';
+            badge.innerHTML = `
+                <div class="badge-content">
+                    <span class="badge-icon">✓</span>
+                    <span class="badge-text">Valid</span>
+                </div>
+            `;
+            badge.title = 'Template is valid - no issues found';
+        } else {
+            // Has issues
+            const hasErrors = errorCount > 0;
+            badge.className = `validation-indicator-badge ${hasErrors ? 'error' : 'warning'}`;
+            
+            const issueText = hasErrors 
+                ? `${errorCount} error${errorCount !== 1 ? 's' : ''}`
+                : `${warningCount} warning${warningCount !== 1 ? 's' : ''}`;
+            
+            badge.innerHTML = `
+                <div class="badge-content">
+                    <span class="badge-icon">${hasErrors ? '⚠️' : '⚡'}</span>
+                    <span class="badge-text">${issueText}</span>
+                    <span class="badge-count">${totalIssues}</span>
+                </div>
+            `;
+            badge.title = `Click to view: ${issueText}${warningCount > 0 ? `, ${warningCount} warning${warningCount !== 1 ? 's' : ''}` : ''}`;
+            
+            // Show panel automatically if has errors
+            if (hasErrors) {
+                this.show();
+            }
+        }
+    }
+
+    /**
+     * Create panel and badge
      */
     createPanel() {
         this.panel = document.createElement('div');
@@ -855,11 +935,25 @@ class ValidationUI {
         this.panel.innerHTML = `
             <div class="validation-header">
                 <h3>Template Validation</h3>
-                <button class="validation-close" title="Close validation panel">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <path d="M2 2L14 14M14 2L2 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                </button>
+                <div class="validation-header-actions">
+                    <button class="validation-export-btn" title="Export as JSON" data-format="json">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <path d="M2 2H12V12H2V2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M5 5H9M5 7H9M5 9H7" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                    <button class="validation-export-btn" title="Export as CSV" data-format="csv">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <path d="M2 2H12V12H2V2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M4 5H5M7 5H8M10 5H11M4 8H5M7 8H8M10 8H11M4 11H5M7 11H8M10 11H11" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                    <button class="validation-close" title="Close validation panel">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M2 2L14 14M14 2L2 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
             <div class="validation-stats"></div>
             <div class="validation-tabs">
@@ -879,6 +973,7 @@ class ValidationUI {
         this.errorList = this.panel.querySelector('[data-content="errors"]');
         this.warningList = this.panel.querySelector('[data-content="warnings"]');
         this.allList = this.panel.querySelector('[data-content="all"]');
+        this.lastValidationResult = null;
         
         // Attach to page
         document.body.appendChild(this.panel);
@@ -890,6 +985,14 @@ class ValidationUI {
     attachEventListeners() {
         const closeBtn = this.panel.querySelector('.validation-close');
         closeBtn.addEventListener('click', () => this.hide());
+        
+        // Export button listeners
+        this.panel.querySelectorAll('.validation-export-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const format = e.currentTarget.dataset.format;
+                this.exportReport(format);
+            });
+        });
         
         // Tab switching
         this.panel.querySelectorAll('.validation-tab').forEach(btn => {
@@ -917,10 +1020,17 @@ class ValidationUI {
      * Update display with validation results
      */
     updateDisplay(result) {
+        this.lastValidationResult = result;
         this.updateStats(result);
         this.updateErrorList(result.errors);
         this.updateWarningList(result.warnings);
         this.updateAllList(result.errors.concat(result.warnings));
+        this.updateValidationBadge(result);
+        
+        // Show success confirmation if validation passes
+        if (result.errors.length === 0 && result.warnings.length === 0) {
+            this.showValidationSuccess();
+        }
     }
     
     /**
@@ -948,19 +1058,35 @@ class ValidationUI {
      */
     updateErrorList(errors) {
         if (errors.length === 0) {
-            this.errorList.innerHTML = '<div class="validation-empty">No errors found</div>';
+            this.errorList.innerHTML = '<div class="validation-empty">✓ No errors found - your template is valid!</div>';
             return;
         }
         
         let html = '';
         errors.forEach((error, i) => {
+            const suggestions = this.getSuggestionsForError(error.ruleId);
+            const userFriendlyMsg = this.getUserFriendlyMessage(error);
+            const context = this.getErrorContext(error);
+            
             html += `
                 <div class="validation-item error">
-                    <div class="validation-item-icon">!</div>
+                    <div class="validation-item-icon">🔴</div>
                     <div class="validation-item-content">
-                        <div class="validation-item-name">${error.ruleName}</div>
-                        <div class="validation-item-message">${error.message}</div>
+                        <div class="validation-item-header">
+                            <div class="validation-item-name">${error.ruleName}</div>
+                            <span class="validation-item-id">${error.ruleId}</span>
+                        </div>
+                        <div class="validation-item-message">${userFriendlyMsg}${context ? ' ' + context : ''}</div>
+                        <div class="validation-item-technical" title="Technical details">${error.message}</div>
                         <div class="validation-item-category">${error.category}</div>
+                        ${suggestions ? `
+                            <div class="validation-suggestions">
+                                <div class="suggestions-title">💡 How to fix:</div>
+                                <ul class="suggestions-list">
+                                    ${suggestions.map(s => `<li>${s}</li>`).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
                     </div>
                 </div>
             `;
@@ -974,19 +1100,31 @@ class ValidationUI {
      */
     updateWarningList(warnings) {
         if (warnings.length === 0) {
-            this.warningList.innerHTML = '<div class="validation-empty">No warnings found</div>';
+            this.warningList.innerHTML = '<div class="validation-empty">✓ No warnings found</div>';
             return;
         }
         
         let html = '';
         warnings.forEach((warning, i) => {
+            const suggestions = this.getSuggestionsForError(warning.ruleId);
             html += `
                 <div class="validation-item warning">
-                    <div class="validation-item-icon">⚠</div>
+                    <div class="validation-item-icon">🟡</div>
                     <div class="validation-item-content">
-                        <div class="validation-item-name">${warning.ruleName}</div>
+                        <div class="validation-item-header">
+                            <div class="validation-item-name">${warning.ruleName}</div>
+                            <span class="validation-item-id">${warning.ruleId}</span>
+                        </div>
                         <div class="validation-item-message">${warning.message}</div>
                         <div class="validation-item-category">${warning.category}</div>
+                        ${suggestions ? `
+                            <div class="validation-suggestions">
+                                <div class="suggestions-title">💡 Suggested fixes:</div>
+                                <ul class="suggestions-list">
+                                    ${suggestions.map(s => `<li>${s}</li>`).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
                     </div>
                 </div>
             `;
@@ -1026,9 +1164,140 @@ class ValidationUI {
     }
     
     /**
-     * Switch between tabs
+     * Get user-friendly suggestions for fixing errors
      */
-    switchTab(tab) {
+    /**
+     * Translate technical error messages to user-friendly format
+     */
+    getUserFriendlyMessage(error) {
+        const messageMap = {
+            // HTML Structure
+            'html-1': 'Your template needs a container element (like a div or section) to hold the content',
+            'html-2': 'Some HTML tags aren\'t properly closed or nested. Make sure opening tags have matching closing tags.',
+            'html-3': 'You have an empty container that doesn\'t serve a purpose. Consider removing it.',
+            'html-4': 'You\'re using an invalid HTML tag. Use standard tags like div, span, p, section, etc.',
+            
+            // Anki Fields
+            'anki-1': 'Field reference is incorrect. Use {{FieldName}} format. Check that the field name matches exactly.',
+            'anki-2': 'Field syntax is wrong. Use {{Field}} format, not {Field} or {{field}}',
+            'anki-3': 'Optional field missing conditional syntax. Use {{#FieldName}}content{{/FieldName}} for optional fields.',
+            
+            // CSS & Styling
+            'css-1': 'Your CSS has syntax errors. Check for typos, missing semicolons, or invalid properties.',
+            'css-2': 'Your CSS could be more efficient. Consider using shorthand properties to reduce file size.',
+            
+            // Performance
+            'perf-1': 'Your template has too many nested elements. Simplify the structure for better performance.',
+            'perf-2': 'Use relative units (em, rem) instead of pixels for better responsive design.',
+            
+            // Accessibility
+            'a11y-1': 'Images need alt text describing them for accessibility. Example: <img alt="Card front">',
+            'a11y-2': 'Heading hierarchy is incorrect. Use h1, h2, h3 in order without skipping levels.',
+            'a11y-3': 'Form inputs need labels for accessibility. Add <label> or aria-label attributes.',
+            
+            // Generic fallback
+            'default': 'There\'s an issue with your template. See the detailed error message below for specifics.'
+        };
+        
+        return messageMap[error.ruleId] || messageMap['default'];
+    }
+
+    /**
+     * Get error context (which field/component has the issue)
+     */
+    getErrorContext(error) {
+        // Try to extract field name or component from error details
+        const contexts = {
+            'anki-1': 'in field reference',
+            'anki-2': 'in field syntax',
+            'anki-3': 'in optional field',
+            'html-1': 'in template structure',
+            'html-2': 'in HTML tags',
+            'css-1': 'in stylesheet'
+        };
+        
+        return contexts[error.ruleId] || '';
+    }
+
+    getSuggestionsForError(ruleId) {
+        const suggestions = {
+            // HTML Structure
+            'html-1': [
+                'Add at least one container element (div, section, article)',
+                'Make sure your template has a root container with content inside'
+            ],
+            'html-2': [
+                'Check that all opening tags have corresponding closing tags',
+                'Ensure tags are properly nested (no crossing tag boundaries)'
+            ],
+            'html-3': [
+                'Remove empty containers that serve no purpose',
+                'If the container is intentional (spacing), add a comment explaining its purpose'
+            ],
+            'html-4': [
+                'Replace invalid HTML tags with valid ones (div, span, p, etc.)',
+                'Use semantic HTML when possible (section, article, header, footer)'
+            ],
+            
+            // Anki Fields
+            'anki-1': [
+                'Surround field references with double curly braces: {{FieldName}}',
+                'Check that field names match exactly (case-sensitive)'
+            ],
+            'anki-2': [
+                'Remove or fix incorrect field syntax',
+                'Field references should be like {{Field}}, not {Field} or {{field}}'
+            ],
+            'anki-3': [
+                'Add conditional statements for optional fields',
+                'Use {{#Optional}}content{{/Optional}} syntax'
+            ],
+            
+            // CSS & Styling
+            'css-1': [
+                'Check CSS syntax for typos or missing semicolons',
+                'Use valid CSS property names and values'
+            ],
+            'css-2': [
+                'Use shorthand CSS properties when applicable',
+                'Consolidate related CSS rules to reduce size'
+            ],
+            
+            // Performance
+            'perf-1': [
+                'Reduce the number of nested elements',
+                'Use CSS classes instead of inline styles',
+                'Consider using CSS Grid or Flexbox for layout'
+            ],
+            'perf-2': [
+                'Use relative units (em, rem) instead of absolute pixels',
+                'This makes the template more responsive and accessible'
+            ],
+            
+            // Accessibility
+            'a11y-1': [
+                'Add alt text to all images: <img src="..." alt="Description">',
+                'Describe what the image shows, not just "image"'
+            ],
+            'a11y-2': [
+                'Use proper heading hierarchy (h1, h2, h3, etc.)',
+                'Don\'t skip heading levels'
+            ],
+            'a11y-3': [
+                'Add descriptive labels to form inputs',
+                'Use aria-label if visible label isn\'t appropriate'
+            ],
+            
+            // Default suggestions for unknown rules
+            'default': [
+                'Review the error message to understand what needs to be fixed',
+                'Check the Anki Template Designer documentation for guidance',
+                'Run validation again after making changes'
+            ]
+        };
+        
+        return suggestions[ruleId] || suggestions['default'];
+    }
         // Update active tab
         this.panel.querySelectorAll('.validation-tab').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.tab === tab);
@@ -1048,6 +1317,45 @@ class ValidationUI {
         if (contentMap[tab]) {
             contentMap[tab].style.display = 'block';
         }
+    }
+    
+    /**
+     * Show validation panel
+     */
+    /**
+     * Show validation success confirmation
+     */
+    showValidationSuccess() {
+        // Check if we should show the success message (not on first validation)
+        if (!this.lastValidationResult) {
+            return;
+        }
+        
+        // Only show toast if we haven't shown it recently (avoid spam)
+        const now = Date.now();
+        if (!this.lastSuccessTime) {
+            this.lastSuccessTime = 0;
+        }
+        
+        // Show success toast if at least 2 seconds since last success message
+        if (now - this.lastSuccessTime > 2000) {
+            this.showSuccessToast();
+            this.lastSuccessTime = now;
+        }
+    }
+    
+    /**
+     * Show success toast notification
+     */
+    showSuccessToast() {
+        // Check if showToast function is available
+        if (typeof showToast !== 'function') {
+            console.log('[Validation] Template is valid - all checks passed');
+            return;
+        }
+        
+        // Show success toast with checkmark
+        showToast('✓ Valid template - all validation checks passed!', 'success', 3000);
     }
     
     /**
@@ -1080,6 +1388,142 @@ class ValidationUI {
         } else {
             this.show();
         }
+    }
+    
+    /**
+     * Export validation report to JSON or CSV
+     */
+    exportReport(format) {
+        if (!this.lastValidationResult) {
+            alert('No validation results to export');
+            return;
+        }
+        
+        const result = this.lastValidationResult;
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+        
+        if (format === 'json') {
+            this.exportAsJSON(result, timestamp);
+        } else if (format === 'csv') {
+            this.exportAsCSV(result, timestamp);
+        }
+    }
+    
+    /**
+     * Export as JSON format
+     */
+    exportAsJSON(result, timestamp) {
+        const data = {
+            exportDate: new Date().toISOString(),
+            summary: {
+                totalErrors: result.errors.length,
+                totalWarnings: result.warnings.length,
+                validationTime: result.time || 0
+            },
+            errors: result.errors.map(e => ({
+                id: e.ruleId,
+                name: e.ruleName,
+                message: e.message,
+                level: e.level,
+                category: e.category || 'General',
+                component: e.component || 'Unknown',
+                suggestions: this.getSuggestionsForError(e.ruleId)
+            })),
+            warnings: result.warnings.map(w => ({
+                id: w.ruleId,
+                name: w.ruleName,
+                message: w.message,
+                level: w.level,
+                category: w.category || 'General',
+                component: w.component || 'Unknown'
+            }))
+        };
+        
+        const json = JSON.stringify(data, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        this.downloadFile(blob, `validation-report-${timestamp}.json`);
+        
+        // Show success toast
+        this.showExportToast('Validation report exported as JSON');
+    }
+    
+    /**
+     * Export as CSV format
+     */
+    exportAsCSV(result, timestamp) {
+        const rows = [];
+        
+        // Header row
+        rows.push(['Type', 'Rule ID', 'Rule Name', 'Message', 'Category', 'Component', 'Suggestions'].join(','));
+        
+        // Error rows
+        result.errors.forEach(e => {
+            const suggestions = this.getSuggestionsForError(e.ruleId).join('; ');
+            rows.push([
+                'Error',
+                e.ruleId,
+                `"${e.ruleName || ''}"`,
+                `"${(e.message || '').replace(/"/g, '""')}"`,
+                e.category || 'General',
+                e.component || 'Unknown',
+                `"${suggestions}"`
+            ].join(','));
+        });
+        
+        // Warning rows
+        result.warnings.forEach(w => {
+            rows.push([
+                'Warning',
+                w.ruleId,
+                `"${w.ruleName || ''}"`,
+                `"${(w.message || '').replace(/"/g, '""')}"`,
+                w.category || 'General',
+                w.component || 'Unknown',
+                ''
+            ].join(','));
+        });
+        
+        const csv = rows.join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        this.downloadFile(blob, `validation-report-${timestamp}.csv`);
+        
+        // Show success toast
+        this.showExportToast('Validation report exported as CSV');
+    }
+    
+    /**
+     * Download file helper
+     */
+    downloadFile(blob, filename) {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+    
+    /**
+     * Show export success toast
+     */
+    showExportToast(message) {
+        const toast = document.createElement('div');
+        toast.className = 'validation-export-toast';
+        toast.textContent = '✓ ' + message;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.classList.add('show');
+        }, 10);
+        
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => {
+                document.body.removeChild(toast);
+            }, 300);
+        }, 3000);
     }
 }
 

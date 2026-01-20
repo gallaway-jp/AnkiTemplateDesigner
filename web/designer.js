@@ -4,17 +4,24 @@
  * Sets up the visual template designer with Anki-specific customizations
  */
 
-// Import tooltip manager
-import { tooltipManager, initializeTooltips } from './tooltips.js';
+// Ensure early logging
+if (typeof logWithTimestamp === 'undefined') {
+    window.logWithTimestamp = (msg) => console.log('[Designer] ' + msg);
+}
 
-// Import UI customization
-import { initializeUICustomization } from './ui-customization.js';
+logWithTimestamp('Designer.js loading');
 
-// Restore theme settings immediately
+// Note: tooltipManager and initializeTooltips will be loaded via external script
+// Note: initializeUICustomization will be loaded via external script
+
+// Restore theme settings after page fully loads (non-blocking)
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', restoreThemeSettings);
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(restoreThemeSettings, 100);
+    });
 } else {
-    restoreThemeSettings();
+    // Page already loaded, defer theme restoration
+    setTimeout(restoreThemeSettings, 100);
 }
 
 // Global editor instance
@@ -61,31 +68,130 @@ window.notifySaveError = function(errorMessage) {
 };
 
 /**
- * Show a toast notification (temporary message)
+ * Toast Queue Manager - Handles stacking and lifecycle of toast notifications
  */
-function showToast(message, type = 'info', duration = 3000) {
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.setAttribute('role', 'status');
-    toast.setAttribute('aria-live', 'polite');
-    toast.textContent = message;
+const toastManager = {
+    queue: [],
+    visibleToasts: [],
+    maxVisible: 3,
+    toastHeight: 80, // Approximate height + margin
     
-    document.body.appendChild(toast);
+    /**
+     * Add toast to queue and display
+     */
+    add(message, type = 'info', duration = 3000) {
+        const toastId = Date.now() + Math.random();
+        const toastObj = { id: toastId, message, type, duration };
+        
+        this.queue.push(toastObj);
+        this.display(toastObj);
+        
+        console.log(`[Toast] ${type.toUpperCase()}: ${message}`);
+        
+        return toastId;
+    },
     
-    // Show toast
-    requestAnimationFrame(() => {
-        toast.classList.add('visible');
-    });
+    /**
+     * Display toast with proper stacking
+     */
+    display(toastObj) {
+        // Check if we already have max visible toasts
+        if (this.visibleToasts.length >= this.maxVisible) {
+            // Auto-dismiss oldest toast
+            const oldestId = this.visibleToasts[0];
+            this.remove(oldestId);
+        }
+        
+        const toast = document.createElement('div');
+        toast.id = `toast-${toastObj.id}`;
+        toast.className = `toast toast-${toastObj.type}`;
+        toast.setAttribute('role', 'status');
+        toast.setAttribute('aria-live', toastObj.type === 'error' ? 'assertive' : 'polite');
+        
+        // For error toasts, don't add the icon prefix (CSS handles it)
+        toast.textContent = toastObj.type === 'error' 
+            ? toastObj.message.startsWith('✗') ? toastObj.message : toastObj.message
+            : toastObj.message;
+        
+        // Calculate position based on visible toasts
+        const stackIndex = this.visibleToasts.length;
+        const bottomOffset = 24 + (stackIndex * this.toastHeight);
+        toast.style.setProperty('--stack-index', stackIndex);
+        toast.style.bottom = bottomOffset + 'px';
+        
+        document.body.appendChild(toast);
+        this.visibleToasts.push(toastObj.id);
+        
+        // Animate in
+        requestAnimationFrame(() => {
+            toast.classList.add('visible');
+        });
+        
+        // Auto-dismiss after duration
+        setTimeout(() => {
+            this.remove(toastObj.id);
+        }, toastObj.duration);
+    },
     
-    // Hide and remove after duration
-    setTimeout(() => {
+    /**
+     * Remove toast from display and queue
+     */
+    remove(toastId) {
+        const toast = document.getElementById(`toast-${toastId}`);
+        if (!toast) return;
+        
+        // Animate out
         toast.classList.remove('visible');
+        
+        // Remove after animation completes
         setTimeout(() => {
             toast.remove();
+            
+            // Remove from visible array
+            this.visibleToasts = this.visibleToasts.filter(id => id !== toastId);
+            
+            // Reposition remaining toasts
+            this.repositionToasts();
+            
+            // Process next queue item if available
+            const queuedToast = this.queue.find(t => t.id === toastId);
+            if (queuedToast) {
+                this.queue = this.queue.filter(t => t.id !== toastId);
+            }
         }, 300);
-    }, duration);
+    },
     
-    console.log(`[Toast] ${type.toUpperCase()}: ${message}`);
+    /**
+     * Reposition all visible toasts with smooth animation
+     */
+    repositionToasts() {
+        this.visibleToasts.forEach((toastId, index) => {
+            const toast = document.getElementById(`toast-${toastId}`);
+            if (toast) {
+                const bottomOffset = 24 + (index * this.toastHeight);
+                toast.style.bottom = bottomOffset + 'px';
+            }
+        });
+    },
+    
+    /**
+     * Clear all toasts (useful on page navigation)
+     */
+    clearAll() {
+        this.visibleToasts.forEach(id => this.remove(id));
+        this.queue = [];
+    }
+};
+
+/**
+ * Show a toast notification (temporary message) - Public API
+ */
+function showToast(message, type = 'info', duration = 3000) {
+    // Increase duration for errors so users have time to read
+    if (type === 'error') {
+        duration = Math.max(duration, 5000);
+    }
+    return toastManager.add(message, type, duration);
 }
 
 // Initialization steps for progress tracking
@@ -104,28 +210,97 @@ const INIT_STEPS = [
 /**
  * Update progress bar and status message
  */
-function updateProgress(step, totalSteps) {
+function updateProgress(step, totalSteps, customMessage = null) {
     const percent = Math.round((step / totalSteps) * 100);
     const progressBar = document.getElementById('progress-bar');
     const progressText = document.getElementById('progress-text');
     const statusText = document.getElementById('loading-status');
     
-    if (progressBar) progressBar.style.width = percent + '%';
-    if (progressText) progressText.textContent = percent + '%';
-    if (statusText && step <= INIT_STEPS.length) {
-        statusText.textContent = INIT_STEPS[step - 1].message;
+    // Update progress bar width with smooth animation
+    if (progressBar) {
+        progressBar.style.transition = 'width 0.3s ease-in-out';
+        progressBar.style.width = percent + '%';
     }
     
-    console.log(`[Progress] Step ${step}/${totalSteps}: ${percent}%`);
+    if (progressText) progressText.textContent = percent + '%';
+    
+    if (statusText) {
+        if (customMessage) {
+            statusText.textContent = customMessage;
+        } else if (step <= INIT_STEPS.length) {
+            statusText.textContent = INIT_STEPS[step - 1].message;
+        }
+    }
+    
+    console.log(`[Progress] Step ${step}/${totalSteps}: ${percent}%${customMessage ? ' - ' + customMessage : ''}`);
+}
+
+/**
+ * Update progress with more granular file loading information
+ */
+function updateFileLoadingProgress(currentFile, totalFiles, percentComplete) {
+    const statusText = document.getElementById('loading-status');
+    const progressBar = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-text');
+    
+    // Calculate overall progress (assuming file loading is 40-90% of total)
+    const baseProgress = 40;
+    const fileLoadingRange = 50;
+    const overallProgress = baseProgress + (percentComplete / 100) * fileLoadingRange;
+    
+    if (progressBar) {
+        progressBar.style.transition = 'width 0.2s ease-out';
+        progressBar.style.width = overallProgress + '%';
+    }
+    
+    if (progressText) {
+        progressText.textContent = Math.round(overallProgress) + '%';
+    }
+    
+    if (statusText) {
+        statusText.textContent = `Loading files: ${currentFile}/${totalFiles} (${percentComplete}%)`;
+    }
+    
+    console.log(`[File Loading] ${currentFile}/${totalFiles}: ${percentComplete}%`);
+}
+
+/**
+ * Listen for real-time file loading progress from backend
+ */
+function initializeFileLoadingProgressListener() {
+    if (window.bridge && window.bridge.onFileLoadProgress) {
+        window.bridge.onFileLoadProgress((progressData) => {
+            if (progressData && typeof progressData.percent !== 'undefined') {
+                updateFileLoadingProgress(
+                    progressData.current_file || 0,
+                    progressData.total_files || 1,
+                    progressData.percent
+                );
+            }
+        });
+    }
 }
 
 /**
  * Hide loading overlay
  */
 function hideLoading() {
+    console.log('[Designer] Hiding loading overlay...');
+    
+    // Initialize file loading progress listener for future operations
+    initializeFileLoadingProgressListener();
+    
     const loading = document.getElementById('loading');
     if (loading) {
         loading.classList.add('hidden');
+        console.log('[Designer] Loading overlay hidden');
+    } else {
+        console.warn('[Designer] Loading element not found');
+    }
+    
+    // Clear any pending initialization timeouts
+    if (window.initializationTimeout) {
+        clearTimeout(window.initializationTimeout);
     }
 }
 
@@ -133,17 +308,34 @@ function hideLoading() {
  * Initialize the GrapeJS editor
  */
 function initializeEditor() {
+    logWithTimestamp('initializeEditor() called');
     console.log('[Designer] Initializing GrapeJS editor...');
     updateProgress(1, INIT_STEPS.length);
     
     try {
+        logWithTimestamp('Checking if grapesjs is defined...');
         // Check if GrapeJS is available
         if (typeof grapesjs === 'undefined') {
+            logWithTimestamp('GrapeJS NOT defined!');
             console.error('[Designer] GrapeJS library not loaded!');
-            showError('GrapeJS library failed to load. Please check your installation.');
+            // Attempt to reload GrapeJS
+            console.log('[Designer] Attempting to reload GrapeJS...');
+            const script = document.createElement('script');
+            script.src = 'grapesjs/grapes.min.js';
+            script.onload = () => {
+                console.log('[Designer] GrapeJS reloaded successfully');
+                setTimeout(() => initializeEditor(), 500);
+            };
+            script.onerror = () => {
+                console.error('[Designer] Failed to load GrapeJS');
+                showError('GrapeJS library failed to load. Please check your installation.');
+                hideLoading();
+            };
+            document.head.appendChild(script);
             return;
         }
         
+        logWithTimestamp('GrapeJS is defined, proceeding with initialization');
         console.log('[Designer] GrapeJS library loaded, creating editor...');
         updateProgress(2, INIT_STEPS.length);
         
@@ -156,23 +348,60 @@ function initializeEditor() {
                 storageManager: false
                 // Note: plugins removed - will configure after init
             });
+            
+            if (!window.editor) {
+                throw new Error('grapesjs.init returned undefined');
+            }
+            
+            console.log('[Designer] ✓ Editor instance created successfully');
         } catch (initError) {
-            console.error('ERROR during init: ' + initError.message);
-            throw initError;
+            console.error('ERROR during GrapeJS init: ' + initError.message);
+            console.error('Stack: ' + initError.stack);
+            console.log('[Designer] ✗ FATAL ERROR - returning from startEditorInit');
+            showError('Failed to initialize GrapeJS: ' + initError.message);
+            hideLoading();
+            return;
         }
         
-        updateProgress(3, INIT_STEPS.length);
-        console.log('[Designer] Editor created, configuring managers...');
+        console.log('[Designer] Proceeding to configure managers...');
         
         // Configure managers after initialization
+        console.log('[Designer] About to configure LayerManager, BlockManager, etc...');
         try {
-            editor.LayerManager.getConfig().appendTo = '.layers-container';
-            editor.BlockManager.getConfig().appendTo = '.blocks-container';
-            editor.StyleManager.getConfig().appendTo = '.styles-container';
-            editor.TraitManager.getConfig().appendTo = '.traits-container';
+            if (window.editor.LayerManager) {
+                window.editor.LayerManager.getConfig().appendTo = '.layers-container';
+            }
+            if (window.editor.BlockManager) {
+                const blockConfig = window.editor.BlockManager.getConfig();
+                blockConfig.appendTo = '.blocks-container';
+                console.log('[Designer] BlockManager configured to append to:', blockConfig.appendTo);
+                
+                // Ensure the BlockManager view is rendered
+                // In GrapeJS, we need to explicitly render the blocks view
+                try {
+                    const blocksContainer = document.querySelector('.blocks-container');
+                    if (blocksContainer && window.editor.BlockManager.view) {
+                        blocksContainer.innerHTML = '';
+                        if (window.editor.BlockManager.render) {
+                            window.editor.BlockManager.render();
+                            console.log('[Designer] BlockManager view rendered');
+                        }
+                    }
+                } catch (e) {
+                    console.warn('[Designer] Could not render BlockManager view:', e.message);
+                }
+            }
+            if (window.editor.StyleManager) {
+                window.editor.StyleManager.getConfig().appendTo = '.styles-container';
+            }
+            if (window.editor.TraitManager) {
+                window.editor.TraitManager.getConfig().appendTo = '.traits-container';
+            }
         } catch (e) {
             console.warn('[Designer] Could not configure manager targets:', e.message);
         }
+        
+        console.log('[Designer] Manager configuration complete, setting up devices...');
         
         // Set up devices
         updateProgress(4, INIT_STEPS.length);
@@ -193,9 +422,10 @@ function initializeEditor() {
         }
         
         updateProgress(6, INIT_STEPS.length);
-        console.log('[Designer] Managers configured');
+        console.log('[Designer] ✓ Devices configured, Managers ready');
         
         // Load anki plugin after editor creation
+        console.log('[Designer] Loading anki plugin...');
         updateProgress(7, INIT_STEPS.length);
         try {
             if (typeof ankiPlugin === 'function') {
@@ -205,27 +435,35 @@ function initializeEditor() {
             console.warn('[Designer] Could not load anki-plugin:', e.message);
         }
         
+        console.log('[Designer] ✓ Anki plugin loaded (or not available)');
         updateProgress(8, INIT_STEPS.length);
     
         // Schedule registration after modules have time to load
+        console.log('[Designer] Scheduling registerCustomizations with 100ms timeout...');
         setTimeout(() => {
-            registerCustomizations(editor);
-            updateProgress(9, INIT_STEPS.length);
-            
-            // Hide loading after a brief moment
-            setTimeout(() => {
+            console.log('[Designer] setTimeout callback executing - calling registerCustomizations');
+            try {
+                registerCustomizations(editor);
+                updateProgress(9, INIT_STEPS.length);
+                
+                // Hide loading after a brief moment
+                setTimeout(() => {
+                    hideLoading();
+                    initializeWelcome();  // Show welcome overlay for first-time users
+                }, 300);
+            } catch (regError) {
+                console.error('[Designer] Error during customization registration:', regError);
                 hideLoading();
-                initializeWelcome();  // Show welcome overlay for first-time users
-            }, 300);
+                showError('Failed to register customizations: ' + regError.message);
+            }
         }, 100);
     
-        console.log('[Designer] Editor initialized');
-        window.log('[Designer] GrapeJS editor ready');
+        console.log('[Designer] Editor initialization sequence started');
     
     } catch (error) {
         console.error('[Designer] Failed to initialize editor:', error);
         console.error('[Designer] Stack:', error.stack);
-        showError('Failed to initialize editor at: ' + error.message + '\n\nCheck browser console for full stack trace.');
+        showError('Failed to initialize editor: ' + error.message + '\n\nCheck browser console for full stack trace.');
         hideLoading();
     }
 }
@@ -235,6 +473,7 @@ function initializeEditor() {
  * Called after a delay to allow ES6 modules time to load
  */
 function registerCustomizations(editor) {
+    console.log('[Designer] *** registerCustomizations() STARTED ***');
     try {
         showDebug('Step 11: Modules loaded, registering customizations...');
         
@@ -260,9 +499,32 @@ function registerCustomizations(editor) {
             showDebug('WARNING: registerAnkiTraits not available');
         }
         
+        // Pre-initialize BlockManager view before registering blocks
+        console.log('[Designer] Pre-initializing BlockManager before block registration...');
+        try {
+            if (editor.BlockManager) {
+                const blockManager = editor.BlockManager;
+                const blocksContainer = document.querySelector('.blocks-container');
+                
+                // Ensure BlockManager view exists and is appended
+                if (blockManager.view && blocksContainer) {
+                    const viewEl = blockManager.view.$el || blockManager.view.el;
+                    if (viewEl && viewEl.parentElement !== blocksContainer) {
+                        console.log('[Designer] Pre-appending BlockManager view to container...');
+                        blocksContainer.appendChild(viewEl);
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('[Designer] Error pre-initializing BlockManager:', e.message);
+        }
+        
         // Register custom blocks (async)
         if (typeof registerAnkiBlocks === 'function') {
             console.log('[Designer] Registering blocks...');
+            if (window.setDebugStatus) {
+                window.setDebugStatus('Registering blocks...');
+            }
             registerAnkiBlocks(editor).then(() => {
                 console.log('[Designer] Blocks registered');
                 showDebug('Step 14: Blocks registered (async)');
@@ -270,6 +532,9 @@ function registerCustomizations(editor) {
                 // Initialize component search system after blocks are loaded
                 if (typeof initializeComponentSearch === 'function') {
                     console.log('[Designer] Initializing component search...');
+                    if (window.setDebugStatus) {
+                        window.setDebugStatus('✓ Ready!');
+                    }
                     initializeComponentSearch(editor);
                     showDebug('Step 14.1: Component search initialized');
                 } else {
@@ -277,11 +542,17 @@ function registerCustomizations(editor) {
                 }
             }).catch(error => {
                 console.error('[Designer] Error registering blocks:', error);
+                if (window.setDebugStatus) {
+                    window.setDebugStatus('❌ Error: ' + error.message);
+                }
                 showDebug('ERROR: Blocks registration failed');
             });
             showDebug('Step 14: Blocks registration started (async)');
         } else {
             console.warn('[Designer] registerAnkiBlocks function not available');
+            if (window.setDebugStatus) {
+                window.setDebugStatus('❌ ERROR: registerAnkiBlocks not found');
+            }
             showDebug('WARNING: registerAnkiBlocks not available');
         }
         
@@ -435,30 +706,30 @@ function setupPanels(editor) {
                 id: 'visibility',
                 active: true,
                 className: 'btn-toggle-borders',
-                label: '🔲',
+                label: '🔲 Borders',
                 command: 'sw-visibility',
-                attributes: { title: 'Toggle borders' }
+                attributes: { title: 'Toggle element borders' }
             },
             {
                 id: 'export',
                 className: 'btn-export',
-                label: '💾',
+                label: '💾 Export',
                 command: 'export-template',
-                attributes: { title: 'Export template' }
+                attributes: { title: 'Export template as HTML' }
             },
             {
                 id: 'preview',
                 className: 'btn-preview',
-                label: '👁',
+                label: '👁 Preview',
                 command: 'preview-card',
-                attributes: { title: 'Preview card' }
+                attributes: { title: 'Preview card appearance' }
             },
             {
                 id: 'validate',
                 className: 'btn-validate',
-                label: '✓',
+                label: '✓ Validate',
                 command: 'validate-template',
-                attributes: { title: 'Validate template' }
+                attributes: { title: 'Validate template syntax' }
             }
         ]
     });
@@ -470,18 +741,18 @@ function setupPanels(editor) {
         buttons: [
             {
                 id: 'device-desktop',
-                label: '🖥',
+                label: '🖥 Desktop',
                 command: 'set-device-desktop',
                 active: true,
                 togglable: false,
-                attributes: { title: 'Desktop view' }
+                attributes: { title: 'Desktop view (1920×1080)' }
             },
             {
                 id: 'device-mobile',
-                label: '📱',
+                label: '📱 Mobile',
                 command: 'set-device-mobile',
                 togglable: false,
-                attributes: { title: 'Mobile view' }
+                attributes: { title: 'Mobile view (390×844)' }
             }
         ]
     });
@@ -550,10 +821,7 @@ function registerCommands() {
     // Preview card command
     commands.add('preview-card', {
         run(editor) {
-            const projectData = editor.getProjectData();
-            if (window.bridge) {
-                window.bridge.requestPreview(JSON.stringify(projectData));
-            }
+            showResponsivePreview(editor);
         }
     });
     
@@ -654,38 +922,17 @@ function hideLoading() {
 }
 
 /**
- * Show debug message (overlay on the page)
+ * Show debug message in new debug panel (redirects from old dialog)
  */
 function showDebug(message) {
-    let debugDiv = document.getElementById('debug-messages');
-    if (!debugDiv) {
-        debugDiv = document.createElement('div');
-        debugDiv.id = 'debug-messages';
-        debugDiv.style.cssText = `
-            position: fixed;
-            top: 60px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #fff3cd;
-            border: 2px solid #ffc107;
-            border-radius: 4px;
-            padding: 15px;
-            max-width: 90%;
-            z-index: 20000;
-            font-family: monospace;
-            font-size: 12px;
-            color: #333;
-            max-height: 200px;
-            overflow-y: auto;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        `;
-        document.body.appendChild(debugDiv);
+    // Redirect to new debug panel if available
+    if (typeof addDebugLog === 'function') {
+        const timestamp = new Date().toLocaleTimeString();
+        addDebugLog(`[${timestamp}] ${message}`);
+    } else {
+        // Fallback to console only if debug panel not ready
+        console.log('[Debug]', message);
     }
-    
-    const timestamp = new Date().toLocaleTimeString();
-    debugDiv.innerHTML += `<div>[${timestamp}] ${message}</div>`;
-    debugDiv.scrollTop = debugDiv.scrollHeight;
-    console.log('[Debug]', message);
 }
 
 /**
@@ -1164,15 +1411,20 @@ class UndoRedoManager {
         this.init();
     }
     
-    init() {
+    init(attempt = 0) {
         // Wait for DOM to be ready and editor to have undo manager
         setTimeout(() => {
             this.undoBtn = document.querySelector('[data-action="undo"]');
             this.redoBtn = document.querySelector('[data-action="redo"]');
             
             if (!this.undoBtn || !this.redoBtn) {
-                console.warn('[UndoRedo] Undo/Redo buttons not found, trying again...');
-                setTimeout(() => this.init(), 500);
+                // Only retry a few times (max 10 attempts = 5 seconds total)
+                if (attempt < 10) {
+                    console.log('[UndoRedo] Buttons not found (attempt ' + (attempt + 1) + '/10), retrying...');
+                    setTimeout(() => this.init(attempt + 1), 500);
+                } else {
+                    console.log('[UndoRedo] Undo/Redo buttons not found after 10 attempts, giving up');
+                }
                 return;
             }
             
@@ -1746,11 +1998,168 @@ function initializeTemplateHistory() {
     }
 }
 
-function initializeDevicePreview() {
-    if (!window.devicePreviewManager && window.editor) {
-        window.devicePreviewManager = new DevicePreviewManager(window.editor);
-        console.log('[DevicePreview] Manager created');
+/**
+ * Show responsive preview modal with device options
+ */
+function showResponsivePreview(editor) {
+    // Create modal HTML
+    const modal = document.createElement('div');
+    modal.className = 'responsive-preview-modal';
+    modal.innerHTML = `
+        <div class="preview-modal-overlay" onclick="this.parentElement.remove()"></div>
+        <div class="preview-modal-content">
+            <div class="preview-modal-header">
+                <h2>Responsive Preview</h2>
+                <button class="preview-close-btn" onclick="this.closest('.responsive-preview-modal').remove()">✕</button>
+            </div>
+            <div class="preview-devices">
+                <div class="device-selector">
+                    <label>Select Device:</label>
+                    <select id="device-select" class="device-select">
+                        <optgroup label="Mobile">
+                            <option value="mobile-375">Mobile (375×667)</option>
+                            <option value="mobile-390">iPhone 13 (390×844)</option>
+                            <option value="mobile-414">Mobile Large (414×896)</option>
+                        </optgroup>
+                        <optgroup label="Tablet">
+                            <option value="tablet-768">iPad (768×1024)</option>
+                            <option value="tablet-1024">iPad Pro (1024×1366)</option>
+                        </optgroup>
+                        <optgroup label="Desktop">
+                            <option value="desktop-1280" selected>Desktop (1280×720)</option>
+                            <option value="desktop-1440">Desktop (1440×900)</option>
+                            <option value="desktop-1920">Desktop (1920×1080)</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div class="device-controls">
+                    <button id="rotate-device" class="device-btn" title="Rotate device">
+                        🔄 Rotate
+                    </button>
+                    <button id="zoom-in" class="device-btn" title="Zoom in">
+                        🔍+
+                    </button>
+                    <button id="zoom-out" class="device-btn" title="Zoom out">
+                        🔍-
+                    </button>
+                    <button id="reset-zoom" class="device-btn" title="Reset zoom">
+                        Reset
+                    </button>
+                </div>
+            </div>
+            <div class="preview-container">
+                <div class="device-frame" id="device-frame">
+                    <div class="device-notch"></div>
+                    <div class="device-screen" id="device-screen">
+                        <iframe id="preview-iframe" class="preview-iframe"></iframe>
+                    </div>
+                    <div class="device-home-indicator"></div>
+                </div>
+            </div>
+            <div class="preview-info">
+                <span id="preview-dims">375 × 667</span>
+                <span id="preview-zoom">100%</span>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Device dimensions
+    const deviceDimensions = {
+        'mobile-375': { width: 375, height: 667, mobile: true },
+        'mobile-390': { width: 390, height: 844, mobile: true },
+        'mobile-414': { width: 414, height: 896, mobile: true },
+        'tablet-768': { width: 768, height: 1024, mobile: false },
+        'tablet-1024': { width: 1024, height: 1366, mobile: false },
+        'desktop-1280': { width: 1280, height: 720, mobile: false },
+        'desktop-1440': { width: 1440, height: 900, mobile: false },
+        'desktop-1920': { width: 1920, height: 1080, mobile: false }
+    };
+
+    let currentDevice = 'desktop-1280';
+    let currentZoom = 100;
+    let isLandscape = false;
+
+    const deviceSelect = modal.querySelector('#device-select');
+    const frame = modal.querySelector('#device-frame');
+    const screen = modal.querySelector('#device-screen');
+    const iframe = modal.querySelector('#preview-iframe');
+    const rotateBtn = modal.querySelector('#rotate-device');
+    const zoomInBtn = modal.querySelector('#zoom-in');
+    const zoomOutBtn = modal.querySelector('#zoom-out');
+    const resetZoomBtn = modal.querySelector('#reset-zoom');
+    const dimsSpan = modal.querySelector('#preview-dims');
+    const zoomSpan = modal.querySelector('#preview-zoom');
+
+    function updateDevicePreview() {
+        const dims = deviceDimensions[currentDevice];
+        if (!dims) return;
+
+        const width = isLandscape ? dims.height : dims.width;
+        const height = isLandscape ? dims.width : dims.height;
+
+        screen.style.width = (width * currentZoom / 100) + 'px';
+        screen.style.height = (height * currentZoom / 100) + 'px';
+
+        dimsSpan.textContent = `${width} × ${height}`;
+        zoomSpan.textContent = `${currentZoom}%`;
+
+        // Add mobile styling
+        frame.classList.toggle('is-mobile', deviceDimensions[currentDevice].mobile);
+        frame.classList.toggle('landscape', isLandscape);
     }
+
+    function loadPreview() {
+        const projectData = editor.getProjectData();
+        const htmlContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <style>
+                    * { margin: 0; padding: 0; box-sizing: border-box; }
+                    body { font-family: system-ui; padding: 16px; }
+                </style>
+            </head>
+            <body>${projectData.html || '<p>No content to preview</p>'}</body>
+            </html>
+        `;
+
+        iframe.srcdoc = htmlContent;
+    }
+
+    deviceSelect.addEventListener('change', (e) => {
+        currentDevice = e.target.value;
+        isLandscape = false;
+        updateDevicePreview();
+        loadPreview();
+    });
+
+    rotateBtn.addEventListener('click', () => {
+        isLandscape = !isLandscape;
+        updateDevicePreview();
+    });
+
+    zoomInBtn.addEventListener('click', () => {
+        currentZoom = Math.min(200, currentZoom + 10);
+        updateDevicePreview();
+    });
+
+    zoomOutBtn.addEventListener('click', () => {
+        currentZoom = Math.max(50, currentZoom - 10);
+        updateDevicePreview();
+    });
+
+    resetZoomBtn.addEventListener('click', () => {
+        currentZoom = 100;
+        updateDevicePreview();
+    });
+
+    // Initial load
+    updateDevicePreview();
+    loadPreview();
 }
 
 /**
@@ -1897,19 +2306,141 @@ function initializeUITooltips() {
 
 // ========== Initialization ========== 
 
-// Wait for bridge to be ready, then initialize editor
-if (typeof initializeBridge === 'function') {
-    initializeBridge(() => {
-        initializeEditor();
-        // Fallback timeout to hide loading if editor doesn't fully initialize
-        setTimeout(hideLoading, 5000);
-    });
-} else {
-    // Fallback if bridge.js not loaded
-    console.warn('[Designer] bridge.js not loaded, initializing without bridge');
-    document.addEventListener('DOMContentLoaded', () => {
-        restoreThemeSettings();
-        initializeEditor();
-        setTimeout(hideLoading, 5000);
-    });
+console.log('[Designer] Initialization section reached');
+
+// Make sure logWithTimestamp exists
+if (typeof logWithTimestamp === 'undefined') {
+    window.logWithTimestamp = (msg) => console.log('[Designer] ' + msg);
 }
+
+// Immediately try to initialize the editor
+function startEditorInit() {
+    console.log('[Designer] startEditorInit() called');
+    
+    // Check if GrapeJS is available
+    if (typeof grapesjs === 'undefined') {
+        console.error('[Designer] GrapeJS not available');
+        
+        // Show visible error
+        const msg = document.getElementById('loading-status');
+        if (msg) {
+            msg.textContent = 'ERROR: GrapeJS library not loaded';
+            msg.style.color = '#ff6666';
+        }
+        
+        console.error('[Designer] GrapeJS not available, waiting 500ms and retrying');
+        setTimeout(startEditorInit, 500);
+        return;
+    }
+    
+    console.log('[Designer] GrapeJS available, initializing editor');
+    console.log('[Designer] grapesjs type:', typeof grapesjs);
+    console.log('[Designer] grapesjs.init type:', typeof grapesjs.init);
+    console.log('[Designer] grapesjs keys:', Object.keys(grapesjs));
+    
+    try {
+        const container = document.getElementById('gjs');
+        if (!container) {
+            console.error('[Designer] Container #gjs not found');
+            return;
+        }
+        
+        console.log('[Designer] Container found, details:');
+        console.log('[Designer]   - clientWidth:', container.clientWidth);
+        console.log('[Designer]   - clientHeight:', container.clientHeight);
+        console.log('[Designer]   - offsetParent:', container.offsetParent);
+        console.log('[Designer]   - display:', getComputedStyle(container).display);
+        console.log('[Designer]   - visibility:', getComputedStyle(container).visibility);
+        
+        const config = {
+            container: '#gjs',
+            height: '100%',
+            width: 'auto',
+            storageManager: false
+        };
+        
+        console.log('[Designer] About to call grapesjs.init with config:');
+        console.log('[Designer]', config);
+        
+        // Initialize GrapeJS with minimal configuration
+        const result = grapesjs.init(config);
+        
+        console.log('[Designer] grapesjs.init returned:', result);
+        console.log('[Designer] Result type:', typeof result);
+        console.log('[Designer] Result is falsy?:', !result);
+        console.log('[Designer] Result is null?:', result === null);
+        console.log('[Designer] Result is undefined?:', result === undefined);
+        
+        if (result) {
+            window.editor = result;
+            console.log('[Designer] Editor instance created successfully');
+            console.log('[Designer] window.editor type:', typeof window.editor);
+            console.log('[Designer] window.editor.getComponents:', typeof window.editor.getComponents);
+        } else {
+            console.error('[Designer] grapesjs.init() returned falsy value:', result);
+            
+            // Try to get error from browser console
+            console.log('[Designer] Trying alternate init methods...');
+            
+            // Check if there's an error handler
+            try {
+                const alt = grapesjs.init({ container: '#gjs' });
+                console.log('[Designer] Minimal config result:', alt);
+            } catch (altError) {
+                console.error('[Designer] Minimal config threw error:', altError);
+            }
+        }
+        
+        // Hide loading screen
+        if (typeof hideLoading === 'function') {
+            hideLoading();
+            console.log('[Designer] Loading screen hidden');
+        }
+        
+        // NOW register customizations after editor is ready
+        console.log('[Designer] Scheduling registerCustomizations...');
+        setTimeout(() => {
+            console.log('[Designer] Calling registerCustomizations now');
+            if (typeof registerCustomizations === 'function') {
+                try {
+                    registerCustomizations(window.editor);
+                    console.log('[Designer] registerCustomizations completed');
+                } catch (regError) {
+                    console.error('[Designer] registerCustomizations threw error:', regError);
+                }
+            } else {
+                console.error('[Designer] registerCustomizations not available!');
+            }
+        }, 100);
+        
+    } catch (error) {
+        console.error('[Designer] EXCEPTION during editor creation:', error);
+        console.error('[Designer] Error name:', error.name);
+        console.error('[Designer] Error message:', error.message);
+        console.error('[Designer] Error stack:', error.stack);
+        
+        // Store error in window for debugging
+        window.editorInitError = error;
+        
+        // Show error on page
+        const errorDiv = document.createElement('div');
+        errorDiv.style.cssText = 'position: fixed; top: 10%; left: 5%; right: 5%; background: #ffe6e6; padding: 20px; border: 3px solid red; border-radius: 8px; font-family: monospace; z-index: 9999; max-height: 80%; overflow: auto;';
+        errorDiv.innerHTML = '<h2 style="margin: 0 0 10px 0; color: red;">🔴 EXCEPTION DURING INITIALIZATION</h2>' +
+            '<p style="margin: 5px 0;"><strong>Error Type:</strong> ' + error.name + '</p>' +
+            '<p style="margin: 5px 0;"><strong>Message:</strong> ' + error.message + '</p>' +
+            '<p style="margin: 5px 0;"><strong>Stack:</strong></p>' +
+            '<pre style="background: #fff; padding: 10px; overflow: auto; max-height: 300px;">' + (error.stack || 'No stack trace') + '</pre>';
+        document.body.appendChild(errorDiv);
+        
+        // Hide loading since we have an error
+        if (typeof hideLoading === 'function') {
+            hideLoading();
+        }
+    }
+}
+
+// NOTE: Do NOT call startEditorInit() here!
+// The index.html page will call startEditorInit() after all scripts are loaded.
+// Calling it here would be too early and could cause grapesjs to not be available yet.
+
+console.log('[Designer] Designer script loaded successfully');

@@ -496,3 +496,44 @@
 .perf-details-panel::-webkit-scrollbar-thumb:hover {
     background: var(--perf-text-secondary);
 }
+/* ========== Export Toast Notification ========== */
+
+.perf-export-toast {
+    position: fixed;
+    bottom: -50px;
+    right: 20px;
+    background-color: #4caf50;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 4px;
+    font-size: 14px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    z-index: 10000;
+    transition: bottom 0.3s ease;
+    animation: slideUp 0.3s ease forwards;
+}
+
+@keyframes slideUp {
+    from {
+        bottom: -50px;
+        opacity: 0;
+    }
+    to {
+        bottom: 20px;
+        opacity: 1;
+    }
+}
+
+.perf-export-toast.show {
+    bottom: 20px;
+}
+
+/* ========== Responsive Design ========== */
+
+@media (max-width: 768px) {
+    .perf-export-toast {
+        right: 10px;
+        left: 10px;
+        width: auto;
+    }
+}
