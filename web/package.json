@@ -10,6 +10,9 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
+    "test:perf": "vitest run --config vitest.config.ts src/tests/performance.test.ts src/tests/integration-render.test.ts src/tests/bridge-performance.test.ts",
+    "test:perf:watch": "vitest watch --config vitest.config.ts src/tests/performance.test.ts",
+    "test:perf:bench": "node --expose-gc node_modules/vitest/vitest.mjs run --config vitest.config.ts src/tests/performance.test.ts",
     "lint": "eslint src --ext .ts,.tsx",
     "type-check": "tsc --noEmit"
   },
