@@ -1632,3 +1632,238 @@ class WebViewBridge(QObject):
                 "success": False,
                 "error": str(e)
             })
+    
+    # ==========================================================================
+    # BACKUP / RECOVERY METHODS (Plan 14)
+    # ==========================================================================
+    
+    @pyqtSlot(str, result=str)
+    def createBackup(self, options_json: str) -> str:
+        """Create a new backup.
+        
+        Args:
+            options_json: JSON with backup_type, description, encrypt.
+            
+        Returns:
+            JSON-encoded result with backup_id.
+        """
+        from ..services.backup_manager import get_backup_manager
+        
+        try:
+            manager = get_backup_manager()
+            if manager is None:
+                return json.dumps({
+                    "success": False,
+                    "error": "Backup manager not initialized"
+                })
+            
+            options = json.loads(options_json) if options_json else {}
+            backup_id = manager.create_backup(
+                backup_type=options.get("backupType", "full"),
+                description=options.get("description", ""),
+                encrypt=options.get("encrypt", False)
+            )
+            
+            if backup_id:
+                backup = manager.get_backup(backup_id)
+                return json.dumps({
+                    "success": True,
+                    "backupId": backup_id,
+                    "backup": backup.to_dict() if backup else None
+                })
+            else:
+                return json.dumps({
+                    "success": False,
+                    "error": "Backup creation failed"
+                })
+        except Exception as e:
+            logger.error(f"Error creating backup: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+    
+    @pyqtSlot(str, str, result=str)
+    def restoreBackup(self, backup_id: str, target_path: str) -> str:
+        """Restore a backup.
+        
+        Args:
+            backup_id: ID of backup to restore.
+            target_path: Where to restore to.
+            
+        Returns:
+            JSON-encoded result.
+        """
+        from ..services.backup_manager import get_backup_manager
+        
+        try:
+            manager = get_backup_manager()
+            if manager is None:
+                return json.dumps({
+                    "success": False,
+                    "error": "Backup manager not initialized"
+                })
+            
+            success, message = manager.restore_backup(backup_id, target_path)
+            return json.dumps({
+                "success": success,
+                "message": message
+            })
+        except Exception as e:
+            logger.error(f"Error restoring backup: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+    
+    @pyqtSlot(result=str)
+    def listBackups(self) -> str:
+        """List available backups.
+        
+        Returns:
+            JSON-encoded list of backups.
+        """
+        from ..services.backup_manager import get_backup_manager
+        
+        try:
+            manager = get_backup_manager()
+            if manager is None:
+                return json.dumps({
+                    "success": False,
+                    "error": "Backup manager not initialized"
+                })
+            
+            backups = manager.list_backups()
+            return json.dumps({
+                "success": True,
+                "backups": [b.to_dict() for b in backups]
+            })
+        except Exception as e:
+            logger.error(f"Error listing backups: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+    
+    @pyqtSlot(str, result=str)
+    def deleteBackup(self, backup_id: str) -> str:
+        """Delete a backup.
+        
+        Args:
+            backup_id: ID of backup to delete.
+            
+        Returns:
+            JSON-encoded result.
+        """
+        from ..services.backup_manager import get_backup_manager
+        
+        try:
+            manager = get_backup_manager()
+            if manager is None:
+                return json.dumps({
+                    "success": False,
+                    "error": "Backup manager not initialized"
+                })
+            
+            result = manager.delete_backup(backup_id)
+            return json.dumps({
+                "success": result,
+                "backupId": backup_id
+            })
+        except Exception as e:
+            logger.error(f"Error deleting backup: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+    
+    @pyqtSlot(str, result=str)
+    def verifyBackup(self, backup_id: str) -> str:
+        """Verify backup integrity.
+        
+        Args:
+            backup_id: ID of backup to verify.
+            
+        Returns:
+            JSON-encoded result with validity.
+        """
+        from ..services.backup_manager import get_backup_manager
+        
+        try:
+            manager = get_backup_manager()
+            if manager is None:
+                return json.dumps({
+                    "success": False,
+                    "error": "Backup manager not initialized"
+                })
+            
+            valid, message = manager.verify_backup_integrity(backup_id)
+            return json.dumps({
+                "success": True,
+                "valid": valid,
+                "message": message
+            })
+        except Exception as e:
+            logger.error(f"Error verifying backup: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+    
+    @pyqtSlot(result=str)
+    def getBackupStats(self) -> str:
+        """Get backup statistics.
+        
+        Returns:
+            JSON-encoded backup stats.
+        """
+        from ..services.backup_manager import get_backup_manager
+        
+        try:
+            manager = get_backup_manager()
+            if manager is None:
+                return json.dumps({
+                    "success": False,
+                    "error": "Backup manager not initialized"
+                })
+            
+            stats = manager.get_backup_stats()
+            return json.dumps({
+                "success": True,
+                "stats": stats.to_dict()
+            })
+        except Exception as e:
+            logger.error(f"Error getting backup stats: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+    
+    @pyqtSlot(result=str)
+    def getRecoveryPoints(self) -> str:
+        """Get available recovery points.
+        
+        Returns:
+            JSON-encoded list of recovery points.
+        """
+        from ..services.backup_manager import get_backup_manager
+        
+        try:
+            manager = get_backup_manager()
+            if manager is None:
+                return json.dumps({
+                    "success": False,
+                    "error": "Backup manager not initialized"
+                })
+            
+            points = manager.get_recovery_points()
+            return json.dumps({
+                "success": True,
+                "recoveryPoints": [p.to_dict() for p in points]
+            })
+        except Exception as e:
+            logger.error(f"Error getting recovery points: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })

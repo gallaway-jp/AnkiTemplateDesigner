@@ -157,6 +157,14 @@ def _on_profile_loaded() -> None:
     init_optimizer()
     logger.debug("Performance optimizer initialized")
     
+    # Initialize backup manager
+    from .services.backup_manager import init_backup_manager
+    addon_dir = _get_addon_dir()
+    backup_dir = os.path.join(addon_dir, "backups")
+    templates_dir = os.path.join(addon_dir, "templates")
+    init_backup_manager(backup_dir, templates_dir)
+    logger.debug("Backup manager initialized")
+    
     _setup_menu()
     _initialized = True
     
