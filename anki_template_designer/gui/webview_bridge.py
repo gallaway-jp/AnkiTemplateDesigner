@@ -771,3 +771,354 @@ class WebViewBridge(QObject):
         return json.dumps({
             "success": result
         })
+    
+    # ===== Note Type Methods (Plan 11) =====
+    
+    @pyqtSlot(result=str)
+    def getNoteTypes(self) -> str:
+        """Get all available note types.
+        
+        Returns:
+            JSON-encoded list of note types.
+        """
+        from ..services.note_type_service import get_note_type_service
+        
+        service = get_note_type_service()
+        if service is None:
+            return json.dumps({
+                "success": False,
+                "error": "Note type service not initialized"
+            })
+        
+        try:
+            note_types = service.get_all_note_types()
+            return json.dumps({
+                "success": True,
+                "noteTypes": [nt.to_dict() for nt in note_types]
+            })
+        except Exception as e:
+            logger.error(f"Error getting note types: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+    
+    @pyqtSlot(str, result=str)
+    def getNoteType(self, note_type_id_str: str) -> str:
+        """Get a specific note type by ID.
+        
+        Args:
+            note_type_id_str: The note type ID as string (to support 64-bit IDs).
+            
+        Returns:
+            JSON-encoded note type.
+        """
+        from ..services.note_type_service import get_note_type_service
+        
+        service = get_note_type_service()
+        if service is None:
+            return json.dumps({
+                "success": False,
+                "error": "Note type service not initialized"
+            })
+        
+        try:
+            note_type_id = int(note_type_id_str)
+            note_type = service.get_note_type(note_type_id)
+            if note_type is None:
+                return json.dumps({
+                    "success": False,
+                    "error": f"Note type {note_type_id} not found"
+                })
+            return json.dumps({
+                "success": True,
+                "noteType": note_type.to_dict()
+            })
+        except Exception as e:
+            logger.error(f"Error getting note type {note_type_id}: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+    
+    @pyqtSlot(str, result=str)
+    def getNoteTypeFields(self, note_type_id_str: str) -> str:
+        """Get fields for a note type.
+        
+        Args:
+            note_type_id_str: The note type ID as string (to support 64-bit IDs).
+            
+        Returns:
+            JSON-encoded list of fields.
+        """
+        from ..services.note_type_service import get_note_type_service
+        
+        service = get_note_type_service()
+        if service is None:
+            return json.dumps({
+                "success": False,
+                "error": "Note type service not initialized"
+            })
+        
+        try:
+            note_type_id = int(note_type_id_str)
+            fields = service.get_fields(note_type_id)
+            if fields is None:
+                return json.dumps({
+                    "success": False,
+                    "error": f"Note type {note_type_id} not found"
+                })
+            return json.dumps({
+                "success": True,
+                "fields": [f.to_dict() for f in fields]
+            })
+        except Exception as e:
+            logger.error(f"Error getting fields for {note_type_id}: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+    
+    @pyqtSlot(str, result=str)
+    def getNoteTypeTemplates(self, note_type_id_str: str) -> str:
+        """Get templates for a note type.
+        
+        Args:
+            note_type_id_str: The note type ID as string (to support 64-bit IDs).
+            
+        Returns:
+            JSON-encoded list of templates.
+        """
+        from ..services.note_type_service import get_note_type_service
+        
+        service = get_note_type_service()
+        if service is None:
+            return json.dumps({
+                "success": False,
+                "error": "Note type service not initialized"
+            })
+        
+        try:
+            note_type_id = int(note_type_id_str)
+            templates = service.get_templates(note_type_id)
+            if templates is None:
+                return json.dumps({
+                    "success": False,
+                    "error": f"Note type {note_type_id} not found"
+                })
+            return json.dumps({
+                "success": True,
+                "templates": [t.to_dict() for t in templates]
+            })
+        except Exception as e:
+            logger.error(f"Error getting templates for {note_type_id}: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+    
+    @pyqtSlot(str, result=str)
+    def getNoteTypeCss(self, note_type_id_str: str) -> str:
+        """Get CSS for a note type.
+        
+        Args:
+            note_type_id_str: The note type ID as string (to support 64-bit IDs).
+            
+        Returns:
+            JSON-encoded CSS string.
+        """
+        from ..services.note_type_service import get_note_type_service
+        
+        service = get_note_type_service()
+        if service is None:
+            return json.dumps({
+                "success": False,
+                "error": "Note type service not initialized"
+            })
+        
+        try:
+            note_type_id = int(note_type_id_str)
+            css = service.get_css(note_type_id)
+            if css is None:
+                return json.dumps({
+                    "success": False,
+                    "error": f"Note type {note_type_id} not found"
+                })
+            return json.dumps({
+                "success": True,
+                "css": css
+            })
+        except Exception as e:
+            logger.error(f"Error getting CSS for {note_type_id}: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+    
+    @pyqtSlot(str, int, str, str, result=str)
+    def updateTemplate(self, note_type_id_str: str, template_ordinal: int, 
+                       front: str, back: str) -> str:
+        """Update a card template.
+        
+        Args:
+            note_type_id_str: The note type ID as string (to support 64-bit IDs).
+            template_ordinal: The template index (0-based).
+            front: New front template HTML.
+            back: New back template HTML.
+            
+        Returns:
+            JSON-encoded result.
+        """
+        from ..services.note_type_service import get_note_type_service
+        
+        service = get_note_type_service()
+        if service is None:
+            return json.dumps({
+                "success": False,
+                "error": "Note type service not initialized"
+            })
+        
+        try:
+            note_type_id = int(note_type_id_str)
+            # Allow empty string to mean "don't update"
+            front_val = front if front else None
+            back_val = back if back else None
+            
+            result = service.update_template(
+                note_type_id, template_ordinal, 
+                front=front_val, back=back_val
+            )
+            
+            if result:
+                logger.info(f"Updated template {template_ordinal} for note type {note_type_id}")
+            
+            return json.dumps({
+                "success": result
+            })
+        except Exception as e:
+            logger.error(f"Error updating template: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+    
+    @pyqtSlot(str, str, result=str)
+    def updateNoteTypeCss(self, note_type_id_str: str, css: str) -> str:
+        """Update CSS for a note type.
+        
+        Args:
+            note_type_id_str: The note type ID as string (to support 64-bit IDs).
+            css: New CSS content.
+            
+        Returns:
+            JSON-encoded result.
+        """
+        from ..services.note_type_service import get_note_type_service
+        
+        service = get_note_type_service()
+        if service is None:
+            return json.dumps({
+                "success": False,
+                "error": "Note type service not initialized"
+            })
+        
+        try:
+            note_type_id = int(note_type_id_str)
+            result = service.update_css(note_type_id, css)
+            
+            if result:
+                logger.info(f"Updated CSS for note type {note_type_id}")
+            
+            return json.dumps({
+                "success": result
+            })
+        except Exception as e:
+            logger.error(f"Error updating CSS: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+    
+    @pyqtSlot(str, int, str, result=str)
+    def renderPreview(self, note_type_id_str: str, template_ordinal: int, 
+                      field_data_json: str) -> str:
+        """Render a preview of a card.
+        
+        Args:
+            note_type_id_str: The note type ID as string (to support 64-bit IDs).
+            template_ordinal: The template index (0-based).
+            field_data_json: JSON-encoded field data dict.
+            
+        Returns:
+            JSON-encoded preview with front, back, and CSS.
+        """
+        from ..services.note_type_service import get_note_type_service
+        
+        service = get_note_type_service()
+        if service is None:
+            return json.dumps({
+                "success": False,
+                "error": "Note type service not initialized"
+            })
+        
+        try:
+            note_type_id = int(note_type_id_str)
+            field_data = json.loads(field_data_json) if field_data_json else None
+            preview = service.render_preview(note_type_id, template_ordinal, field_data)
+            
+            if preview is None:
+                return json.dumps({
+                    "success": False,
+                    "error": f"Could not render preview for note type {note_type_id}"
+                })
+            
+            return json.dumps({
+                "success": True,
+                "preview": preview
+            })
+        except Exception as e:
+            logger.error(f"Error rendering preview: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+    
+    @pyqtSlot(str, result=str)
+    def getSampleData(self, note_type_id_str: str) -> str:
+        """Get sample field data for a note type.
+        
+        Args:
+            note_type_id_str: The note type ID as string (to support 64-bit IDs).
+            
+        Returns:
+            JSON-encoded sample data dict.
+        """
+        from ..services.note_type_service import get_note_type_service
+        
+        service = get_note_type_service()
+        if service is None:
+            return json.dumps({
+                "success": False,
+                "error": "Note type service not initialized"
+            })
+        
+        try:
+            note_type_id = int(note_type_id_str)
+            sample = service.get_sample_data(note_type_id)
+            
+            if sample is None:
+                return json.dumps({
+                    "success": False,
+                    "error": f"Note type {note_type_id} not found"
+                })
+            
+            return json.dumps({
+                "success": True,
+                "sampleData": sample
+            })
+        except Exception as e:
+            logger.error(f"Error getting sample data: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })

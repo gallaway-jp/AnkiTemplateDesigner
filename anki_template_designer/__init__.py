@@ -141,6 +141,12 @@ def _on_profile_loaded() -> None:
     logger = logging.getLogger("anki_template_designer")
     logger.debug("Anki Template Designer initializing...")
     
+    # Initialize note type service with main window
+    from .services.note_type_service import init_note_type_service
+    from aqt import mw
+    init_note_type_service(mw)
+    logger.debug("Note type service initialized")
+    
     _setup_menu()
     _initialized = True
     
