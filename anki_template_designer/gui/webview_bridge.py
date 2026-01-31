@@ -19,6 +19,7 @@ except ImportError:
 if TYPE_CHECKING:
     from ..services.template_service import TemplateService
     from ..services.undo_redo_manager import UndoRedoManager
+    from ..services.error_handler import ErrorHandler
 
 logger = logging.getLogger("anki_template_designer.gui.webview_bridge")
 
@@ -54,6 +55,7 @@ class WebViewBridge(QObject):
         self._connected = False
         self._template_service: Optional["TemplateService"] = None
         self._undo_manager: Optional["UndoRedoManager"] = None
+        self._error_handler: Optional["ErrorHandler"] = None
         
         logger.debug("WebViewBridge initialized")
     
@@ -475,3 +477,69 @@ class WebViewBridge(QObject):
         if self._undo_manager is not None:
             self._undo_manager.clear()
             logger.debug("Undo history cleared")
+
+    # ===== Error Handler Methods =====
+    
+    def set_error_handler(self, handler: "ErrorHandler") -> None:
+        """Set the error handler.
+        
+        Args:
+            handler: ErrorHandler instance.
+        """
+        self._error_handler = handler
+        
+        # Set up listener to notify JS of errors
+        def on_error(error_info: dict) -> None:
+            self.send_to_js("errorOccurred", error_info)
+        
+        handler.add_listener(on_error)
+        logger.debug("Error handler connected to bridge")
+    
+    @pyqtSlot(str, str)
+    def reportError(self, message: str, context_json: str) -> None:
+        """Report an error from JavaScript.
+        
+        Args:
+            message: Error message.
+            context_json: JSON-encoded context dictionary.
+        """
+        if self._error_handler is None:
+            logger.error(f"[JS Error] {message}")
+            return
+        
+        try:
+            context = json.loads(context_json) if context_json else {}
+            context["source"] = "javascript"
+            
+            # Create a simple exception for the error handler
+            from ..core.exceptions import TemplateDesignerError, ErrorCode
+            error = TemplateDesignerError(
+                message=message,
+                code=ErrorCode.UI_RENDER_FAILED,
+                details=context
+            )
+            self._error_handler.handle(error)
+        except Exception as e:
+            logger.error(f"Error reporting JS error: {e}")
+    
+    @pyqtSlot(result=str)
+    def getRecentErrors(self) -> str:
+        """Get recent errors for display.
+        
+        Returns:
+            JSON-encoded list of recent errors.
+        """
+        if self._error_handler is None:
+            return json.dumps({"errors": []})
+        
+        return json.dumps({
+            "errors": self._error_handler.recent_errors,
+            "total_count": self._error_handler.error_count
+        })
+    
+    @pyqtSlot()
+    def clearErrors(self) -> None:
+        """Clear error history."""
+        if self._error_handler is not None:
+            self._error_handler.clear_history()
+            logger.debug("Error history cleared")

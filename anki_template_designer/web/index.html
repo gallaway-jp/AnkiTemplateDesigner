@@ -59,6 +59,22 @@
         .debug-error { color: #ff4444; }
         .debug-warn { color: #ffaa00; }
         .debug-info { color: #00aaff; }
+        /* Error Toast Styles */
+        #errorToastContainer { position: fixed; top: 70px; right: 20px; z-index: 9998; display: flex; flex-direction: column; gap: 10px; max-width: 400px; }
+        .error-toast { background: white; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); padding: 16px; display: flex; gap: 12px; align-items: flex-start; animation: slideIn 0.3s ease; border-left: 4px solid #e74c3c; }
+        .error-toast.warning { border-left-color: #f39c12; }
+        .error-toast.info { border-left-color: #3498db; }
+        .error-toast.success { border-left-color: #27ae60; }
+        .error-toast-icon { font-size: 20px; flex-shrink: 0; }
+        .error-toast-content { flex: 1; min-width: 0; }
+        .error-toast-title { font-weight: 600; color: #333; margin-bottom: 4px; font-size: 14px; }
+        .error-toast-message { color: #666; font-size: 13px; line-height: 1.4; }
+        .error-toast-suggestion { color: #888; font-size: 12px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee; }
+        .error-toast-close { background: none; border: none; color: #999; cursor: pointer; font-size: 18px; padding: 0; margin-left: 8px; flex-shrink: 0; }
+        .error-toast-close:hover { color: #666; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+        .error-toast.removing { animation: slideOut 0.3s ease forwards; }
     </style>
     <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
 </head>
@@ -145,6 +161,9 @@
             <span id="statusRight">v2.0.0</span>
         </footer>
     </div>
+    
+    <!-- Error Toast Container -->
+    <div id="errorToastContainer"></div>
     
     <!-- Debug Console Panel -->
     <div id="debugConsole" class="hidden">
@@ -346,6 +365,90 @@
             console.log('Pushed undo state:', description);
         };
         
+        // ===== Error Toast System =====
+        let toastIdCounter = 0;
+        const ERROR_TOAST_DURATION = 8000; // 8 seconds
+        
+        function showErrorToast(errorInfo) {
+            const container = document.getElementById('errorToastContainer');
+            if (!container) return;
+            
+            const toastId = ++toastIdCounter;
+            const toast = document.createElement('div');
+            toast.className = 'error-toast';
+            toast.id = `toast-${toastId}`;
+            
+            // Determine icon based on error type
+            let icon = '❌';
+            if (errorInfo.recoverable === false) {
+                toast.classList.add('critical');
+            }
+            
+            // Build toast HTML
+            let html = `
+                <span class="error-toast-icon">${icon}</span>
+                <div class="error-toast-content">
+                    <div class="error-toast-title">${escapeHtml(errorInfo.code_name || 'Error')}</div>
+                    <div class="error-toast-message">${escapeHtml(errorInfo.message)}</div>
+            `;
+            
+            if (errorInfo.recovery_suggestion) {
+                html += `<div class="error-toast-suggestion">💡 ${escapeHtml(errorInfo.recovery_suggestion)}</div>`;
+            }
+            
+            html += `</div><button class="error-toast-close" onclick="dismissToast(${toastId})">&times;</button>`;
+            
+            toast.innerHTML = html;
+            container.appendChild(toast);
+            
+            // Auto-dismiss after duration
+            setTimeout(() => dismissToast(toastId), ERROR_TOAST_DURATION);
+            
+            // Log to console as well
+            console.error(`[${errorInfo.code_name}] ${errorInfo.message}`);
+        }
+        
+        function dismissToast(toastId) {
+            const toast = document.getElementById(`toast-${toastId}`);
+            if (toast) {
+                toast.classList.add('removing');
+                setTimeout(() => toast.remove(), 300);
+            }
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Report JS error to Python
+        window.reportError = function(message, context = {}) {
+            if (!bridge) {
+                console.error('[Local Error]', message, context);
+                return;
+            }
+            bridge.reportError(message, JSON.stringify(context));
+        };
+        
+        // Global error handler for uncaught JS errors
+        window.onerror = function(message, source, lineno, colno, error) {
+            console.error('Uncaught error:', message);
+            reportError(message, {
+                source: source,
+                line: lineno,
+                column: colno,
+                stack: error ? error.stack : null
+            });
+            return false; // Let default handler run too
+        };
+        
+        // Promise rejection handler
+        window.onunhandledrejection = function(event) {
+            console.error('Unhandled promise rejection:', event.reason);
+            reportError(String(event.reason), { type: 'unhandled_promise_rejection' });
+        };
+        
         document.addEventListener('DOMContentLoaded', function() {
             initWebChannel();
             initToolbar();
@@ -377,6 +480,15 @@
                             console.log('History changed:', state.description, '| canUndo:', canUndo, '| canRedo:', canRedo);
                         } catch (e) {
                             console.error('History change parse error:', e);
+                        }
+                    }
+                    // Listen for errors from Python
+                    else if (method === 'errorOccurred') {
+                        try {
+                            const errorInfo = JSON.parse(data);
+                            showErrorToast(errorInfo);
+                        } catch (e) {
+                            console.error('Error notification parse error:', e);
                         }
                     }
                 });

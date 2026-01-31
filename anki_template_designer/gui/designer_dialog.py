@@ -307,6 +307,11 @@ class DesignerDialog(QDialog):
         undo_manager = UndoRedoManager(max_history=100)
         self._bridge.set_undo_manager(undo_manager)
         
+        # Initialize error handler
+        from ..services.error_handler import ErrorHandler
+        error_handler = ErrorHandler()
+        self._bridge.set_error_handler(error_handler)
+        
         # Register default actions
         self._bridge.register_action("save_template", self._on_save_template)
         self._bridge.register_action("load_template", self._on_load_template)
@@ -314,7 +319,7 @@ class DesignerDialog(QDialog):
         # Connect inspector toggle signal
         self._bridge.inspectorToggleRequested.connect(self._toggle_inspector)
         
-        logger.debug("Bridge setup complete with template service and undo manager")
+        logger.debug("Bridge setup complete with template service, undo manager, and error handler")
     
     def _on_save_template(self, payload: dict) -> dict:
         """Handle save template action from JS.
