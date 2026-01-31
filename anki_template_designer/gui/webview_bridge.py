@@ -1394,3 +1394,241 @@ class WebViewBridge(QObject):
             "newId": new_id,
             "selection": service.get_state_dict()
         })
+    
+    # ==========================================================================
+    # PERFORMANCE / CACHING METHODS (Plan 13)
+    # ==========================================================================
+    
+    @pyqtSlot(result=str)
+    def getCacheStats(self) -> str:
+        """Get cache statistics.
+        
+        Returns:
+            JSON-encoded cache stats for all caches.
+        """
+        from ..services.performance import get_optimizer
+        
+        try:
+            optimizer = get_optimizer()
+            if optimizer is None:
+                return json.dumps({
+                    "success": False,
+                    "error": "Performance optimizer not initialized"
+                })
+            
+            stats = optimizer.get_all_cache_stats()
+            return json.dumps({
+                "success": True,
+                "stats": stats
+            })
+        except Exception as e:
+            logger.error(f"Error getting cache stats: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+    
+    @pyqtSlot(result=str)
+    def clearCache(self) -> str:
+        """Clear all caches.
+        
+        Returns:
+            JSON-encoded result with clear counts.
+        """
+        from ..services.performance import get_optimizer
+        
+        try:
+            optimizer = get_optimizer()
+            if optimizer is None:
+                return json.dumps({
+                    "success": False,
+                    "error": "Performance optimizer not initialized"
+                })
+            
+            result = optimizer.cleanup()
+            return json.dumps({
+                "success": True,
+                "cleared": result
+            })
+        except Exception as e:
+            logger.error(f"Error clearing cache: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+    
+    @pyqtSlot(result=str)
+    def getMetrics(self) -> str:
+        """Get performance metrics summary.
+        
+        Returns:
+            JSON-encoded metrics summary.
+        """
+        from ..services.performance import get_optimizer
+        
+        try:
+            optimizer = get_optimizer()
+            if optimizer is None:
+                return json.dumps({
+                    "success": False,
+                    "error": "Performance optimizer not initialized"
+                })
+            
+            summary = optimizer.get_metrics_summary()
+            return json.dumps({
+                "success": True,
+                "metrics": summary
+            })
+        except Exception as e:
+            logger.error(f"Error getting metrics: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+    
+    @pyqtSlot(result=str)
+    def getPerformanceReport(self) -> str:
+        """Get full performance report with recommendations.
+        
+        Returns:
+            JSON-encoded performance report.
+        """
+        from ..services.performance import get_optimizer
+        
+        try:
+            optimizer = get_optimizer()
+            if optimizer is None:
+                return json.dumps({
+                    "success": False,
+                    "error": "Performance optimizer not initialized"
+                })
+            
+            report = optimizer.get_performance_report()
+            return json.dumps({
+                "success": True,
+                "report": report.to_dict()
+            })
+        except Exception as e:
+            logger.error(f"Error getting performance report: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+    
+    @pyqtSlot(str, str, result=str)
+    def cacheGet(self, key: str, cache_name: str = "main") -> str:
+        """Get a value from cache.
+        
+        Args:
+            key: Cache key.
+            cache_name: Which cache to use (main, templates, previews).
+            
+        Returns:
+            JSON-encoded result with cached value.
+        """
+        from ..services.performance import get_optimizer
+        
+        try:
+            optimizer = get_optimizer()
+            if optimizer is None:
+                return json.dumps({
+                    "success": False,
+                    "error": "Performance optimizer not initialized"
+                })
+            
+            if cache_name == "templates":
+                value = optimizer.get_cached_template(key)
+            elif cache_name == "previews":
+                value = optimizer.get_cached_preview(key)
+            else:
+                value = optimizer.cache_get(key)
+            
+            return json.dumps({
+                "success": True,
+                "value": value,
+                "found": value is not None
+            })
+        except Exception as e:
+            logger.error(f"Error getting from cache: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+    
+    @pyqtSlot(str, str, str, result=str)
+    def cacheSet(self, key: str, value: str, cache_name: str = "main") -> str:
+        """Set a value in cache.
+        
+        Args:
+            key: Cache key.
+            value: Value to cache.
+            cache_name: Which cache to use (main, templates, previews).
+            
+        Returns:
+            JSON-encoded result.
+        """
+        from ..services.performance import get_optimizer
+        
+        try:
+            optimizer = get_optimizer()
+            if optimizer is None:
+                return json.dumps({
+                    "success": False,
+                    "error": "Performance optimizer not initialized"
+                })
+            
+            if cache_name == "templates":
+                optimizer.cache_template(key, value)
+            elif cache_name == "previews":
+                optimizer.cache_preview(key, value)
+            else:
+                optimizer.cache_set(key, value)
+            
+            return json.dumps({
+                "success": True,
+                "key": key,
+                "cacheName": cache_name
+            })
+        except Exception as e:
+            logger.error(f"Error setting cache: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+    
+    @pyqtSlot(str, result=str)
+    def trackTiming(self, timing_json: str) -> str:
+        """Track a timing measurement from the frontend.
+        
+        Args:
+            timing_json: JSON with name and duration_ms.
+            
+        Returns:
+            JSON-encoded result.
+        """
+        from ..services.performance import get_optimizer
+        
+        try:
+            optimizer = get_optimizer()
+            if optimizer is None:
+                return json.dumps({
+                    "success": False,
+                    "error": "Performance optimizer not initialized"
+                })
+            
+            data = json.loads(timing_json)
+            name = data.get("name", "unknown")
+            duration_ms = data.get("durationMs", 0)
+            
+            optimizer.track_timing(name, duration_ms)
+            
+            return json.dumps({
+                "success": True,
+                "recorded": name
+            })
+        except Exception as e:
+            logger.error(f"Error tracking timing: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })

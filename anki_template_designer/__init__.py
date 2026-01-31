@@ -152,6 +152,11 @@ def _on_profile_loaded() -> None:
     init_selection_service()
     logger.debug("Selection service initialized")
     
+    # Initialize performance optimizer
+    from .services.performance import init_optimizer
+    init_optimizer()
+    logger.debug("Performance optimizer initialized")
+    
     _setup_menu()
     _initialized = True
     
