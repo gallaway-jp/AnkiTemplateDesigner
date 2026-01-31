@@ -18,6 +18,7 @@ except ImportError:
 
 if TYPE_CHECKING:
     from ..services.template_service import TemplateService
+    from ..services.undo_redo_manager import UndoRedoManager
 
 logger = logging.getLogger("anki_template_designer.gui.webview_bridge")
 
@@ -52,6 +53,7 @@ class WebViewBridge(QObject):
         self._channel: Optional[QWebChannel] = None
         self._connected = False
         self._template_service: Optional["TemplateService"] = None
+        self._undo_manager: Optional["UndoRedoManager"] = None
         
         logger.debug("WebViewBridge initialized")
     
@@ -364,3 +366,112 @@ class WebViewBridge(QObject):
         except Exception as e:
             logger.error(f"Error getting current template: {e}")
             return json.dumps({"success": False, "error": str(e)})
+
+    # ===== Undo/Redo Methods =====
+    
+    def set_undo_manager(self, manager: "UndoRedoManager") -> None:
+        """Set the undo/redo manager.
+        
+        Args:
+            manager: UndoRedoManager instance.
+        """
+        self._undo_manager = manager
+        
+        # Set up listener to notify JS of history changes
+        def on_history_change(desc: str, can_undo: bool, can_redo: bool) -> None:
+            self.send_to_js("historyChanged", {
+                "description": desc,
+                "canUndo": can_undo,
+                "canRedo": can_redo
+            })
+        
+        manager.add_listener(on_history_change)
+        logger.debug("Undo manager connected to bridge")
+    
+    @pyqtSlot(str, str, str)
+    def pushUndoState(self, state_before_json: str, state_after_json: str, description: str) -> None:
+        """Push a state change to undo history.
+        
+        Args:
+            state_before_json: JSON-encoded state before the change.
+            state_after_json: JSON-encoded state after the change.
+            description: Human-readable description of the change.
+        """
+        if self._undo_manager is None:
+            logger.warning("Undo manager not initialized")
+            return
+        
+        try:
+            state_before = json.loads(state_before_json)
+            state_after = json.loads(state_after_json)
+            self._undo_manager.push_state(state_before, state_after, description)
+            logger.debug(f"Pushed undo state: {description}")
+        except Exception as e:
+            logger.error(f"Error pushing undo state: {e}")
+    
+    @pyqtSlot(result=str)
+    def undo(self) -> str:
+        """Undo the last action.
+        
+        Returns:
+            JSON-encoded result with state to restore.
+        """
+        if self._undo_manager is None:
+            return json.dumps({"success": False, "error": "Undo not available"})
+        
+        try:
+            state = self._undo_manager.undo()
+            if state is not None:
+                return json.dumps({"success": True, "state": state})
+            return json.dumps({"success": False, "error": "Nothing to undo"})
+        except Exception as e:
+            logger.error(f"Error in undo: {e}")
+            return json.dumps({"success": False, "error": str(e)})
+    
+    @pyqtSlot(result=str)
+    def redo(self) -> str:
+        """Redo the last undone action.
+        
+        Returns:
+            JSON-encoded result with state to restore.
+        """
+        if self._undo_manager is None:
+            return json.dumps({"success": False, "error": "Redo not available"})
+        
+        try:
+            state = self._undo_manager.redo()
+            if state is not None:
+                return json.dumps({"success": True, "state": state})
+            return json.dumps({"success": False, "error": "Nothing to redo"})
+        except Exception as e:
+            logger.error(f"Error in redo: {e}")
+            return json.dumps({"success": False, "error": str(e)})
+    
+    @pyqtSlot(result=str)
+    def getHistoryState(self) -> str:
+        """Get current undo/redo history state.
+        
+        Returns:
+            JSON-encoded history state with canUndo, canRedo, and descriptions.
+        """
+        if self._undo_manager is None:
+            return json.dumps({
+                "canUndo": False,
+                "canRedo": False,
+                "undoDescription": None,
+                "redoDescription": None
+            })
+        
+        return json.dumps({
+            "canUndo": self._undo_manager.can_undo,
+            "canRedo": self._undo_manager.can_redo,
+            "undoDescription": self._undo_manager.undo_description,
+            "redoDescription": self._undo_manager.redo_description
+        })
+    
+    @pyqtSlot()
+    def clearHistory(self) -> None:
+        """Clear all undo/redo history."""
+        if self._undo_manager is not None:
+            self._undo_manager.clear()
+            logger.debug("Undo history cleared")

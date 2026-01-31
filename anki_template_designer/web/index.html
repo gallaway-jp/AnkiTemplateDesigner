@@ -219,6 +219,16 @@
                     bridge.toggleInspector();
                 }
             }
+            // Undo with Ctrl+Z
+            if (e.ctrlKey && !e.shiftKey && e.code === 'KeyZ') {
+                e.preventDefault();
+                doUndo();
+            }
+            // Redo with Ctrl+Y or Ctrl+Shift+Z
+            if ((e.ctrlKey && e.code === 'KeyY') || (e.ctrlKey && e.shiftKey && e.code === 'KeyZ')) {
+                e.preventDefault();
+                doRedo();
+            }
         });
         
         // Close button for debug console
@@ -253,6 +263,89 @@
             });
         };
         
+        // Undo/Redo state
+        let canUndo = false;
+        let canRedo = false;
+        
+        function updateUndoRedoButtons() {
+            const undoBtn = document.getElementById('btnUndo');
+            const redoBtn = document.getElementById('btnRedo');
+            if (undoBtn) {
+                undoBtn.disabled = !canUndo;
+                undoBtn.style.opacity = canUndo ? '1' : '0.5';
+            }
+            if (redoBtn) {
+                redoBtn.disabled = !canRedo;
+                redoBtn.style.opacity = canRedo ? '1' : '0.5';
+            }
+        }
+        
+        function doUndo() {
+            if (!bridge) {
+                console.error('Bridge not connected');
+                return;
+            }
+            bridge.undo(function(response) {
+                try {
+                    const result = JSON.parse(response);
+                    if (result.success) {
+                        console.log('Undo successful, state:', result.state);
+                        setStatusLeft('Undo');
+                        // Apply state to editor (implementation in later plans)
+                    } else {
+                        console.warn('Undo failed:', result.error);
+                    }
+                } catch (e) {
+                    console.error('Undo parse error:', e);
+                }
+            });
+        }
+        
+        function doRedo() {
+            if (!bridge) {
+                console.error('Bridge not connected');
+                return;
+            }
+            bridge.redo(function(response) {
+                try {
+                    const result = JSON.parse(response);
+                    if (result.success) {
+                        console.log('Redo successful, state:', result.state);
+                        setStatusLeft('Redo');
+                        // Apply state to editor (implementation in later plans)
+                    } else {
+                        console.warn('Redo failed:', result.error);
+                    }
+                } catch (e) {
+                    console.error('Redo parse error:', e);
+                }
+            });
+        }
+        
+        function refreshHistoryState() {
+            if (!bridge) return;
+            bridge.getHistoryState(function(response) {
+                try {
+                    const state = JSON.parse(response);
+                    canUndo = state.canUndo;
+                    canRedo = state.canRedo;
+                    updateUndoRedoButtons();
+                } catch (e) {
+                    console.error('History state parse error:', e);
+                }
+            });
+        }
+        
+        // Helper to push undo state (called by editor when changes occur)
+        window.pushUndoState = function(stateBefore, stateAfter, description) {
+            if (!bridge) {
+                console.error('Bridge not connected');
+                return;
+            }
+            bridge.pushUndoState(JSON.stringify(stateBefore), JSON.stringify(stateAfter), description);
+            console.log('Pushed undo state:', description);
+        };
+        
         document.addEventListener('DOMContentLoaded', function() {
             initWebChannel();
             initToolbar();
@@ -272,6 +365,22 @@
                     return;
                 }
                 isConnected = true;
+                
+                // Listen for history changes from Python
+                bridge.messageReceived.connect(function(method, data) {
+                    if (method === 'historyChanged') {
+                        try {
+                            const state = JSON.parse(data);
+                            canUndo = state.canUndo;
+                            canRedo = state.canRedo;
+                            updateUndoRedoButtons();
+                            console.log('History changed:', state.description, '| canUndo:', canUndo, '| canRedo:', canRedo);
+                        } catch (e) {
+                            console.error('History change parse error:', e);
+                        }
+                    }
+                });
+                
                 bridge.getVersion(function(response) {
                     try {
                         const data = JSON.parse(response);
@@ -281,6 +390,10 @@
                         console.error('Parse error:', e);
                     }
                 });
+                
+                // Initialize undo/redo state
+                refreshHistoryState();
+                
                 bridge.log('UI shell loaded');
                 hideLoading();
             });
@@ -297,11 +410,14 @@
             document.getElementById('btnNew').addEventListener('click', () => setStatusLeft('New'));
             document.getElementById('btnOpen').addEventListener('click', () => setStatusLeft('Open'));
             document.getElementById('btnSave').addEventListener('click', () => setStatusLeft('Saved'));
-            document.getElementById('btnUndo').addEventListener('click', () => setStatusLeft('Undo'));
-            document.getElementById('btnRedo').addEventListener('click', () => setStatusLeft('Redo'));
+            document.getElementById('btnUndo').addEventListener('click', doUndo);
+            document.getElementById('btnRedo').addEventListener('click', doRedo);
             document.getElementById('btnPreview').addEventListener('click', () => setStatusLeft('Preview'));
             document.getElementById('btnExport').addEventListener('click', () => setStatusLeft('Export'));
             document.getElementById('btnHelp').addEventListener('click', () => setStatusLeft('Help'));
+            
+            // Initialize button states
+            updateUndoRedoButtons();
         }
         function setStatusLeft(text) {
             const el = document.getElementById('statusLeft');
