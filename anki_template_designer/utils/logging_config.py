@@ -132,9 +132,9 @@ class LoggingConfig:
         _initialized = True
         _log_dir = self.log_dir
         
-        # Log startup message
+        # Log startup message (debug level - internal info)
         logger = self.get_logger("logging_config")
-        logger.info(f"Logging initialized (level={logging.getLevelName(self._log_level)})")
+        logger.debug(f"Logging initialized (level={logging.getLevelName(self._log_level)})")
         if self.log_file:
             logger.debug(f"Log file: {self.log_file}")
     

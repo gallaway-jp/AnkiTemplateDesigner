@@ -10,18 +10,18 @@ from pathlib import Path
 
 # Paths
 PROJECT_ROOT = Path(__file__).parent
+SOURCE_DIR = PROJECT_ROOT / "anki_template_designer"  # Source from the new package structure
 ANKI_ADDONS_DIR = Path.home() / "AppData/Roaming/Anki2/addons21"
 ADDON_NAME = "AnkiTemplateDesigner"
 ADDON_DIR = ANKI_ADDONS_DIR / ADDON_NAME
 
-# Files/directories to copy
+# Files/directories to copy from anki_template_designer/
 ITEMS_TO_COPY = [
     "__init__.py",
     "template_designer.py",
     "manifest.json",
     "meta.json",
     "config.json",
-    "config/",
     "core/",
     "gui/",
     "hooks/",
@@ -61,11 +61,11 @@ def install_addon():
     ADDON_DIR.mkdir(parents=True, exist_ok=True)
     
     # Copy files
-    print(f"\n[INFO] Copying addon files...")
+    print(f"\n[INFO] Copying addon files from {SOURCE_DIR}...")
     copied_count = 0
     
     for item_name in ITEMS_TO_COPY:
-        src = PROJECT_ROOT / item_name
+        src = SOURCE_DIR / item_name
         dst = ADDON_DIR / item_name
         
         if not src.exists():
