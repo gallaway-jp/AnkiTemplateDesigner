@@ -12,6 +12,11 @@ build/
 # Testing
 coverage/
 .nyc_output/
+playwright-report/
+playwright-results.json
+e2e-screenshots/
+test-results/
+*.trace.zip
 
 # IDE
 .vscode/

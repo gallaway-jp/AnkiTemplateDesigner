@@ -149,3 +149,14 @@ export type {
 export type {
   Locale,
 } from './utils';
+
+// Phase 1 Architecture Enhancements
+export type {
+  Notification as EventNotification,
+  CraftComponent as EventCraftComponent,
+  TemplateEvent,
+  AppEvents,
+} from './events';
+export { TypedEventBus } from './events';
+
+

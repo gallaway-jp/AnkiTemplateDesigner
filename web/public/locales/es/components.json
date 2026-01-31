@@ -1,0 +1,212 @@
+{
+  "text": {
+    "label": "Texto",
+    "description": "Contenido de texto estático (no dinámico)",
+    "help": "Úsalo para etiquetas, instrucciones y cualquier texto fijo que no cambie según los datos de la tarjeta",
+    "examples": [
+      "Etiqueta estática",
+      "Instrucciones",
+      "Texto fijo"
+    ]
+  },
+  "field": {
+    "label": "Campo",
+    "description": "Referencia de campo dinámico de tu tipo de nota",
+    "help": "Referencia datos de campos de tarjeta como {{Front}}, {{Back}}, {{Extra}}. Los nombres de campos son sensibles a mayúsculas",
+    "examples": [
+      "{{Front}}",
+      "{{Back}}",
+      "{{Extra}}"
+    ]
+  },
+  "image": {
+    "label": "Imagen",
+    "description": "Mostrar imágenes de valores de campo",
+    "help": "El campo debe contener ruta de imagen o URL. Las imágenes se muestran en su tamaño natural o limitadas por CSS",
+    "examples": [
+      "{{ImageField}}",
+      "https://example.com/image.jpg"
+    ]
+  },
+  "video": {
+    "label": "Video",
+    "description": "Insertar contenido de video",
+    "help": "El campo debe contener ruta de origen de video o URL. Soporta MP4, WebM y otros formatos de video HTML5",
+    "examples": [
+      "{{VideoField}}",
+      "https://example.com/video.mp4"
+    ]
+  },
+  "audio": {
+    "label": "Audio",
+    "description": "Reproducir archivos de audio",
+    "help": "El campo debe contener ruta de archivo de audio. Usa controles de audio HTML para reproducción",
+    "examples": [
+      "{{AudioField}}",
+      "[sound:audio.mp3]"
+    ]
+  },
+  "container": {
+    "label": "Contenedor",
+    "description": "Contenedor de diseño para organizar contenido",
+    "help": "Envuelve otros componentes para propósitos de diseño y estilo. Los contenedores pueden anidarse",
+    "examples": [
+      "Contenedor div",
+      "Envoltura de sección",
+      "Diseño flex"
+    ]
+  },
+  "row": {
+    "label": "Fila",
+    "description": "Contenedor de diseño horizontal",
+    "help": "Muestra componentes secundarios en una fila horizontal. Usa diseño flex para diseño responsivo",
+    "examples": [
+      "Dos columnas lado a lado",
+      "Diseño de encabezado",
+      "Grupo de botones"
+    ]
+  },
+  "column": {
+    "label": "Columna",
+    "description": "Contenedor de diseño vertical",
+    "help": "Muestra componentes secundarios verticalmente. Útil para apilar elementos",
+    "examples": [
+      "Lista vertical",
+      "Campos de formulario",
+      "Diseño de pila"
+    ]
+  },
+  "divider": {
+    "label": "Divisor",
+    "description": "Línea separadora horizontal",
+    "help": "Separa secciones de contenido visualmente. Se puede estilizar con color, ancho y altura",
+    "examples": [
+      "Separador de sección",
+      "Línea horizontal",
+      "Salto visual"
+    ]
+  },
+  "heading": {
+    "label": "Encabezado",
+    "description": "Encabezado de sección (H1-H6)",
+    "help": "Úsalo para organización de contenido jerárquico. Elige nivel de encabezado según estructura de contenido",
+    "examples": [
+      "Pregunta",
+      "Respuesta",
+      "Título de sección"
+    ]
+  },
+  "button": {
+    "label": "Botón",
+    "description": "Elemento de botón interactivo",
+    "help": "Puede desencadenar funciones JavaScript o vincular a URLs. Agrega manejadores de eventos según sea necesario",
+    "examples": [
+      "Botón de alternancia",
+      "Botón de enlace",
+      "Botón de acción"
+    ]
+  },
+  "link": {
+    "label": "Enlace",
+    "description": "Elemento de hipervínculo",
+    "help": "Crea enlaces clicables. Usa atributo href para especificar destino del enlace",
+    "examples": [
+      "Enlace externo",
+      "Referencia de página",
+      "Enlace de recurso"
+    ]
+  },
+  "list": {
+    "label": "Lista",
+    "description": "Lista ordenada o desordenada",
+    "help": "Muestra elementos en formato de lista. Usa ordenada para listas numeradas, desordenada para puntos",
+    "examples": [
+      "Lista con viñetas",
+      "Pasos numerados",
+      "Lista de definiciones"
+    ]
+  },
+  "table": {
+    "label": "Tabla",
+    "description": "Tabla de datos con filas y columnas",
+    "help": "Organiza datos tabulares. Define columnas, filas y contenido de celdas",
+    "examples": [
+      "Tabla de datos",
+      "Tabla de comparación",
+      "Horario"
+    ]
+  },
+  "cloze": {
+    "label": "Cloze",
+    "description": "Eliminación de cloze (llenar en blanco)",
+    "help": "Oculta texto específico de la pantalla en el lado de pregunta. Usa sintaxis {{cloze:FieldName}}",
+    "examples": [
+      "{{cloze:Text}}",
+      "Respuesta oculta",
+      "Llenar en blanco"
+    ]
+  },
+  "hint": {
+    "label": "Pista",
+    "description": "Pista oculta revelada al hacer clic",
+    "help": "El contenido está oculto por defecto y se revela cuando el usuario hace clic. Úsalo para información complementaria",
+    "examples": [
+      "Pista extra",
+      "Ayuda de memoria",
+      "Nota de estudio"
+    ]
+  },
+  "conditional": {
+    "label": "Condicional",
+    "description": "Mostrar/ocultar contenido basado en valor de campo",
+    "help": "El contenido se muestra solo si el campo referenciado no está vacío. Usa {{#FieldName}}...{{/FieldName}}",
+    "examples": [
+      "Sección opcional",
+      "Mostrar campo extra",
+      "Contenido condicional"
+    ]
+  },
+  "badge": {
+    "label": "Distintivo",
+    "description": "Etiqueta o etiqueta pequeña",
+    "help": "Muestra estado, categoría o pequeños fragmentos de información",
+    "examples": [
+      "Etiqueta de categoría",
+      "Distintivo de estado",
+      "Etiqueta"
+    ]
+  },
+  "card": {
+    "label": "Tarjeta",
+    "description": "Contenedor de tarjeta/panel con estilo",
+    "help": "Contenedor estilizado para contenido agrupado. Puede tener borde, sombra y color de fondo",
+    "examples": [
+      "Tarjeta de contenido",
+      "Panel de información",
+      "Caja de sección"
+    ]
+  },
+  "properties": {
+    "fontSize": "Tamaño de fuente",
+    "fontColor": "Color de fuente",
+    "backgroundColor": "Color de fondo",
+    "borderColor": "Color de borde",
+    "borderWidth": "Ancho de borde",
+    "padding": "Relleno",
+    "margin": "Margen",
+    "width": "Ancho",
+    "height": "Alto",
+    "textAlign": "Alineación de texto",
+    "fontWeight": "Grosor de fuente",
+    "fontStyle": "Estilo de fuente",
+    "textDecoration": "Decoración de texto",
+    "opacity": "Opacidad",
+    "display": "Mostrar",
+    "flexDirection": "Dirección de flex",
+    "justifyContent": "Justificar contenido",
+    "alignItems": "Alinear elementos",
+    "gap": "Brecha",
+    "borderRadius": "Radio de borde",
+    "boxShadow": "Sombra de caja"
+  }
+}

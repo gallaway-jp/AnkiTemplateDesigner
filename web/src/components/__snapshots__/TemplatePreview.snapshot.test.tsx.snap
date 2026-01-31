@@ -1,0 +1,642 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`TemplatePreview Snapshot Tests > matches snapshot with empty fields 1`] = `
+<div>
+  <div
+    class="template-preview"
+  >
+    <div
+      class="preview-header"
+    >
+      <h3>
+        Preview
+      </h3>
+      <button
+        aria-label="Close preview"
+        class="close-btn"
+      >
+        ×
+      </button>
+    </div>
+    <div
+      class="preview-controls"
+    >
+      <div
+        class="side-toggle"
+      >
+        <button
+          class="side-btn active"
+        >
+          Front
+        </button>
+        <button
+          class="side-btn "
+        >
+          Back
+        </button>
+      </div>
+    </div>
+    <div
+      class="preview-loading"
+    >
+      <div
+        class="spinner"
+      />
+      <span>
+        Generating preview...
+      </span>
+    </div>
+    <div
+      class="preview-iframe-container"
+    >
+      <iframe
+        class="preview-iframe"
+        srcdoc="
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="UTF-8">
+              <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body { 
+                  font-family: Arial, sans-serif;
+                  padding: 1rem;
+                  background: white;
+                }
+                
+              </style>
+            </head>
+            <body>
+              
+            </body>
+            </html>
+          "
+        title="Template front side preview"
+      />
+    </div>
+    <style>
+      
+        .template-preview {
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+          background: var(--color-bg-secondary);
+        }
+
+        .preview-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0.75rem 1rem;
+          border-bottom: 1px solid var(--color-border);
+        }
+
+        .preview-header h3 {
+          margin: 0;
+          font-size: 0.95rem;
+          font-weight: 600;
+          color: var(--color-text-primary);
+        }
+
+        .close-btn {
+          background: none;
+          border: none;
+          color: var(--color-text-secondary);
+          font-size: 1.5rem;
+          cursor: pointer;
+          padding: 0;
+          width: 1.5rem;
+          height: 1.5rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s;
+        }
+
+        .close-btn:hover {
+          color: var(--color-text-primary);
+          background: var(--color-bg-tertiary);
+          border-radius: 4px;
+        }
+
+        .preview-controls {
+          padding: 0.5rem 1rem;
+          border-bottom: 1px solid var(--color-border);
+        }
+
+        .side-toggle {
+          display: flex;
+          gap: 0.25rem;
+          border: 1px solid var(--color-border);
+          border-radius: var(--border-radius-sm);
+          background: var(--color-bg-primary);
+          overflow: hidden;
+        }
+
+        .side-btn {
+          flex: 1;
+          padding: 0.4rem 0.75rem;
+          background: transparent;
+          border: none;
+          color: var(--color-text-primary);
+          font-size: 0.8rem;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .side-btn:hover {
+          background: var(--color-bg-tertiary);
+        }
+
+        .side-btn.active {
+          background: var(--color-accent);
+          color: white;
+        }
+
+        .preview-error {
+          padding: 0.75rem 1rem;
+          background: var(--color-error);
+          color: white;
+          font-size: 0.8rem;
+          text-align: center;
+          margin: 0.5rem;
+          border-radius: var(--border-radius-sm);
+        }
+
+        .preview-loading {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          flex: 1;
+          gap: 1rem;
+          color: var(--color-text-secondary);
+        }
+
+        .spinner {
+          width: 24px;
+          height: 24px;
+          border: 2px solid var(--color-border);
+          border-top-color: var(--color-accent);
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+
+        .preview-iframe-container {
+          flex: 1;
+          overflow: hidden;
+          display: flex;
+        }
+
+        .preview-iframe {
+          flex: 1;
+          border: none;
+          background: white;
+          width: 100%;
+          height: 100%;
+        }
+
+        @media (max-width: 768px) {
+          .preview-header h3 {
+            font-size: 0.85rem;
+          }
+
+          .side-btn {
+            font-size: 0.7rem;
+            padding: 0.3rem 0.5rem;
+          }
+        }
+      
+    </style>
+  </div>
+</div>
+`;
+
+exports[`TemplatePreview Snapshot Tests > matches snapshot with null template 1`] = `
+<div>
+  <div
+    class="template-preview"
+  >
+    <div
+      class="preview-header"
+    >
+      <h3>
+        Preview
+      </h3>
+      <button
+        aria-label="Close preview"
+        class="close-btn"
+      >
+        ×
+      </button>
+    </div>
+    <div
+      class="preview-controls"
+    >
+      <div
+        class="side-toggle"
+      >
+        <button
+          class="side-btn active"
+        >
+          Front
+        </button>
+        <button
+          class="side-btn "
+        >
+          Back
+        </button>
+      </div>
+    </div>
+    <div
+      class="preview-iframe-container"
+    >
+      <iframe
+        class="preview-iframe"
+        srcdoc="
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="UTF-8">
+              <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body { 
+                  font-family: Arial, sans-serif;
+                  padding: 1rem;
+                  background: white;
+                }
+                
+              </style>
+            </head>
+            <body>
+              
+            </body>
+            </html>
+          "
+        title="Template front side preview"
+      />
+    </div>
+    <style>
+      
+        .template-preview {
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+          background: var(--color-bg-secondary);
+        }
+
+        .preview-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0.75rem 1rem;
+          border-bottom: 1px solid var(--color-border);
+        }
+
+        .preview-header h3 {
+          margin: 0;
+          font-size: 0.95rem;
+          font-weight: 600;
+          color: var(--color-text-primary);
+        }
+
+        .close-btn {
+          background: none;
+          border: none;
+          color: var(--color-text-secondary);
+          font-size: 1.5rem;
+          cursor: pointer;
+          padding: 0;
+          width: 1.5rem;
+          height: 1.5rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s;
+        }
+
+        .close-btn:hover {
+          color: var(--color-text-primary);
+          background: var(--color-bg-tertiary);
+          border-radius: 4px;
+        }
+
+        .preview-controls {
+          padding: 0.5rem 1rem;
+          border-bottom: 1px solid var(--color-border);
+        }
+
+        .side-toggle {
+          display: flex;
+          gap: 0.25rem;
+          border: 1px solid var(--color-border);
+          border-radius: var(--border-radius-sm);
+          background: var(--color-bg-primary);
+          overflow: hidden;
+        }
+
+        .side-btn {
+          flex: 1;
+          padding: 0.4rem 0.75rem;
+          background: transparent;
+          border: none;
+          color: var(--color-text-primary);
+          font-size: 0.8rem;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .side-btn:hover {
+          background: var(--color-bg-tertiary);
+        }
+
+        .side-btn.active {
+          background: var(--color-accent);
+          color: white;
+        }
+
+        .preview-error {
+          padding: 0.75rem 1rem;
+          background: var(--color-error);
+          color: white;
+          font-size: 0.8rem;
+          text-align: center;
+          margin: 0.5rem;
+          border-radius: var(--border-radius-sm);
+        }
+
+        .preview-loading {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          flex: 1;
+          gap: 1rem;
+          color: var(--color-text-secondary);
+        }
+
+        .spinner {
+          width: 24px;
+          height: 24px;
+          border: 2px solid var(--color-border);
+          border-top-color: var(--color-accent);
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+
+        .preview-iframe-container {
+          flex: 1;
+          overflow: hidden;
+          display: flex;
+        }
+
+        .preview-iframe {
+          flex: 1;
+          border: none;
+          background: white;
+          width: 100%;
+          height: 100%;
+        }
+
+        @media (max-width: 768px) {
+          .preview-header h3 {
+            font-size: 0.85rem;
+          }
+
+          .side-btn {
+            font-size: 0.7rem;
+            padding: 0.3rem 0.5rem;
+          }
+        }
+      
+    </style>
+  </div>
+</div>
+`;
+
+exports[`TemplatePreview Snapshot Tests > matches snapshot with template 1`] = `
+<div>
+  <div
+    class="template-preview"
+  >
+    <div
+      class="preview-header"
+    >
+      <h3>
+        Preview
+      </h3>
+      <button
+        aria-label="Close preview"
+        class="close-btn"
+      >
+        ×
+      </button>
+    </div>
+    <div
+      class="preview-controls"
+    >
+      <div
+        class="side-toggle"
+      >
+        <button
+          class="side-btn active"
+        >
+          Front
+        </button>
+        <button
+          class="side-btn "
+        >
+          Back
+        </button>
+      </div>
+    </div>
+    <div
+      class="preview-loading"
+    >
+      <div
+        class="spinner"
+      />
+      <span>
+        Generating preview...
+      </span>
+    </div>
+    <div
+      class="preview-iframe-container"
+    >
+      <iframe
+        class="preview-iframe"
+        srcdoc="
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="UTF-8">
+              <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body { 
+                  font-family: Arial, sans-serif;
+                  padding: 1rem;
+                  background: white;
+                }
+                
+              </style>
+            </head>
+            <body>
+              
+            </body>
+            </html>
+          "
+        title="Template front side preview"
+      />
+    </div>
+    <style>
+      
+        .template-preview {
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+          background: var(--color-bg-secondary);
+        }
+
+        .preview-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0.75rem 1rem;
+          border-bottom: 1px solid var(--color-border);
+        }
+
+        .preview-header h3 {
+          margin: 0;
+          font-size: 0.95rem;
+          font-weight: 600;
+          color: var(--color-text-primary);
+        }
+
+        .close-btn {
+          background: none;
+          border: none;
+          color: var(--color-text-secondary);
+          font-size: 1.5rem;
+          cursor: pointer;
+          padding: 0;
+          width: 1.5rem;
+          height: 1.5rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s;
+        }
+
+        .close-btn:hover {
+          color: var(--color-text-primary);
+          background: var(--color-bg-tertiary);
+          border-radius: 4px;
+        }
+
+        .preview-controls {
+          padding: 0.5rem 1rem;
+          border-bottom: 1px solid var(--color-border);
+        }
+
+        .side-toggle {
+          display: flex;
+          gap: 0.25rem;
+          border: 1px solid var(--color-border);
+          border-radius: var(--border-radius-sm);
+          background: var(--color-bg-primary);
+          overflow: hidden;
+        }
+
+        .side-btn {
+          flex: 1;
+          padding: 0.4rem 0.75rem;
+          background: transparent;
+          border: none;
+          color: var(--color-text-primary);
+          font-size: 0.8rem;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .side-btn:hover {
+          background: var(--color-bg-tertiary);
+        }
+
+        .side-btn.active {
+          background: var(--color-accent);
+          color: white;
+        }
+
+        .preview-error {
+          padding: 0.75rem 1rem;
+          background: var(--color-error);
+          color: white;
+          font-size: 0.8rem;
+          text-align: center;
+          margin: 0.5rem;
+          border-radius: var(--border-radius-sm);
+        }
+
+        .preview-loading {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          flex: 1;
+          gap: 1rem;
+          color: var(--color-text-secondary);
+        }
+
+        .spinner {
+          width: 24px;
+          height: 24px;
+          border: 2px solid var(--color-border);
+          border-top-color: var(--color-accent);
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+
+        .preview-iframe-container {
+          flex: 1;
+          overflow: hidden;
+          display: flex;
+        }
+
+        .preview-iframe {
+          flex: 1;
+          border: none;
+          background: white;
+          width: 100%;
+          height: 100%;
+        }
+
+        @media (max-width: 768px) {
+          .preview-header h3 {
+            font-size: 0.85rem;
+          }
+
+          .side-btn {
+            font-size: 0.7rem;
+            padding: 0.3rem 0.5rem;
+          }
+        }
+      
+    </style>
+  </div>
+</div>
+`;

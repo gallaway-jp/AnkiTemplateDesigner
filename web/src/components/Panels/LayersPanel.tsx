@@ -255,6 +255,13 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({ className = '' }) => {
 
   // Initialize layer tree when nodes change
   useEffect(() => {
+    // Guard against null/undefined nodes
+    if (!nodes || typeof nodes !== 'object') {
+      setLayerTree(null);
+      setStats({ total: 0, selected: 0 });
+      return;
+    }
+
     const rootNodeId = Object.keys(nodes).find((id) => !nodes[id].parent);
     if (rootNodeId) {
       const tree = buildLayerTree(rootNodeId);
@@ -291,6 +298,9 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({ className = '' }) => {
   }, []);
 
   const handleRename = useCallback((id: string, newName: string) => {
+    // Guard against null/undefined nodes
+    if (!nodes || typeof nodes !== 'object') return;
+    
     // Update store with renamed node
     const node = nodes[id];
     if (node) {
@@ -305,6 +315,9 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({ className = '' }) => {
   }, []);
 
   const handleExpandAll = useCallback(() => {
+    // Guard against null/undefined nodes
+    if (!nodes || typeof nodes !== 'object') return;
+    
     const allExpanded: Record<string, boolean> = {};
     Object.keys(nodes).forEach((id) => {
       allExpanded[id] = true;
@@ -313,6 +326,12 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({ className = '' }) => {
   }, [nodes]);
 
   const handleCollapseAll = useCallback(() => {
+    // Guard against null/undefined nodes
+    if (!nodes || typeof nodes !== 'object') {
+      setExpanded({});
+      return;
+    }
+    
     const rootNodeId = Object.keys(nodes).find((id) => !nodes[id].parent);
     if (rootNodeId) {
       setExpanded({ [rootNodeId]: true });

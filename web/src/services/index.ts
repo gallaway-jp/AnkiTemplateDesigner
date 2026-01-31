@@ -14,3 +14,50 @@ export {
   updateCraftComponent,
   validateCraftData,
 } from './craftjsAdapter';
+
+// Phase 1 Architecture Enhancements
+export { ServiceRegistry, registry } from './registry';
+export type { ServiceConfig } from './registry';
+
+// Phase 2 Architecture Enhancements
+export {
+  CacheManager,
+  LRUCacheStrategy,
+  TTLCacheStrategy,
+  HybridCacheStrategy,
+  SimpleMemoryCacheStrategy,
+  cacheManager,
+} from './cacheManager';
+export type { CacheStrategy } from './cacheManager';
+
+export {
+  ApiClient,
+  HttpTransport,
+  WebSocketTransport,
+  ApiError,
+} from './apiClient';
+export type { ApiRequest, ApiResponse, ApiTransport } from './apiClient';
+
+// Phase 3 Architecture Enhancements
+export {
+  CommandBus,
+  QueryBus,
+  CQRSHandler,
+  BaseCommand,
+  BaseQuery,
+  cqrsHandler,
+} from './cqrs';
+
+export {
+  InMemoryEventStore,
+  EventProjector,
+  EventSourcedRepository,
+  AggregateRoot,
+  EventReplayService,
+  SnapshotRepository,
+} from './eventSourcing';
+export type {
+  DomainEvent,
+  IEventStore,
+  Snapshot,
+} from './eventSourcing';

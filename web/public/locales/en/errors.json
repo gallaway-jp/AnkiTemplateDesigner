@@ -1,0 +1,68 @@
+{
+  "html": {
+    "html-1": "Your template needs a container element to wrap all content",
+    "html-2": "Template contains duplicate IDs. Each element must have a unique ID",
+    "html-3": "Invalid HTML syntax detected",
+    "html-4": "Unterminated HTML tag",
+    "html-5": "Deprecated HTML element used"
+  },
+  "anki": {
+    "anki-1": "Field reference is incorrect or does not exist",
+    "anki-2": "Invalid Anki field syntax",
+    "anki-3": "Cloze syntax is malformed",
+    "anki-4": "Conditional block is not properly closed",
+    "anki-5": "Field name contains invalid characters"
+  },
+  "a11y": {
+    "a11y-1": "Images should have alt text for accessibility",
+    "a11y-2": "Buttons need descriptive text or aria-label",
+    "a11y-3": "Links should have meaningful text content",
+    "a11y-4": "Form inputs need associated labels",
+    "a11y-5": "Color alone should not convey meaning"
+  },
+  "css": {
+    "css-1": "Invalid CSS property",
+    "css-2": "Unknown CSS color value",
+    "css-3": "CSS unit is not supported",
+    "css-4": "Font family is not web-safe"
+  },
+  "validation": {
+    "validation-1": "Template is empty",
+    "validation-2": "Template has no visible content",
+    "validation-3": "Text is too small to read",
+    "validation-4": "Element dimensions may cause overflow"
+  },
+  "performance": {
+    "performance-1": "Template may render slowly",
+    "performance-2": "Image file size is very large",
+    "performance-3": "Too many nested elements",
+    "performance-4": "Inefficient CSS selectors detected"
+  },
+  "mobile": {
+    "mobile-1": "Template may not display correctly on mobile",
+    "mobile-2": "Touch targets are too small",
+    "mobile-3": "Content may overflow on small screens",
+    "mobile-4": "Fixed positioning not recommended for mobile"
+  },
+  "security": {
+    "security-1": "External script references not allowed",
+    "security-2": "Inline event handlers detected",
+    "security-3": "Potentially unsafe HTML content"
+  },
+  "suggestions": {
+    "addAltText": "Add alt text to all images for accessibility",
+    "improveContrast": "Improve color contrast for better readability",
+    "optimizeImages": "Optimize image sizes to improve performance",
+    "useSemanticHtml": "Use semantic HTML elements for better structure",
+    "removeEmptyElements": "Remove empty elements that don't serve a purpose",
+    "simplifyLayout": "Simplify layout to reduce complexity",
+    "testMobile": "Test template on mobile devices"
+  },
+  "types": {
+    "error": "Error",
+    "warning": "Warning",
+    "info": "Information",
+    "success": "Success",
+    "critical": "Critical"
+  }
+}

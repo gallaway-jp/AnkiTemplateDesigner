@@ -2,9 +2,13 @@
 Main entry point for the Anki Template Designer add-on
 """
 
-from aqt import mw, gui_hooks
-from aqt.qt import QAction
+import logging
+import os
+
+from aqt import mw
 from aqt.utils import showInfo
+
+from .utils import configure_logging, get_logger, install_exception_logging, install_qt_message_handler
 
 
 # Global service container (initialized on first use)
@@ -53,7 +57,7 @@ def _create_service_container():
 def show_template_designer():
     """Show the template designer dialog"""
     # Import dialog only when needed (lazy loading)
-    from .ui.android_studio_dialog import AndroidStudioDesignerDialog
+    from .gui.designer_dialog import TemplateDesignerDialog
     
     # Get the current note type
     note_types = mw.col.models.all_names_and_ids()
@@ -62,46 +66,36 @@ def show_template_designer():
         showInfo("No note types found. Please create a note type first.")
         return
     
-    # Get service container
-    services = get_service_container()
-    
-    # Create and show the designer dialog (Android Studio style)
-    dialog = AndroidStudioDesignerDialog(services, mw)
+    # Create and show the designer dialog
+    dialog = TemplateDesignerDialog(mw)
     dialog.exec()
 
 
-def setup_menu():
-    """Setup menu items"""
-    action = QAction("Template Designer (Visual Editor)", mw)
-    action.triggered.connect(show_template_designer)
-    mw.form.menuTools.addAction(action)
+def _configure_addon_logging():
+    """Configure logging based on add-on settings."""
+    config = {}
+    try:
+        config = mw.addonManager.getConfig(__name__) if mw and hasattr(mw, 'addonManager') else {}
+    except Exception:
+        config = {}
 
+    debug_logging = bool(config.get('debugLogging', False))
+    log_level_name = str(config.get('logLevel', 'INFO')).upper()
+    log_level = getattr(logging, log_level_name, logging.INFO)
 
-def init_addon():
-    """Initialize the add-on"""
-    setup_menu()
-    
-    # Add hook to card layout screen
-    gui_hooks.card_layout_will_show.append(on_card_layout_show)
+    log_file = None
+    if mw and hasattr(mw, 'addonManager'):
+        try:
+            data_dir = mw.addonManager.addonDataFolder(__name__)
+            log_dir = os.path.join(data_dir, 'logs')
+            os.makedirs(log_dir, exist_ok=True)
+            log_file = os.path.join(log_dir, 'anki_template_designer.log')
+        except Exception:
+            log_file = None
 
+    configure_logging(log_level=log_level, log_file=log_file, enable_file_logging=debug_logging)
+    logger = get_logger('init')
+    logger.info("Logging initialized", extra={"debugLogging": debug_logging, "logLevel": log_level_name})
 
-def on_card_layout_show(clayout):
-    """Add Template Designer button to card layout screen"""
-    from aqt.qt import QPushButton
-    
-    btn = QPushButton("Visual Designer", clayout)
-    btn.clicked.connect(lambda: show_template_designer_for_note_type(clayout.model))
-    
-    # Add button to the card layout dialog
-    if hasattr(clayout, 'buttons'):
-        clayout.buttons.addWidget(btn)
-
-# Import dialog only when needed (lazy loading)
-    from .ui.android_studio_dialog import AndroidStudioDesignerDialog
-    
-    
-def show_template_designer_for_note_type(note_type):
-    """Show template designer for a specific note type."""
-    services = get_service_container()
-    dialog = AndroidStudioDesignerDialog(services, mw, note_type=note_type)
-    dialog.exec()
+    install_exception_logging(logger)
+    install_qt_message_handler(logger)

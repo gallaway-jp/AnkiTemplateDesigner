@@ -4,5 +4,7 @@
     "default_platform": "desktop",
     "ankidroid_theme": "light",
     "show_both_platforms": true,
-    "auto_refresh": true
+    "auto_refresh": true,
+    "debugLogging": true,
+    "logLevel": "INFO"
 }

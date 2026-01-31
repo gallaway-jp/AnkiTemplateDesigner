@@ -1168,8 +1168,15 @@ class ValidationUI {
      */
     /**
      * Translate technical error messages to user-friendly format
+     * Uses i18n if available, falls back to English translations
      */
     getUserFriendlyMessage(error) {
+        // Try to use i18n if available
+        if (typeof window.i18nErrors !== 'undefined' && window.i18nErrors.getUserFriendlyErrorMessage) {
+            return window.i18nErrors.getUserFriendlyErrorMessage(error.ruleId);
+        }
+        
+        // Fallback to English
         const messageMap = {
             // HTML Structure
             'html-1': 'Your template needs a container element (like a div or section) to hold the content',
@@ -1204,8 +1211,14 @@ class ValidationUI {
 
     /**
      * Get error context (which field/component has the issue)
+     * Uses i18n if available, falls back to English
      */
     getErrorContext(error) {
+        // Try to use i18n if available
+        if (typeof window.i18nErrors !== 'undefined' && window.i18nErrors.getErrorContext) {
+            return window.i18nErrors.getErrorContext(error.ruleId);
+        }
+        
         // Try to extract field name or component from error details
         const contexts = {
             'anki-1': 'in field reference',
@@ -1220,6 +1233,12 @@ class ValidationUI {
     }
 
     getSuggestionsForError(ruleId) {
+        // Try to use i18n if available
+        if (typeof window.i18nErrors !== 'undefined' && window.i18nErrors.getSuggestionsForError) {
+            return window.i18nErrors.getSuggestionsForError(ruleId);
+        }
+        
+        // Fallback to English
         const suggestions = {
             // HTML Structure
             'html-1': [

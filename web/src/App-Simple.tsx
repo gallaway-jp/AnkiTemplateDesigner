@@ -1,5 +1,5 @@
 import React from 'react';
-import './App.css';
+import { appStyle, containerStyle, mainContentStyle } from './App.styles';
 
 /**
  * Simple Anki Template Designer App

@@ -6,6 +6,8 @@ import path from 'path';
 export default defineConfig({
   plugins: [react()],
   
+  base: './', // Use relative paths for assets (works with file:// protocol)
+  
   server: {
     port: 5173,
     strictPort: false,

@@ -30,12 +30,23 @@ def open_designer():
         print("[Template Designer] Cannot open - Anki not available")
         return
     
+    print("[Template Designer] ╔" + "═" * 66 + "╗")
+    print("[Template Designer] ║ open_designer() CALLED                        " + " " * 17 + "║")
+    print("[Template Designer] ╚" + "═" * 66 + "╝")
+    
     from ..gui.designer_dialog import TemplateDesignerDialog
     
     try:
+        print("[Template Designer] Creating TemplateDesignerDialog instance...")
         dialog = TemplateDesignerDialog(mw)
-        dialog.exec()
+        print("[Template Designer] Dialog instance created successfully")
+        print("[Template Designer] Calling dialog.exec() to show dialog...")
+        result = dialog.exec()
+        print(f"[Template Designer] dialog.exec() returned: {result}")
     except Exception as e:
         from aqt.utils import showWarning
+        print(f"[Template Designer] EXCEPTION in open_designer: {e}")
+        import traceback
+        traceback.print_exc()
         showWarning(f"Failed to open Template Designer: {e}")
         print(f"[Template Designer] Error: {e}")

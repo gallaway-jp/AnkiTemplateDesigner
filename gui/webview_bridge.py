@@ -3,11 +3,26 @@
 from typing import Callable, Any, Optional
 import json
 
+# Handle both relative and absolute imports for flexibility
+try:
+    from ..utils import get_logger
+except ImportError:
+    # When imported as top-level or in test environment
+    try:
+        from utils import get_logger
+    except ImportError:
+        # Fallback: create a simple logger
+        import logging
+        def get_logger(name):
+            return logging.getLogger(name)
+
 try:
     from aqt.qt import QObject, pyqtSlot, pyqtSignal
+    from aqt import mw
 except ImportError:
     # Fallback for testing without Anki
     from PyQt6.QtCore import QObject, pyqtSlot, pyqtSignal
+    mw = None
 
 
 class WebViewBridge(QObject):
@@ -29,6 +44,25 @@ class WebViewBridge(QObject):
         self._save_callback: Optional[Callable] = None
         self._preview_callback: Optional[Callable] = None
         self._export_callback: Optional[Callable] = None
+        self._logger = get_logger('bridge')
+        self._debug_logging_enabled = self._load_debug_logging_flag()
+        
+        self._logger.info("WebViewBridge initialized successfully")
+
+    def _load_debug_logging_flag(self) -> bool:
+        """Load debug logging flag from add-on config."""
+        try:
+            if mw and hasattr(mw, 'addonManager'):
+                addon_name = __name__.split('.')[0]
+                config = mw.addonManager.getConfig(addon_name) or {}
+                enabled = bool(config.get('debugLogging', False))
+                if enabled:
+                    self._logger.info("Debug logging ENABLED")
+                return enabled
+        except Exception as e:
+            self._logger.warning("Failed to load debug logging flag: %s", e)
+            return False
+        return False
     
     # ========== JavaScript -> Python Slots ==========
     
@@ -161,7 +195,36 @@ class WebViewBridge(QObject):
         Args:
             message: Log message from JavaScript
         """
-        print(f"[GrapeJS] {message}")
+        if not self._debug_logging_enabled:
+            return
+        self._logger.info("JS: %s", message)
+
+    @pyqtSlot(str, str, str)
+    def logClientEvent(self, level: str, message: str, details: str):
+        """Called by JS to log structured client events.
+
+        Args:
+            level: Log level string
+            message: Log message
+            details: JSON string details
+        """
+        if not self._debug_logging_enabled:
+            return
+
+        try:
+            parsed_details = json.loads(details) if details else None
+        except Exception:
+            parsed_details = details
+
+        level_lower = (level or '').lower()
+        if level_lower == 'error':
+            self._logger.error("JS: %s", message, extra={"details": parsed_details})
+        elif level_lower == 'warn':
+            self._logger.warning("JS: %s", message, extra={"details": parsed_details})
+        elif level_lower == 'debug':
+            self._logger.debug("JS: %s", message, extra={"details": parsed_details})
+        else:
+            self._logger.info("JS: %s", message, extra={"details": parsed_details})
     
     @pyqtSlot(str)
     def showError(self, message: str):
@@ -195,10 +258,24 @@ class WebViewBridge(QObject):
         Returns:
             JSON string array of behavior objects
         """
-        from ..services.ankijsapi_service import AnkiJSApiService
-        service = AnkiJSApiService()
-        behaviors = service.get_available_behaviors()
-        return json.dumps(behaviors)
+        try:
+            print("[WebViewBridge] getAnkiBehaviors() called")
+            from ..services.ankijsapi_service import AnkiJSApiService
+            print("[WebViewBridge] AnkiJSApiService imported")
+            service = AnkiJSApiService()
+            print("[WebViewBridge] AnkiJSApiService instantiated")
+            behaviors = service.get_available_behaviors()
+            print(f"[WebViewBridge] Got {len(behaviors)} behaviors")
+            result = json.dumps(behaviors)
+            print(f"[WebViewBridge] Returning JSON ({len(result)} chars)")
+            return result
+        except Exception as e:
+            print(f"[WebViewBridge] ERROR in getAnkiBehaviors: {e}")
+            import traceback
+            traceback.print_exc()
+            # Return empty list as fallback
+            print("[WebViewBridge] Returning empty list as fallback")
+            return json.dumps([])
     
     def _call_js(self, js_code: str):
         """Execute JavaScript code from Python.

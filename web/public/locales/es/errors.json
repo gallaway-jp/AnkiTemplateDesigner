@@ -1,0 +1,68 @@
+{
+  "html": {
+    "html-1": "Tu plantilla necesita un elemento contenedor para envolver todo el contenido",
+    "html-2": "La plantilla contiene IDs duplicados. Cada elemento debe tener un ID único",
+    "html-3": "Se detectó sintaxis HTML inválida",
+    "html-4": "Etiqueta HTML no terminada",
+    "html-5": "Se utilizó elemento HTML obsoleto"
+  },
+  "anki": {
+    "anki-1": "La referencia de campo es incorrecta o no existe",
+    "anki-2": "Sintaxis de campo Anki inválida",
+    "anki-3": "La sintaxis de cloze está malformada",
+    "anki-4": "El bloque condicional no está correctamente cerrado",
+    "anki-5": "El nombre del campo contiene caracteres inválidos"
+  },
+  "a11y": {
+    "a11y-1": "Las imágenes deben tener texto alternativo para accesibilidad",
+    "a11y-2": "Los botones necesitan texto descriptivo o aria-label",
+    "a11y-3": "Los enlaces deben tener contenido de texto significativo",
+    "a11y-4": "Las entradas de formulario necesitan etiquetas asociadas",
+    "a11y-5": "El color solo no debe transmitir significado"
+  },
+  "css": {
+    "css-1": "Propiedad CSS inválida",
+    "css-2": "Valor de color CSS desconocido",
+    "css-3": "Unidad CSS no compatible",
+    "css-4": "La familia de fuente no es web-safe"
+  },
+  "validation": {
+    "validation-1": "La plantilla está vacía",
+    "validation-2": "La plantilla no tiene contenido visible",
+    "validation-3": "El texto es demasiado pequeño para leer",
+    "validation-4": "Las dimensiones del elemento pueden causar desbordamiento"
+  },
+  "performance": {
+    "performance-1": "La plantilla puede renderizarse lentamente",
+    "performance-2": "El tamaño del archivo de imagen es muy grande",
+    "performance-3": "Demasiados elementos anidados",
+    "performance-4": "Selectores CSS ineficientes detectados"
+  },
+  "mobile": {
+    "mobile-1": "La plantilla puede no mostrar correctamente en móvil",
+    "mobile-2": "Los objetivos táctiles son demasiado pequeños",
+    "mobile-3": "El contenido puede desbordarse en pantallas pequeñas",
+    "mobile-4": "Posicionamiento fijo no recomendado para móvil"
+  },
+  "security": {
+    "security-1": "Referencias de scripts externos no permitidas",
+    "security-2": "Manejadores de eventos en línea detectados",
+    "security-3": "Contenido HTML potencialmente inseguro"
+  },
+  "suggestions": {
+    "addAltText": "Agrega texto alternativo a todas las imágenes para accesibilidad",
+    "improveContrast": "Mejora el contraste de color para mejor legibilidad",
+    "optimizeImages": "Optimiza tamaños de imagen para mejorar rendimiento",
+    "useSemanticHtml": "Usa elementos HTML semánticos para mejor estructura",
+    "removeEmptyElements": "Elimina elementos vacíos que no sirven un propósito",
+    "simplifyLayout": "Simplifica el diseño para reducir complejidad",
+    "testMobile": "Prueba la plantilla en dispositivos móviles"
+  },
+  "types": {
+    "error": "Error",
+    "warning": "Advertencia",
+    "info": "Información",
+    "success": "Éxito",
+    "critical": "Crítico"
+  }
+}

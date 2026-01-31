@@ -109,6 +109,7 @@ body {
   background: var(--color-bg-primary);
   padding: var(--spacing-xl);
   text-align: center;
+  overflow: auto;
 }
 
 .error-screen h1 {
@@ -124,6 +125,76 @@ body {
 .error-screen .hint {
   font-size: var(--font-size-sm);
   margin-top: var(--spacing-md);
+}
+
+.error-message {
+  background: var(--color-bg-secondary);
+  border: 2px solid var(--color-error);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-md);
+  max-width: 800px;
+  width: 100%;
+  max-height: 300px;
+  overflow: auto;
+  text-align: left;
+}
+
+.error-message pre {
+  color: var(--color-error);
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: var(--font-size-sm);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.debug-details {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-bg-tertiary);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-md);
+  max-width: 800px;
+  width: 100%;
+  margin-top: var(--spacing-md);
+}
+
+.debug-details summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--color-accent);
+  padding: var(--spacing-sm);
+  user-select: none;
+  display: list-item;
+  list-style: disclosure-triangle-open;
+}
+
+.debug-details summary:hover {
+  color: var(--color-accent-hover);
+}
+
+.debug-details[open] summary {
+  margin-bottom: var(--spacing-md);
+}
+
+.debug-log {
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--color-bg-primary);
+  border-radius: var(--border-radius-sm);
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: var(--font-size-sm);
+  max-height: 400px;
+  overflow: auto;
+  text-align: left;
+}
+
+.debug-log > div {
+  padding: 4px 0;
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid var(--color-bg-tertiary);
+}
+
+.debug-log > div:last-child {
+  border-bottom: none;
 }
 
 /* Scrollbars */
@@ -219,4 +290,36 @@ select:focus {
   flex: 1;
   overflow: auto;
   padding: var(--spacing-md);
+}
+/* App Layout */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-bg-tertiary);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: var(--z-sticky);
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+}
+
+.app-main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
 }

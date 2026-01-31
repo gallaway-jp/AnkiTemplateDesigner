@@ -9,6 +9,10 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/tests/setup.ts'],
+    snapshotFormat: {
+      printBasicPrototype: false,
+      escapeString: false,
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

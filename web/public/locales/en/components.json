@@ -1,0 +1,212 @@
+{
+  "text": {
+    "label": "Text",
+    "description": "Static text content (not dynamic)",
+    "help": "Use for labels, instructions, and any static text that won't change based on card data",
+    "examples": [
+      "Static label",
+      "Instructions",
+      "Fixed text"
+    ]
+  },
+  "field": {
+    "label": "Field",
+    "description": "Dynamic field reference from your note type",
+    "help": "Reference card data fields like {{Front}}, {{Back}}, {{Extra}}. Field names are case-sensitive",
+    "examples": [
+      "{{Front}}",
+      "{{Back}}",
+      "{{Extra}}"
+    ]
+  },
+  "image": {
+    "label": "Image",
+    "description": "Display images from field values",
+    "help": "Field should contain image path or URL. Images are displayed at their natural size or constrained by CSS",
+    "examples": [
+      "{{ImageField}}",
+      "https://example.com/image.jpg"
+    ]
+  },
+  "video": {
+    "label": "Video",
+    "description": "Embed video content",
+    "help": "Field should contain video source path or URL. Supports MP4, WebM, and other HTML5 video formats",
+    "examples": [
+      "{{VideoField}}",
+      "https://example.com/video.mp4"
+    ]
+  },
+  "audio": {
+    "label": "Audio",
+    "description": "Play audio files",
+    "help": "Field should contain audio file path. Use HTML audio controls for playback",
+    "examples": [
+      "{{AudioField}}",
+      "[sound:audio.mp3]"
+    ]
+  },
+  "container": {
+    "label": "Container",
+    "description": "Layout container for organizing content",
+    "help": "Wraps other components for layout and styling purposes. Containers can be nested",
+    "examples": [
+      "Div container",
+      "Section wrapper",
+      "Flex layout"
+    ]
+  },
+  "row": {
+    "label": "Row",
+    "description": "Horizontal layout container",
+    "help": "Displays child components in a horizontal row. Use flex layout for responsive design",
+    "examples": [
+      "Two columns side by side",
+      "Header layout",
+      "Button group"
+    ]
+  },
+  "column": {
+    "label": "Column",
+    "description": "Vertical layout container",
+    "help": "Displays child components vertically. Useful for stacking elements",
+    "examples": [
+      "Vertical list",
+      "Form fields",
+      "Stack layout"
+    ]
+  },
+  "divider": {
+    "label": "Divider",
+    "description": "Horizontal separator line",
+    "help": "Separates content sections visually. Can be styled with color, width, and height",
+    "examples": [
+      "Section separator",
+      "Horizontal line",
+      "Visual break"
+    ]
+  },
+  "heading": {
+    "label": "Heading",
+    "description": "Section heading (H1-H6)",
+    "help": "Use for hierarchical content organization. Choose heading level based on content structure",
+    "examples": [
+      "Question",
+      "Answer",
+      "Section Title"
+    ]
+  },
+  "button": {
+    "label": "Button",
+    "description": "Interactive button element",
+    "help": "Can trigger JavaScript functions or link to URLs. Add event handlers as needed",
+    "examples": [
+      "Toggle button",
+      "Link button",
+      "Action button"
+    ]
+  },
+  "link": {
+    "label": "Link",
+    "description": "Hyperlink element",
+    "help": "Creates clickable links. Use href attribute to specify link target",
+    "examples": [
+      "External link",
+      "Page reference",
+      "Resource link"
+    ]
+  },
+  "list": {
+    "label": "List",
+    "description": "Ordered or unordered list",
+    "help": "Displays items in list format. Use ordered for numbered lists, unordered for bullet points",
+    "examples": [
+      "Bulleted list",
+      "Numbered steps",
+      "Definition list"
+    ]
+  },
+  "table": {
+    "label": "Table",
+    "description": "Data table with rows and columns",
+    "help": "Organize tabular data. Define columns, rows, and cell content",
+    "examples": [
+      "Data table",
+      "Comparison table",
+      "Schedule"
+    ]
+  },
+  "cloze": {
+    "label": "Cloze",
+    "description": "Cloze deletion (fill-in-the-blank)",
+    "help": "Hide specific text from display on question side. Use {{cloze:FieldName}} syntax",
+    "examples": [
+      "{{cloze:Text}}",
+      "Hidden answer",
+      "Fill-in-the-blank"
+    ]
+  },
+  "hint": {
+    "label": "Hint",
+    "description": "Hidden hint revealed on click",
+    "help": "Content is hidden by default and revealed when user clicks. Use for supplementary information",
+    "examples": [
+      "Extra hint",
+      "Memory aid",
+      "Study note"
+    ]
+  },
+  "conditional": {
+    "label": "Conditional",
+    "description": "Show/hide content based on field value",
+    "help": "Content is displayed only if the referenced field is not empty. Use {{#FieldName}}...{{/FieldName}}",
+    "examples": [
+      "Optional section",
+      "Extra field display",
+      "Conditional content"
+    ]
+  },
+  "badge": {
+    "label": "Badge",
+    "description": "Small label or tag",
+    "help": "Display status, category, or small pieces of information",
+    "examples": [
+      "Category tag",
+      "Status badge",
+      "Label"
+    ]
+  },
+  "card": {
+    "label": "Card",
+    "description": "Card/panel container with styling",
+    "help": "Styled container for grouped content. Can have border, shadow, and background color",
+    "examples": [
+      "Content card",
+      "Info panel",
+      "Section box"
+    ]
+  },
+  "properties": {
+    "fontSize": "Font Size",
+    "fontColor": "Font Color",
+    "backgroundColor": "Background Color",
+    "borderColor": "Border Color",
+    "borderWidth": "Border Width",
+    "padding": "Padding",
+    "margin": "Margin",
+    "width": "Width",
+    "height": "Height",
+    "textAlign": "Text Align",
+    "fontWeight": "Font Weight",
+    "fontStyle": "Font Style",
+    "textDecoration": "Text Decoration",
+    "opacity": "Opacity",
+    "display": "Display",
+    "flexDirection": "Flex Direction",
+    "justifyContent": "Justify Content",
+    "alignItems": "Align Items",
+    "gap": "Gap",
+    "borderRadius": "Border Radius",
+    "boxShadow": "Box Shadow"
+  }
+}

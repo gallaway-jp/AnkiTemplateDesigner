@@ -19,6 +19,7 @@ ITEMS_TO_COPY = [
     "__init__.py",
     "template_designer.py",
     "manifest.json",
+    "meta.json",
     "config.json",
     "config/",
     "core/",
@@ -128,10 +129,17 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Install/uninstall Anki Template Designer')
     parser.add_argument('action', choices=['install', 'uninstall'], 
                        help='Action to perform')
+    parser.add_argument('-f', '--force', action='store_true',
+                       help='Force reinstall without prompting')
     
     args = parser.parse_args()
     
     if args.action == 'install':
+        if args.force and ADDON_DIR.exists():
+            print(f"\n[INFO] Force reinstalling (--force flag specified)")
+            print(f"  Removing existing addon...")
+            shutil.rmtree(ADDON_DIR)
+            print(f"  [REMOVED]")
         success = install_addon()
     else:
         success = uninstall_addon()

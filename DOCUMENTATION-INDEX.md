@@ -536,16 +536,89 @@ npm run preview
 
 ---
 
+## 🐛 Debugging & Issue Resolution (Added Jan 24, 2026)
+
+### For Users: Common Issues
+👉 **[ISSUE-RESOLUTION-SUMMARY.md](ISSUE-RESOLUTION-SUMMARY.md)** ⭐ (5 min read)
+- "Step 2 Bridge Initialization" hang - FIXED
+- Root cause analysis
+- Testing instructions
+- Verification checklist
+
+👉 **[POST-FIX-TESTING.md](POST-FIX-TESTING.md)** (12 min testing guide)
+- 8-step testing checklist with expected outputs
+- Step 2 & Step 4c verification
+- Troubleshooting if issues persist
+- Log file locations
+
+### For Understanding Qt Warnings
+👉 **[QT-WIDGET-LIFECYCLE-FIXES.md](QT-WIDGET-LIFECYCLE-FIXES.md)** ⭐⭐⭐ (15 min read - COMPREHENSIVE)
+- Complete fix details (all 3 changes documented)
+- Root cause analysis with examples
+- Widget hierarchy explanation
+- How parent-child relationships work
+- Validation results (7/7 checks passed)
+- Step-by-step testing checklist
+- Technical deep-dive into Qt signal cleanup
+
+👉 **[QT-WARNINGS-EXPLAINED.md](QT-WARNINGS-EXPLAINED.md)** (5 min read)
+- What the QPushButton warnings mean
+- Why they appear (and why they're not errors)
+- Before/after comparison
+- Quick troubleshooting if warnings persist
+
+### For Debugging Issues
+👉 **[STEP2-DIAGNOSTIC.md](STEP2-DIAGNOSTIC.md)** (15 min read)
+- Step 2 bridge initialization diagnostics
+- Root causes & solutions
+- Qt widget lifecycle issues
+- Diagnostic procedures
+
+👉 **[DEBUG-CHECKLIST.md](DEBUG-CHECKLIST.md)** (3 min quick ref)
+- 5-minute checklist for stuck apps
+- Command quick reference
+- Common issues & one-line fixes
+
+### For Logging & Monitoring
+👉 **[DEBUGGING-GUIDE.md](DEBUGGING-GUIDE.md)** (10 min read)
+- How to enable debug logging
+- Log file locations (~/.anki_template_designer/template_designer.log)
+- What gets logged (Python + JavaScript)
+- Accessing logs programmatically
+
+👉 **[LOGGING-IMPLEMENTATION.md](LOGGING-IMPLEMENTATION.md)** (10 min technical read)
+- Complete logging infrastructure details
+- Python exception/Qt handlers
+- JavaScript error forwarding
+- Configuration options
+
+### Summary of Recent Fixes
+👉 **[FIXES-APPLIED.md](FIXES-APPLIED.md)** (5 min read)
+- Problems identified & fixed
+- Root cause analysis
+- All code changes
+- Files modified with line numbers
+
+### Validation Tools
+👉 **[validate_qt_fixes.py](validate_qt_fixes.py)** (Executable)
+- Run: `python validate_qt_fixes.py`
+- Verifies all 7 widget lifecycle fixes are in place
+- Reports any missing changes
+
+---
+
 ## ✨ What Makes This Project Special
 
 1. **100% TypeScript**: No `any` types, full type safety
 2. **Type-Safe Bridge**: Python ↔ JavaScript communication
 3. **Modern Stack**: React 18 + Craft.js + Zustand + Vite
 4. **Production Ready**: 18,800 lines of stable, tested code
-5. **Well Documented**: 10,000+ lines of docs
+5. **Well Documented**: 10,000+ lines of docs (+ 5+ debugging guides)
 6. **Scalable Architecture**: Clean separation of concerns
 7. **Comprehensive Testing**: Integration tests, component tests
 8. **Complete Services**: 10+ production services (optimization, keyboard, clipboard, theme, sync, etc.)
+9. **Production Logging**: Full error capture on Python + JavaScript sides
+10. **Easy Debugging**: One-line toggling, structured logs, clear error messages
 
 ---
 

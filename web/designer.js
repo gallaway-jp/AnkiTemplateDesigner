@@ -1043,11 +1043,21 @@ const KEYBOARD_SHORTCUTS = {
 /**
  * Component Help Guide - WCAG AAA Accessible Documentation
  * Provides helpful descriptions and usage information for all components
+ * 
+ * NOTE: This is now dynamically populated with i18n translations.
+ * Use window.i18nComponentGuide.getTranslatedComponentGuide() instead.
  */
-const COMPONENT_GUIDE = {
-    // Basic Components
-    'text': {
-        label: 'Text',
+const getComponentGuide = () => {
+    // Try to use i18n if available
+    if (typeof window.i18nComponentGuide !== 'undefined' && window.i18nComponentGuide.getTranslatedComponentGuide) {
+        return window.i18nComponentGuide.getTranslatedComponentGuide();
+    }
+    
+    // Fallback to English
+    return {
+        // Basic Components
+        'text': {
+            label: 'Text',
         category: 'Basic',
         description: 'Static text content (not dynamic)',
         help: 'Use for labels, instructions, or static content. Text components display exactly what you type and do not change based on field data.',
@@ -1174,7 +1184,15 @@ const COMPONENT_GUIDE = {
         examples: ['Section breaks', 'Visual dividers', 'Content separation'],
         moreLink: 'https://docs.ankiweb.net/templates/intro.html'
     }
+    };
 };
+
+// For backward compatibility, provide COMPONENT_GUIDE as a getter that dynamically pulls translations
+Object.defineProperty(window, 'COMPONENT_GUIDE', {
+    get: getComponentGuide,
+    enumerable: true,
+    configurable: true
+});
 
 /**
  * Device Definitions for Mobile Preview - WCAG Compliant Responsive Design

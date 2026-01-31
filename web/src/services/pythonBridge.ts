@@ -628,6 +628,20 @@ export class PythonBridge {
    * Get available Anki fields
    */
   async getAnkiFields(): Promise<AnkiField[]> {
+    // Try direct method call first (QWebChannel)
+    if (this.bridge && typeof this.bridge.getAnkiFields === 'function') {
+      try {
+        const result = this.bridge.getAnkiFields();
+        this.logInternal('info', 'getAnkiFields called directly via bridge');
+        if (typeof result === 'string') {
+          return JSON.parse(result);
+        }
+        return result;
+      } catch (error) {
+        this.logInternal('error', `Direct call failed: ${error}, falling back to sendRequest`);
+      }
+    }
+    // Fall back to message-based request
     return this.sendRequest('getAnkiFields');
   }
 
@@ -635,6 +649,20 @@ export class PythonBridge {
    * Get available Anki behaviors
    */
   async getAnkiBehaviors(): Promise<AnkiBehavior[]> {
+    // Try direct method call first (QWebChannel)
+    if (this.bridge && typeof this.bridge.getAnkiBehaviors === 'function') {
+      try {
+        const result = this.bridge.getAnkiBehaviors();
+        this.logInternal('info', 'getAnkiBehaviors called directly via bridge');
+        if (typeof result === 'string') {
+          return JSON.parse(result);
+        }
+        return result;
+      } catch (error) {
+        this.logInternal('error', `Direct call failed: ${error}, falling back to sendRequest`);
+      }
+    }
+    // Fall back to message-based request
     return this.sendRequest('getAnkiBehaviors');
   }
 
@@ -660,6 +688,40 @@ export class PythonBridge {
    */
   async log(message: string, level: 'info' | 'warn' | 'error' = 'info'): Promise<void> {
     return this.sendRequest('log', { message, level });
+  }
+
+  /**
+   * Log structured client event to Python (file logging)
+   */
+  async logClientEvent(
+    level: 'debug' | 'info' | 'warn' | 'error',
+    message: string,
+    details?: Record<string, any>
+  ): Promise<void> {
+    if (this.bridge && typeof this.bridge.logClientEvent === 'function') {
+      try {
+        this.bridge.logClientEvent(level, message, details ? JSON.stringify(details) : '');
+        return;
+      } catch (error) {
+        this.logInternal('warn', `Direct logClientEvent failed: ${error}`);
+      }
+    }
+
+    if (this.bridge && typeof this.bridge.log === 'function') {
+      try {
+        const payload = details ? ` ${JSON.stringify(details)}` : '';
+        this.bridge.log(`${message}${payload}`);
+        return;
+      } catch (error) {
+        this.logInternal('warn', `Fallback log failed: ${error}`);
+      }
+    }
+
+    try {
+      await this.sendRequest('logClientEvent', { level, message, details });
+    } catch (error) {
+      this.logInternal('warn', `sendRequest logClientEvent failed: ${error}`);
+    }
   }
 
   /**

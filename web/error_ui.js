@@ -33,15 +33,34 @@ class ErrorMessagesUI {
         this.errorPanel = document.createElement('div');
         this.errorPanel.id = 'error-panel';
         this.errorPanel.className = 'error-panel hidden';
+        
+        // Helper to get translated text
+        const t = (key) => {
+            if (typeof window.i18nErrors !== 'undefined' && window.i18nErrors.t) {
+                return window.i18nErrors.t(key);
+            }
+            // Fallback English translations
+            const translations = {
+                'error.panel.title': 'No errors',
+                'error.panel.minimize': 'Minimize',
+                'error.panel.close': 'Close',
+                'error.panel.recovery': 'Recovery Options',
+                'error.panel.apply': 'Apply Suggestion',
+                'error.panel.details': 'Details',
+                'error.panel.resolved': 'Mark Resolved'
+            };
+            return translations[key] || key;
+        };
+        
         this.errorPanel.innerHTML = `
             <div class="error-header">
                 <div class="error-title">
                     <span class="error-icon" id="error-icon"></span>
-                    <span id="error-message">No errors</span>
+                    <span id="error-message">${t('error.panel.title')}</span>
                 </div>
                 <div class="error-controls">
-                    <button class="error-minimize-btn" id="minimize-error" title="Minimize">−</button>
-                    <button class="error-close-btn" id="close-error" title="Close">×</button>
+                    <button class="error-minimize-btn" id="minimize-error" title="${t('error.panel.minimize')}">−</button>
+                    <button class="error-close-btn" id="close-error" title="${t('error.panel.close')}">×</button>
                 </div>
             </div>
             <div class="error-content" id="error-content">
@@ -50,13 +69,13 @@ class ErrorMessagesUI {
                     <div class="error-context" id="error-context"></div>
                 </div>
                 <div class="error-suggestions">
-                    <h4>Recovery Options</h4>
+                    <h4>${t('error.panel.recovery')}</h4>
                     <div class="suggestions-list" id="suggestions-list"></div>
                 </div>
                 <div class="error-actions">
-                    <button class="btn btn-primary" id="apply-recovery">Apply Suggestion</button>
-                    <button class="btn btn-secondary" id="view-details">Details</button>
-                    <button class="btn btn-secondary" id="mark-resolved">Mark Resolved</button>
+                    <button class="btn btn-primary" id="apply-recovery">${t('error.panel.apply')}</button>
+                    <button class="btn btn-secondary" id="view-details">${t('error.panel.details')}</button>
+                    <button class="btn btn-secondary" id="mark-resolved">${t('error.panel.resolved')}</button>
                 </div>
             </div>
         `;
@@ -81,18 +100,37 @@ class ErrorMessagesUI {
         this.errorHistoryPanel = document.createElement('div');
         this.errorHistoryPanel.id = 'error-history';
         this.errorHistoryPanel.className = 'error-history-panel';
+        
+        // Helper to get translated text
+        const t = (key) => {
+            if (typeof window.i18nErrors !== 'undefined' && window.i18nErrors.t) {
+                return window.i18nErrors.t(key);
+            }
+            // Fallback English translations
+            const translations = {
+                'error.history.title': 'Error History',
+                'error.history.allSeverities': 'All Severities',
+                'error.history.info': 'Info',
+                'error.history.warning': 'Warning',
+                'error.history.error': 'Error',
+                'error.history.critical': 'Critical',
+                'error.history.clear': 'Clear'
+            };
+            return translations[key] || key;
+        };
+        
         this.errorHistoryPanel.innerHTML = `
             <div class="history-header">
-                <h3>Error History</h3>
+                <h3>${t('error.history.title')}</h3>
                 <div class="history-controls">
                     <select id="severity-filter" class="filter-select">
-                        <option value="all">All Severities</option>
-                        <option value="info">Info</option>
-                        <option value="warning">Warning</option>
-                        <option value="error">Error</option>
-                        <option value="critical">Critical</option>
+                        <option value="all">${t('error.history.allSeverities')}</option>
+                        <option value="info">${t('error.history.info')}</option>
+                        <option value="warning">${t('error.history.warning')}</option>
+                        <option value="error">${t('error.history.error')}</option>
+                        <option value="critical">${t('error.history.critical')}</option>
                     </select>
-                    <button class="btn btn-small" id="clear-history">Clear</button>
+                    <button class="btn btn-small" id="clear-history">${t('error.history.clear')}</button>
                 </div>
             </div>
             <div class="history-list" id="history-list"></div>
@@ -166,7 +204,12 @@ class ErrorMessagesUI {
         list.innerHTML = '';
         
         if (suggestions.length === 0) {
-            list.innerHTML = '<p class="no-suggestions">No recovery options available</p>';
+            // Try to use i18n if available
+            let noSuggestionsText = 'No recovery options available';
+            if (typeof window.i18nErrors !== 'undefined' && window.i18nErrors.t) {
+                noSuggestionsText = window.i18nErrors.t('error.suggestions.none') || noSuggestionsText;
+            }
+            list.innerHTML = `<p class="no-suggestions">${noSuggestionsText}</p>`;
             return;
         }
         
@@ -175,6 +218,12 @@ class ErrorMessagesUI {
             div.className = 'suggestion-item';
             if (suggestion.is_automatic) div.classList.add('automatic');
             
+            // Translate "Automatic" badge
+            let automaticText = 'Automatic';
+            if (typeof window.i18nErrors !== 'undefined' && window.i18nErrors.t) {
+                automaticText = window.i18nErrors.t('error.suggestions.automatic') || automaticText;
+            }
+            
             div.innerHTML = `
                 <div class="suggestion-radio">
                     <input type="radio" name="recovery-option" value="${suggestion.id}" ${index === 0 ? 'checked' : ''} id="sug-${suggestion.id}">
@@ -182,7 +231,7 @@ class ErrorMessagesUI {
                 <div class="suggestion-content">
                     <label for="sug-${suggestion.id}" class="suggestion-title">${suggestion.title}</label>
                     <p class="suggestion-description">${suggestion.description}</p>
-                    ${suggestion.is_automatic ? '<span class="auto-badge">Automatic</span>' : ''}
+                    ${suggestion.is_automatic ? `<span class="auto-badge">${automaticText}</span>` : ''}
                 </div>
             `;
             
