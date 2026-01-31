@@ -147,6 +147,11 @@ def _on_profile_loaded() -> None:
     init_note_type_service(mw)
     logger.debug("Note type service initialized")
     
+    # Initialize selection service
+    from .services.selection_service import init_selection_service
+    init_selection_service()
+    logger.debug("Selection service initialized")
+    
     _setup_menu()
     _initialized = True
     

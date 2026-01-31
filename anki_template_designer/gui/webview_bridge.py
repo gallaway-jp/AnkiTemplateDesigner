@@ -1122,3 +1122,275 @@ class WebViewBridge(QObject):
                 "success": False,
                 "error": str(e)
             })
+    
+    # ===== Selection Methods (Plan 12) =====
+    
+    @pyqtSlot(result=str)
+    def getSelection(self) -> str:
+        """Get current selection state.
+        
+        Returns:
+            JSON-encoded selection state.
+        """
+        from ..services.selection_service import get_selection_service
+        
+        service = get_selection_service()
+        if service is None:
+            return json.dumps({
+                "success": False,
+                "error": "Selection service not initialized"
+            })
+        
+        return json.dumps({
+            "success": True,
+            "selection": service.get_state_dict()
+        })
+    
+    @pyqtSlot(str, result=str)
+    def selectComponent(self, component_id: str) -> str:
+        """Select a single component (replacing current selection).
+        
+        Args:
+            component_id: The component ID to select.
+            
+        Returns:
+            JSON-encoded result.
+        """
+        from ..services.selection_service import get_selection_service
+        
+        service = get_selection_service()
+        if service is None:
+            return json.dumps({
+                "success": False,
+                "error": "Selection service not initialized"
+            })
+        
+        result = service.select(component_id)
+        return json.dumps({
+            "success": True,
+            "changed": result,
+            "selection": service.get_state_dict()
+        })
+    
+    @pyqtSlot(str, result=str)
+    def addToSelection(self, component_id: str) -> str:
+        """Add a component to selection (Ctrl+click).
+        
+        Args:
+            component_id: The component ID to add.
+            
+        Returns:
+            JSON-encoded result.
+        """
+        from ..services.selection_service import get_selection_service
+        
+        service = get_selection_service()
+        if service is None:
+            return json.dumps({
+                "success": False,
+                "error": "Selection service not initialized"
+            })
+        
+        result = service.add_to_selection(component_id)
+        return json.dumps({
+            "success": True,
+            "changed": result,
+            "selection": service.get_state_dict()
+        })
+    
+    @pyqtSlot(str, result=str)
+    def removeFromSelection(self, component_id: str) -> str:
+        """Remove a component from selection.
+        
+        Args:
+            component_id: The component ID to remove.
+            
+        Returns:
+            JSON-encoded result.
+        """
+        from ..services.selection_service import get_selection_service
+        
+        service = get_selection_service()
+        if service is None:
+            return json.dumps({
+                "success": False,
+                "error": "Selection service not initialized"
+            })
+        
+        result = service.remove_from_selection(component_id)
+        return json.dumps({
+            "success": True,
+            "changed": result,
+            "selection": service.get_state_dict()
+        })
+    
+    @pyqtSlot(str, result=str)
+    def toggleSelection(self, component_id: str) -> str:
+        """Toggle a component's selection state.
+        
+        Args:
+            component_id: The component ID to toggle.
+            
+        Returns:
+            JSON-encoded result with isSelected state.
+        """
+        from ..services.selection_service import get_selection_service
+        
+        service = get_selection_service()
+        if service is None:
+            return json.dumps({
+                "success": False,
+                "error": "Selection service not initialized"
+            })
+        
+        is_selected = service.toggle_selection(component_id)
+        return json.dumps({
+            "success": True,
+            "isSelected": is_selected,
+            "selection": service.get_state_dict()
+        })
+    
+    @pyqtSlot(result=str)
+    def clearSelection(self) -> str:
+        """Clear all selection.
+        
+        Returns:
+            JSON-encoded result.
+        """
+        from ..services.selection_service import get_selection_service
+        
+        service = get_selection_service()
+        if service is None:
+            return json.dumps({
+                "success": False,
+                "error": "Selection service not initialized"
+            })
+        
+        result = service.clear()
+        return json.dumps({
+            "success": True,
+            "changed": result,
+            "selection": service.get_state_dict()
+        })
+    
+    @pyqtSlot(str, result=str)
+    def setSelection(self, selection_json: str) -> str:
+        """Set selection to specific components.
+        
+        Args:
+            selection_json: JSON with componentIds and optional primaryId.
+            
+        Returns:
+            JSON-encoded result.
+        """
+        from ..services.selection_service import get_selection_service
+        
+        service = get_selection_service()
+        if service is None:
+            return json.dumps({
+                "success": False,
+                "error": "Selection service not initialized"
+            })
+        
+        try:
+            data = json.loads(selection_json)
+            component_ids = data.get("componentIds", [])
+            primary_id = data.get("primaryId")
+            
+            result = service.set_selection(component_ids, primary_id)
+            return json.dumps({
+                "success": True,
+                "changed": result,
+                "selection": service.get_state_dict()
+            })
+        except Exception as e:
+            logger.error(f"Error setting selection: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+    
+    @pyqtSlot(str, result=str)
+    def selectRange(self, to_component_id: str) -> str:
+        """Select a range from primary to target (Shift+click).
+        
+        Args:
+            to_component_id: The end component of the range.
+            
+        Returns:
+            JSON-encoded result.
+        """
+        from ..services.selection_service import get_selection_service
+        
+        service = get_selection_service()
+        if service is None:
+            return json.dumps({
+                "success": False,
+                "error": "Selection service not initialized"
+            })
+        
+        result = service.select_range(to_component_id)
+        return json.dumps({
+            "success": True,
+            "changed": result,
+            "selection": service.get_state_dict()
+        })
+    
+    @pyqtSlot(str, result=str)
+    def setComponentOrder(self, order_json: str) -> str:
+        """Set component order for range selection.
+        
+        Args:
+            order_json: JSON array of component IDs in display order.
+            
+        Returns:
+            JSON-encoded result.
+        """
+        from ..services.selection_service import get_selection_service
+        
+        service = get_selection_service()
+        if service is None:
+            return json.dumps({
+                "success": False,
+                "error": "Selection service not initialized"
+            })
+        
+        try:
+            order = json.loads(order_json)
+            service.set_component_order(order)
+            return json.dumps({
+                "success": True,
+                "count": len(order)
+            })
+        except Exception as e:
+            logger.error(f"Error setting component order: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+    
+    @pyqtSlot(str, result=str)
+    def moveSelection(self, direction: str) -> str:
+        """Move selection in a direction (keyboard navigation).
+        
+        Args:
+            direction: "next", "prev", "first", or "last"
+            
+        Returns:
+            JSON-encoded result with new selection.
+        """
+        from ..services.selection_service import get_selection_service
+        
+        service = get_selection_service()
+        if service is None:
+            return json.dumps({
+                "success": False,
+                "error": "Selection service not initialized"
+            })
+        
+        new_id = service.move_selection(direction)
+        return json.dumps({
+            "success": True,
+            "newId": new_id,
+            "selection": service.get_state_dict()
+        })
