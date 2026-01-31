@@ -1867,3 +1867,321 @@ class WebViewBridge(QObject):
                 "success": False,
                 "error": str(e)
             })
+
+    # =========================================================================
+    # Plugin System Methods (Plan 16)
+    # =========================================================================
+
+    @pyqtSlot(result=str)
+    def listPlugins(self) -> str:
+        """List all registered plugins.
+        
+        Returns:
+            JSON-encoded list of plugin info.
+        """
+        from ..services.plugin_system import get_plugin_manager
+        
+        try:
+            manager = get_plugin_manager()
+            if manager is None:
+                return json.dumps({
+                    "success": False,
+                    "error": "Plugin manager not initialized"
+                })
+            
+            plugins = manager.list_plugins()
+            return json.dumps({
+                "success": True,
+                "plugins": plugins
+            })
+        except Exception as e:
+            logger.error(f"Error listing plugins: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+
+    @pyqtSlot(str, result=str)
+    def getPluginInfo(self, plugin_id: str) -> str:
+        """Get information about a specific plugin.
+        
+        Args:
+            plugin_id: Plugin identifier.
+            
+        Returns:
+            JSON-encoded plugin info.
+        """
+        from ..services.plugin_system import get_plugin_manager
+        
+        try:
+            manager = get_plugin_manager()
+            if manager is None:
+                return json.dumps({
+                    "success": False,
+                    "error": "Plugin manager not initialized"
+                })
+            
+            info = manager.get_plugin_info(plugin_id)
+            if info is None:
+                return json.dumps({
+                    "success": False,
+                    "error": f"Plugin not found: {plugin_id}"
+                })
+            
+            return json.dumps({
+                "success": True,
+                "plugin": info
+            })
+        except Exception as e:
+            logger.error(f"Error getting plugin info: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+
+    @pyqtSlot(str, result=str)
+    def loadPlugin(self, plugin_id: str) -> str:
+        """Load a plugin.
+        
+        Args:
+            plugin_id: Plugin to load.
+            
+        Returns:
+            JSON-encoded result.
+        """
+        from ..services.plugin_system import get_plugin_manager
+        
+        try:
+            manager = get_plugin_manager()
+            if manager is None:
+                return json.dumps({
+                    "success": False,
+                    "error": "Plugin manager not initialized"
+                })
+            
+            result = manager.load_plugin(plugin_id)
+            return json.dumps({
+                "success": result,
+                "pluginId": plugin_id
+            })
+        except Exception as e:
+            logger.error(f"Error loading plugin: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+
+    @pyqtSlot(str, result=str)
+    def unloadPlugin(self, plugin_id: str) -> str:
+        """Unload a plugin.
+        
+        Args:
+            plugin_id: Plugin to unload.
+            
+        Returns:
+            JSON-encoded result.
+        """
+        from ..services.plugin_system import get_plugin_manager
+        
+        try:
+            manager = get_plugin_manager()
+            if manager is None:
+                return json.dumps({
+                    "success": False,
+                    "error": "Plugin manager not initialized"
+                })
+            
+            result = manager.unload_plugin(plugin_id)
+            return json.dumps({
+                "success": result,
+                "pluginId": plugin_id
+            })
+        except Exception as e:
+            logger.error(f"Error unloading plugin: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+
+    @pyqtSlot(str, result=str)
+    def enablePlugin(self, plugin_id: str) -> str:
+        """Enable a plugin.
+        
+        Args:
+            plugin_id: Plugin to enable.
+            
+        Returns:
+            JSON-encoded result.
+        """
+        from ..services.plugin_system import get_plugin_manager
+        
+        try:
+            manager = get_plugin_manager()
+            if manager is None:
+                return json.dumps({
+                    "success": False,
+                    "error": "Plugin manager not initialized"
+                })
+            
+            result = manager.enable_plugin(plugin_id)
+            return json.dumps({
+                "success": result,
+                "pluginId": plugin_id
+            })
+        except Exception as e:
+            logger.error(f"Error enabling plugin: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+
+    @pyqtSlot(str, result=str)
+    def disablePlugin(self, plugin_id: str) -> str:
+        """Disable a plugin.
+        
+        Args:
+            plugin_id: Plugin to disable.
+            
+        Returns:
+            JSON-encoded result.
+        """
+        from ..services.plugin_system import get_plugin_manager
+        
+        try:
+            manager = get_plugin_manager()
+            if manager is None:
+                return json.dumps({
+                    "success": False,
+                    "error": "Plugin manager not initialized"
+                })
+            
+            result = manager.disable_plugin(plugin_id)
+            return json.dumps({
+                "success": result,
+                "pluginId": plugin_id
+            })
+        except Exception as e:
+            logger.error(f"Error disabling plugin: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+
+    @pyqtSlot(str, result=str)
+    def reloadPlugin(self, plugin_id: str) -> str:
+        """Reload a plugin.
+        
+        Args:
+            plugin_id: Plugin to reload.
+            
+        Returns:
+            JSON-encoded result.
+        """
+        from ..services.plugin_system import get_plugin_manager
+        
+        try:
+            manager = get_plugin_manager()
+            if manager is None:
+                return json.dumps({
+                    "success": False,
+                    "error": "Plugin manager not initialized"
+                })
+            
+            result = manager.reload_plugin(plugin_id)
+            return json.dumps({
+                "success": result,
+                "pluginId": plugin_id
+            })
+        except Exception as e:
+            logger.error(f"Error reloading plugin: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+
+    @pyqtSlot(result=str)
+    def discoverPlugins(self) -> str:
+        """Discover and load plugins.
+        
+        Returns:
+            JSON-encoded discovery result.
+        """
+        from ..services.plugin_system import get_plugin_manager
+        
+        try:
+            manager = get_plugin_manager()
+            if manager is None:
+                return json.dumps({
+                    "success": False,
+                    "error": "Plugin manager not initialized"
+                })
+            
+            count = manager.discover_and_load()
+            return json.dumps({
+                "success": True,
+                "pluginsLoaded": count
+            })
+        except Exception as e:
+            logger.error(f"Error discovering plugins: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+
+    @pyqtSlot(result=str)
+    def getRegisteredHooks(self) -> str:
+        """Get all registered hooks.
+        
+        Returns:
+            JSON-encoded list of hooks.
+        """
+        from ..services.plugin_system import get_plugin_manager
+        
+        try:
+            manager = get_plugin_manager()
+            if manager is None:
+                return json.dumps({
+                    "success": False,
+                    "error": "Plugin manager not initialized"
+                })
+            
+            hooks = manager.get_hooks()
+            return json.dumps({
+                "success": True,
+                "hooks": hooks
+            })
+        except Exception as e:
+            logger.error(f"Error getting hooks: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+
+    @pyqtSlot(result=str)
+    def getRegisteredFilters(self) -> str:
+        """Get all registered filters.
+        
+        Returns:
+            JSON-encoded list of filters.
+        """
+        from ..services.plugin_system import get_plugin_manager
+        
+        try:
+            manager = get_plugin_manager()
+            if manager is None:
+                return json.dumps({
+                    "success": False,
+                    "error": "Plugin manager not initialized"
+                })
+            
+            filters = manager.get_filters()
+            return json.dumps({
+                "success": True,
+                "filters": filters
+            })
+        except Exception as e:
+            logger.error(f"Error getting filters: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
