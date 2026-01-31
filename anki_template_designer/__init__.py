@@ -36,19 +36,20 @@ def _get_addon_dir() -> str:
 def _setup_logging() -> None:
     """Initialize logging for the addon.
     
-    Sets up file and console logging based on configuration.
+    Sets up file and console logging using LoggingConfig.
     Should be called early in addon initialization.
     """
-    import logging
+    from .utils.logging_config import setup_logging
     
-    logger = logging.getLogger("anki_template_designer")
-    if not logger.handlers:
-        handler = logging.StreamHandler()
-        handler.setFormatter(
-            logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-        )
-        logger.addHandler(handler)
-        logger.setLevel(logging.INFO)
+    config = _load_config()
+    debug = config.get("debugLogging", False)
+    
+    setup_logging(
+        addon_dir=_get_addon_dir(),
+        debug=debug,
+        log_to_file=True,
+        log_to_console=True
+    )
 
 
 def _load_config() -> dict:

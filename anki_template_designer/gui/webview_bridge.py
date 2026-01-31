@@ -543,3 +543,87 @@ class WebViewBridge(QObject):
         if self._error_handler is not None:
             self._error_handler.clear_history()
             logger.debug("Error history cleared")
+    
+    # =========================================================================
+    # Logging Methods (Plan 09)
+    # =========================================================================
+    
+    @pyqtSlot(result=str)
+    def getLogStatus(self) -> str:
+        """Get current logging status.
+        
+        Returns:
+            JSON-encoded logging status information.
+        """
+        from ..utils.logging_config import get_logging_config
+        
+        config = get_logging_config()
+        if config is None:
+            return json.dumps({
+                "initialized": False,
+                "error": "Logging not initialized"
+            })
+        
+        return json.dumps(config.get_status())
+    
+    @pyqtSlot(str, result=str)
+    def setDebugMode(self, enabled_str: str) -> str:
+        """Enable or disable debug logging mode.
+        
+        Args:
+            enabled_str: "true" or "false" to enable/disable.
+            
+        Returns:
+            JSON-encoded result with new status.
+        """
+        from ..utils.logging_config import get_logging_config
+        
+        config = get_logging_config()
+        if config is None:
+            return json.dumps({
+                "success": False,
+                "error": "Logging not initialized"
+            })
+        
+        enabled = enabled_str.lower() == "true"
+        config.set_debug_mode(enabled)
+        
+        logger.info(f"Debug mode {'enabled' if enabled else 'disabled'} via bridge")
+        
+        return json.dumps({
+            "success": True,
+            "debug_mode": config.debug_mode
+        })
+    
+    @pyqtSlot(str, result=str)
+    def getLogContents(self, lines_str: str) -> str:
+        """Get recent log file contents.
+        
+        Args:
+            lines_str: Number of lines to retrieve (as string).
+            
+        Returns:
+            JSON-encoded log contents.
+        """
+        from ..utils.logging_config import get_logging_config
+        
+        config = get_logging_config()
+        if config is None:
+            return json.dumps({
+                "success": False,
+                "contents": "",
+                "error": "Logging not initialized"
+            })
+        
+        try:
+            lines = int(lines_str) if lines_str else 100
+        except ValueError:
+            lines = 100
+        
+        contents = config.get_log_contents(lines=lines)
+        
+        return json.dumps({
+            "success": True,
+            "contents": contents,
+            "lines_requested": lines
+        })
