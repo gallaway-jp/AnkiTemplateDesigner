@@ -2185,3 +2185,298 @@ class WebViewBridge(QObject):
                 "success": False,
                 "error": str(e)
             })
+
+    # =========================================================================
+    # Shortcuts Manager Methods (Plan 19)
+    # =========================================================================
+
+    @pyqtSlot(result=str)
+    def getShortcuts(self) -> str:
+        """Get all keyboard shortcuts.
+        
+        Returns:
+            JSON-encoded list of shortcuts.
+        """
+        from ..services.shortcuts_manager import get_shortcuts_manager
+        
+        try:
+            manager = get_shortcuts_manager()
+            if manager is None:
+                return json.dumps({
+                    "success": False,
+                    "error": "Shortcuts manager not initialized"
+                })
+            
+            shortcuts = manager.get_all_shortcuts()
+            return json.dumps({
+                "success": True,
+                "shortcuts": shortcuts
+            })
+        except Exception as e:
+            logger.error(f"Error getting shortcuts: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+
+    @pyqtSlot(str, result=str)
+    def getShortcut(self, shortcut_id: str) -> str:
+        """Get a specific shortcut.
+        
+        Args:
+            shortcut_id: Shortcut identifier.
+            
+        Returns:
+            JSON-encoded shortcut info.
+        """
+        from ..services.shortcuts_manager import get_shortcuts_manager
+        
+        try:
+            manager = get_shortcuts_manager()
+            if manager is None:
+                return json.dumps({
+                    "success": False,
+                    "error": "Shortcuts manager not initialized"
+                })
+            
+            shortcut = manager.get_shortcut(shortcut_id)
+            if shortcut is None:
+                return json.dumps({
+                    "success": False,
+                    "error": f"Shortcut not found: {shortcut_id}"
+                })
+            
+            return json.dumps({
+                "success": True,
+                "shortcut": shortcut
+            })
+        except Exception as e:
+            logger.error(f"Error getting shortcut: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+
+    @pyqtSlot(str, str, result=str)
+    def updateShortcut(self, shortcut_id: str, keys: str) -> str:
+        """Update a shortcut's key binding.
+        
+        Args:
+            shortcut_id: Shortcut identifier.
+            keys: New key binding.
+            
+        Returns:
+            JSON-encoded result.
+        """
+        from ..services.shortcuts_manager import get_shortcuts_manager
+        
+        try:
+            manager = get_shortcuts_manager()
+            if manager is None:
+                return json.dumps({
+                    "success": False,
+                    "error": "Shortcuts manager not initialized"
+                })
+            
+            result = manager.update_shortcut(shortcut_id, keys)
+            if not result:
+                conflicts = manager.get_conflicts()
+                return json.dumps({
+                    "success": False,
+                    "error": "Update failed - possible conflict",
+                    "conflicts": conflicts
+                })
+            
+            return json.dumps({
+                "success": True,
+                "shortcutId": shortcut_id,
+                "keys": keys
+            })
+        except Exception as e:
+            logger.error(f"Error updating shortcut: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+
+    @pyqtSlot(str, result=str)
+    def handleShortcut(self, keys: str) -> str:
+        """Handle a keyboard shortcut press.
+        
+        Args:
+            keys: Key combination pressed.
+            
+        Returns:
+            JSON-encoded result.
+        """
+        from ..services.shortcuts_manager import get_shortcuts_manager
+        
+        try:
+            manager = get_shortcuts_manager()
+            if manager is None:
+                return json.dumps({
+                    "success": False,
+                    "error": "Shortcuts manager not initialized"
+                })
+            
+            handled = manager.handle_shortcut(keys)
+            return json.dumps({
+                "success": True,
+                "handled": handled
+            })
+        except Exception as e:
+            logger.error(f"Error handling shortcut: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+
+    @pyqtSlot(result=str)
+    def getShortcutProfiles(self) -> str:
+        """Get all shortcut profiles.
+        
+        Returns:
+            JSON-encoded list of profiles.
+        """
+        from ..services.shortcuts_manager import get_shortcuts_manager
+        
+        try:
+            manager = get_shortcuts_manager()
+            if manager is None:
+                return json.dumps({
+                    "success": False,
+                    "error": "Shortcuts manager not initialized"
+                })
+            
+            profiles = manager.get_profiles()
+            return json.dumps({
+                "success": True,
+                "profiles": profiles
+            })
+        except Exception as e:
+            logger.error(f"Error getting profiles: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+
+    @pyqtSlot(str, result=str)
+    def switchShortcutProfile(self, profile_id: str) -> str:
+        """Switch to a different shortcut profile.
+        
+        Args:
+            profile_id: Profile to switch to.
+            
+        Returns:
+            JSON-encoded result.
+        """
+        from ..services.shortcuts_manager import get_shortcuts_manager
+        
+        try:
+            manager = get_shortcuts_manager()
+            if manager is None:
+                return json.dumps({
+                    "success": False,
+                    "error": "Shortcuts manager not initialized"
+                })
+            
+            result = manager.switch_profile(profile_id)
+            return json.dumps({
+                "success": result,
+                "profileId": profile_id
+            })
+        except Exception as e:
+            logger.error(f"Error switching profile: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+
+    @pyqtSlot(result=str)
+    def resetShortcutsToDefaults(self) -> str:
+        """Reset shortcuts to defaults.
+        
+        Returns:
+            JSON-encoded result.
+        """
+        from ..services.shortcuts_manager import get_shortcuts_manager
+        
+        try:
+            manager = get_shortcuts_manager()
+            if manager is None:
+                return json.dumps({
+                    "success": False,
+                    "error": "Shortcuts manager not initialized"
+                })
+            
+            result = manager.reset_to_defaults()
+            return json.dumps({
+                "success": result
+            })
+        except Exception as e:
+            logger.error(f"Error resetting shortcuts: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+
+    @pyqtSlot(str, result=str)
+    def searchShortcuts(self, query: str) -> str:
+        """Search shortcuts.
+        
+        Args:
+            query: Search query.
+            
+        Returns:
+            JSON-encoded search results.
+        """
+        from ..services.shortcuts_manager import get_shortcuts_manager
+        
+        try:
+            manager = get_shortcuts_manager()
+            if manager is None:
+                return json.dumps({
+                    "success": False,
+                    "error": "Shortcuts manager not initialized"
+                })
+            
+            results = manager.search_shortcuts(query)
+            return json.dumps({
+                "success": True,
+                "shortcuts": results
+            })
+        except Exception as e:
+            logger.error(f"Error searching shortcuts: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+
+    @pyqtSlot(result=str)
+    def getShortcutStatistics(self) -> str:
+        """Get shortcut statistics.
+        
+        Returns:
+            JSON-encoded statistics.
+        """
+        from ..services.shortcuts_manager import get_shortcuts_manager
+        
+        try:
+            manager = get_shortcuts_manager()
+            if manager is None:
+                return json.dumps({
+                    "success": False,
+                    "error": "Shortcuts manager not initialized"
+                })
+            
+            stats = manager.get_statistics()
+            return json.dumps({
+                "success": True,
+                "statistics": stats
+            })
+        except Exception as e:
+            logger.error(f"Error getting statistics: {e}")
+            return json.dumps({
+                "success": False,
+                "error": str(e)
+            })
