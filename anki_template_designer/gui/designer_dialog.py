@@ -54,12 +54,15 @@ class DesignerDialog(QDialog):
         
         self._webview: Optional[QWebEngineView] = None
         self._bridge: Optional[WebViewBridge] = None
+        self._inspector_dialog: Optional[QDialog] = None
+        self._inspector_view: Optional[QWebEngineView] = None
         
         self._setup_window()
         self._setup_ui()
+        self._setup_inspector()
         self._load_editor()
         
-        logger.info("DesignerDialog initialized")
+        logger.debug("DesignerDialog initialized")
     
     def _setup_window(self) -> None:
         """Configure window properties and sizing."""
@@ -133,6 +136,68 @@ class DesignerDialog(QDialog):
         # Set up bridge after webview creation
         self._setup_bridge()
     
+    def _setup_inspector(self) -> None:
+        """Set up the WebView inspector in a separate window.
+        
+        Creates a dev tools inspector that can be toggled with Ctrl+Shift+I.
+        """
+        logger.debug("Setting up inspector")
+        if self._webview is None:
+            logger.debug("_webview is None, aborting inspector setup")
+            return
+        
+        try:
+            # Create inspector dialog
+            self._inspector_dialog = QDialog(self)
+            self._inspector_dialog.setWindowTitle("Template Designer - Inspector")
+            self._inspector_dialog.resize(900, 600)
+            
+            # Window flags for independent window
+            flags = Qt.WindowType.Window
+            flags |= Qt.WindowType.WindowCloseButtonHint
+            flags |= Qt.WindowType.WindowMinimizeButtonHint
+            flags |= Qt.WindowType.WindowMaximizeButtonHint
+            self._inspector_dialog.setWindowFlags(flags)
+            
+            # Create inspector webview
+            inspector_layout = QVBoxLayout(self._inspector_dialog)
+            inspector_layout.setContentsMargins(0, 0, 0, 0)
+            self._inspector_view = QWebEngineView(self._inspector_dialog)
+            inspector_layout.addWidget(self._inspector_view)
+            
+            # Connect inspector to main webview
+            page = self._webview.page()
+            if page:
+                page.setDevToolsPage(self._inspector_view.page())
+            
+            logger.debug("Inspector setup complete. Use F12 to toggle.")
+            
+        except Exception as e:
+            logger.warning(f"Could not setup inspector: {e}")
+    
+    def keyPressEvent(self, event: Any) -> None:
+        """Handle key press events at Qt level.
+        
+        F12 toggles the inspector window (handled here to bypass WebView).
+        """
+        if event.key() == Qt.Key.Key_F12:
+            self._toggle_inspector()
+            event.accept()
+            return
+        super().keyPressEvent(event)
+    
+    def _toggle_inspector(self) -> None:
+        """Toggle the inspector window visibility."""
+        if self._inspector_dialog is None:
+            return
+        
+        if self._inspector_dialog.isVisible():
+            self._inspector_dialog.hide()
+        else:
+            self._inspector_dialog.show()
+            self._inspector_dialog.raise_()
+            self._inspector_dialog.activateWindow()
+    
     def _get_web_path(self) -> str:
         """Get the path to the web content.
         
@@ -157,7 +222,7 @@ class DesignerDialog(QDialog):
         
         file_url = QUrl.fromLocalFile(html_path)
         self._webview.load(file_url)
-        logger.info(f"Loading editor from: {html_path}")
+        logger.debug(f"Loading editor from: {html_path}")
     
     def _show_error(self, message: str) -> None:
         """Display an error message in the WebView.
@@ -215,7 +280,7 @@ class DesignerDialog(QDialog):
         Args:
             event: Close event object.
         """
-        logger.info("DesignerDialog closing")
+        logger.debug("DesignerDialog closing")
         # Clean up WebView
         if self._webview is not None:
             self._webview.setUrl(QUrl("about:blank"))
@@ -231,11 +296,20 @@ class DesignerDialog(QDialog):
         self._bridge = WebViewBridge(self)
         self._bridge.setup_channel(self._webview)
         
+        # Initialize template service
+        from ..services.template_service import TemplateService
+        addon_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        template_service = TemplateService(addon_dir)
+        self._bridge.set_template_service(template_service)
+        
         # Register default actions
         self._bridge.register_action("save_template", self._on_save_template)
         self._bridge.register_action("load_template", self._on_load_template)
         
-        logger.info("Bridge setup complete")
+        # Connect inspector toggle signal
+        self._bridge.inspectorToggleRequested.connect(self._toggle_inspector)
+        
+        logger.debug("Bridge setup complete with template service")
     
     def _on_save_template(self, payload: dict) -> dict:
         """Handle save template action from JS.

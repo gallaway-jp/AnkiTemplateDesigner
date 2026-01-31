@@ -128,12 +128,12 @@ def _on_profile_loaded() -> None:
     
     import logging
     logger = logging.getLogger("anki_template_designer")
-    logger.info("Anki Template Designer initializing...")
+    logger.debug("Anki Template Designer initializing...")
     
     _setup_menu()
     _initialized = True
     
-    logger.info("Anki Template Designer initialized successfully")
+    logger.debug("Anki Template Designer initialized successfully")
 
 
 # Only run initialization when in Anki environment
