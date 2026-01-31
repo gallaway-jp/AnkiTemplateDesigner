@@ -1,0 +1,13 @@
+{
+    "debugLogging": false,
+    "logLevel": "INFO",
+    "autoSave": true,
+    "autoSaveIntervalSeconds": 30,
+    "theme": "system",
+    "windowSize": {
+        "width": 1200,
+        "height": 800
+    },
+    "recentTemplates": [],
+    "maxRecentTemplates": 10
+}

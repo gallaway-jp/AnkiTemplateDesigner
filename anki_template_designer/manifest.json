@@ -1,0 +1,10 @@
+{
+    "name": "Anki Template Designer",
+    "package": "anki_template_designer",
+    "version": "2.0.0",
+    "author": "Anki Template Designer Contributors",
+    "homepage": "https://github.com/AnkiTemplateDesigner/AnkiTemplateDesigner",
+    "conflicts": [],
+    "min_point_version": 50,
+    "mod": 1738281600
+}

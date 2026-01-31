@@ -5,8 +5,10 @@ param(
     [string]$AnkiAddonsPath = "$env:APPDATA\Anki2\addons21"
 )
 
-$SourceAddonPath = "d:\Development\Python\AnkiTemplateDesigner\test_addon_minimal"
+# During development, deploy from anki_template_designer (the full source)
+$SourceAddonPath = "d:\Development\Python\AnkiTemplateDesigner\anki_template_designer"
 $DestAddonPath = Join-Path $AnkiAddonsPath "test_addon_minimal"
+$OldAddonPath = Join-Path $AnkiAddonsPath "anki_template_designer"
 $AddonName = "test_addon_minimal"
 
 # Validate source exists
@@ -24,7 +26,14 @@ if (-not (Test-Path $AnkiAddonsPath)) {
 
 Write-Host "Deploying $AddonName addon..." -ForegroundColor Cyan
 
-# Remove existing addon if present
+# Remove old anki_template_designer folder if it exists (shouldn't be deployed)
+if (Test-Path $OldAddonPath) {
+    Write-Host "Removing old addon folder at: $OldAddonPath" -ForegroundColor Yellow
+    Remove-Item -Path $OldAddonPath -Recurse -Force
+    Write-Host "Old addon folder removed." -ForegroundColor Green
+}
+
+# Remove existing test_addon_minimal if present
 if (Test-Path $DestAddonPath) {
     Write-Host "Removing existing addon at: $DestAddonPath" -ForegroundColor Yellow
     Remove-Item -Path $DestAddonPath -Recurse -Force

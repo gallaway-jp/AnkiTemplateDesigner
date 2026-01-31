@@ -44,6 +44,36 @@ def get_anki_version():
     except Exception:
         return "Unknown"
 
+def is_anki_running():
+    """Check if Anki is currently running"""
+    try:
+        import psutil
+        for proc in psutil.process_iter(['pid', 'name']):
+            try:
+                if 'anki.exe' in proc.info['name'].lower():
+                    return True
+            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                pass
+    except ImportError:
+        # If psutil not available, try alternative method
+        try:
+            result = subprocess.run(
+                ["tasklist"],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            return 'anki.exe' in result.stdout.lower()
+        except Exception:
+            pass
+    return False
+
+@pytest.fixture(autouse=True)
+def skip_if_anki_running(request):
+    """Skip test if Anki is currently running (causes Qt event loop conflicts)"""
+    if is_anki_running():
+        pytest.skip("Anki is running - would cause Qt event loop conflicts with pytest-qt. Please close Anki before running tests.")
+
 @pytest.fixture(scope="session")
 def qapp():
     """Create QApplication instance for the test session"""
