@@ -627,3 +627,147 @@ class WebViewBridge(QObject):
             "contents": contents,
             "lines_requested": lines
         })
+    
+    # =========================================================================
+    # Configuration Methods (Plan 10)
+    # =========================================================================
+    
+    @pyqtSlot(result=str)
+    def getConfig(self) -> str:
+        """Get all configuration values.
+        
+        Returns:
+            JSON-encoded configuration dictionary.
+        """
+        from ..services.config_service import get_config_service
+        
+        service = get_config_service()
+        if service is None:
+            return json.dumps({
+                "success": False,
+                "error": "Config service not initialized"
+            })
+        
+        return json.dumps({
+            "success": True,
+            "config": service.get_all()
+        })
+    
+    @pyqtSlot(str, result=str)
+    def getConfigValue(self, key: str) -> str:
+        """Get a specific configuration value.
+        
+        Args:
+            key: Configuration key (supports dot notation).
+            
+        Returns:
+            JSON-encoded result with value.
+        """
+        from ..services.config_service import get_config_service
+        
+        service = get_config_service()
+        if service is None:
+            return json.dumps({
+                "success": False,
+                "error": "Config service not initialized"
+            })
+        
+        value = service.get(key)
+        
+        return json.dumps({
+            "success": True,
+            "key": key,
+            "value": value
+        })
+    
+    @pyqtSlot(str, str, result=str)
+    def setConfigValue(self, key: str, value_json: str) -> str:
+        """Set a configuration value.
+        
+        Args:
+            key: Configuration key.
+            value_json: JSON-encoded value.
+            
+        Returns:
+            JSON-encoded result.
+        """
+        from ..services.config_service import get_config_service
+        
+        service = get_config_service()
+        if service is None:
+            return json.dumps({
+                "success": False,
+                "error": "Config service not initialized"
+            })
+        
+        try:
+            value = json.loads(value_json)
+        except json.JSONDecodeError:
+            # Treat as string if not valid JSON
+            value = value_json
+        
+        result = service.set(key, value, save=True)
+        
+        if result:
+            logger.debug(f"Config set: {key} = {value}")
+        
+        return json.dumps({
+            "success": result,
+            "key": key,
+            "value": value
+        })
+    
+    @pyqtSlot(str, result=str)
+    def resetConfig(self, key: str = "") -> str:
+        """Reset configuration to defaults.
+        
+        Args:
+            key: Specific key to reset, or empty for all.
+            
+        Returns:
+            JSON-encoded result.
+        """
+        from ..services.config_service import get_config_service
+        
+        service = get_config_service()
+        if service is None:
+            return json.dumps({
+                "success": False,
+                "error": "Config service not initialized"
+            })
+        
+        if key:
+            result = service.reset(key)
+            logger.info(f"Config key reset: {key}")
+        else:
+            result = service.reset()
+            logger.info("All config reset to defaults")
+        
+        service.save()
+        
+        return json.dumps({
+            "success": result,
+            "reset_key": key if key else "all"
+        })
+    
+    @pyqtSlot(result=str)
+    def saveConfig(self) -> str:
+        """Save current configuration.
+        
+        Returns:
+            JSON-encoded result.
+        """
+        from ..services.config_service import get_config_service
+        
+        service = get_config_service()
+        if service is None:
+            return json.dumps({
+                "success": False,
+                "error": "Config service not initialized"
+            })
+        
+        result = service.save()
+        
+        return json.dumps({
+            "success": result
+        })

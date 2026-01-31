@@ -52,6 +52,16 @@ def _setup_logging() -> None:
     )
 
 
+def _setup_config_service() -> None:
+    """Initialize the configuration service.
+    
+    Sets up ConfigService for centralized configuration management.
+    """
+    from .services.config_service import init_config_service
+    
+    init_config_service(addon_dir=_get_addon_dir())
+
+
 def _load_config() -> dict:
     """Load addon configuration.
     
@@ -142,6 +152,7 @@ try:
     from aqt import gui_hooks
     
     _setup_logging()
+    _setup_config_service()
     gui_hooks.profile_did_open.append(_on_profile_loaded)
     
 except ImportError:
