@@ -1,9 +1,11 @@
 /**
  * Canvas Management
- * Drag and drop, canvas operations
+ * Drag and drop, canvas operations, component selection
  */
 
 let draggedComponent = null;
+let selectedComponent = null;
+let componentIdCounter = 0;
 
 function initializeCanvas() {
     console.log('Initializing canvas...');
@@ -18,6 +20,7 @@ function initializeCanvas() {
     canvas.addEventListener('dragover', handleDragOver);
     canvas.addEventListener('dragleave', handleDragLeave);
     canvas.addEventListener('drop', handleDrop);
+    canvas.addEventListener('click', handleCanvasClick);
     
     console.log('Canvas initialized successfully');
     return true;
@@ -75,6 +78,10 @@ function handleDrop(event) {
         
         console.log('Component dropped:', component);
         
+        // Create unique ID for this component
+        const componentId = `component-${componentIdCounter++}`;
+        component.id = componentId;
+        
         // Create component element
         const element = createComponentElement(component);
         
@@ -86,6 +93,9 @@ function handleDrop(event) {
         
         canvas.appendChild(element);
         
+        // Auto-select the new component
+        selectComponent(element, component);
+        
         // Mark changes as unsaved
         if (typeof markUnsavedChanges === 'function') {
             markUnsavedChanges();
@@ -94,7 +104,7 @@ function handleDrop(event) {
         // Sync with bridge
         syncCanvasStateToBridge();
         
-        window.debugUtils.showErrorToast(
+        window.debugUtils?.showErrorToast(
             'Component Added',
             `Added ${component.label} to canvas`,
             'success'
@@ -102,7 +112,21 @@ function handleDrop(event) {
         
     } catch (error) {
         console.error('Drop failed:', error);
-        window.debugUtils.handleError(error, 'Canvas Drop');
+        window.debugUtils?.handleError(error, 'Canvas Drop');
+    }
+}
+
+function handleCanvasClick(event) {
+    // Check if clicking a component directly
+    const componentEl = event.target.closest('.canvas-component');
+    if (componentEl && componentEl.dataset.componentId) {
+        // Component will handle its own selection
+        return;
+    }
+    
+    // Click on empty canvas - deselect
+    if (event.target.id === 'designCanvas') {
+        deselectComponent();
     }
 }
 
@@ -118,10 +142,11 @@ function syncCanvasStateToBridge() {
     // Get all components on canvas
     const components = [];
     canvas.querySelectorAll('.canvas-component').forEach((element, index) => {
-        const type = element.querySelector('[data-type]')?.getAttribute('data-type') || 'unknown';
-        const label = element.querySelector('div')?.textContent || 'Component';
+        const type = element.dataset.type || 'unknown';
+        const label = element.dataset.label || 'Component';
+        const id = element.dataset.componentId || `component-${index}`;
         components.push({
-            id: `component-${index}`,
+            id: id,
             type: type,
             label: label,
             position: index
@@ -156,6 +181,11 @@ function syncCanvasStateToBridge() {
 function createComponentElement(component) {
     const element = document.createElement('div');
     element.className = 'canvas-component';
+    element.dataset.componentId = component.id;
+    element.dataset.type = component.type;
+    element.dataset.label = component.label;
+    
+    // Initialize with some default styling
     element.style.cssText = `
         padding: 16px;
         margin: 8px;
@@ -163,19 +193,17 @@ function createComponentElement(component) {
         border: 2px dashed #3498db;
         border-radius: 4px;
         cursor: pointer;
+        transition: all 0.2s ease;
     `;
     
     element.innerHTML = `
-        <div style="font-weight: 600; color: #2c3e50; margin-bottom: 8px;">
-            ${component.label}
-        </div>
-        <div style="font-size: 12px; color: #7f8c8d;">
-            Type: ${component.type}
-        </div>
+        <div class="canvas-component-label">${component.label}</div>
+        <div class="canvas-component-type">Type: ${component.type}</div>
     `;
     
     // Make selectable
-    element.addEventListener('click', () => {
+    element.addEventListener('click', (e) => {
+        e.stopPropagation();
         selectComponent(element, component);
     });
     
@@ -183,39 +211,85 @@ function createComponentElement(component) {
 }
 
 function selectComponent(element, component) {
+    // Store selected component
+    selectedComponent = component;
+    
     // Remove previous selection
     document.querySelectorAll('.canvas-component').forEach(el => {
         el.style.borderColor = '#3498db';
         el.style.borderStyle = 'dashed';
+        el.style.boxShadow = 'none';
     });
     
     // Highlight selected
     element.style.borderColor = '#e74c3c';
     element.style.borderStyle = 'solid';
+    element.style.boxShadow = '0 0 0 3px rgba(231, 76, 60, 0.15)';
     
     console.log('Component selected:', component);
     
-    // Update properties panel
-    updatePropertiesPanel(component);
+    // Update properties panel using the enhanced properties module
+    if (window.propertiesModule && window.propertiesModule.showComponentProperties) {
+        window.propertiesModule.showComponentProperties(component);
+    }
 }
 
-function updatePropertiesPanel(component) {
-    const propertiesContent = document.querySelector('.properties-content');
-    if (!propertiesContent) return;
+function deselectComponent() {
+    selectedComponent = null;
     
-    propertiesContent.innerHTML = `
-        <div style="margin-bottom: 16px;">
-            <div style="font-weight: 600; margin-bottom: 8px;">Component Type</div>
-            <div style="color: #666;">${component.label}</div>
-        </div>
-        <div style="margin-bottom: 16px;">
-            <div style="font-weight: 600; margin-bottom: 8px;">Data Type</div>
-            <div style="color: #666; font-family: monospace; font-size: 12px;">${component.type}</div>
-        </div>
-        <div style="padding: 12px; background: #f8f9fa; border-radius: 4px; font-size: 12px; color: #666;">
-            Component properties and styling options will appear here.
-        </div>
-    `;
+    // Remove all selections
+    document.querySelectorAll('.canvas-component').forEach(el => {
+        el.style.borderColor = '#3498db';
+        el.style.borderStyle = 'dashed';
+        el.style.boxShadow = 'none';
+    });
+    
+    // Clear properties panel
+    if (window.propertiesModule && window.propertiesModule.clearPropertiesPanel) {
+        window.propertiesModule.clearPropertiesPanel();
+    }
+    
+    console.log('Component deselected');
+}
+
+function deleteSelectedComponent() {
+    if (!selectedComponent) {
+        console.warn('No component selected for deletion');
+        return;
+    }
+    
+    const element = document.querySelector(`[data-component-id="${selectedComponent.id}"]`);
+    if (element) {
+        element.remove();
+        console.log(`Deleted component: ${selectedComponent.label}`);
+        
+        // Clear selection
+        deselectComponent();
+        
+        // Sync changes
+        syncCanvasStateToBridge();
+        
+        // Mark as unsaved
+        if (typeof markUnsavedChanges === 'function') {
+            markUnsavedChanges();
+        }
+    }
+}
+
+function getCanvasComponents() {
+    const canvas = document.getElementById('designCanvas');
+    if (!canvas) return [];
+    
+    const components = [];
+    canvas.querySelectorAll('.canvas-component').forEach(element => {
+        components.push({
+            id: element.dataset.componentId,
+            type: element.dataset.type,
+            label: element.dataset.label
+        });
+    });
+    
+    return components;
 }
 
 // Export functions
@@ -226,8 +300,11 @@ window.canvasModule = {
     handleDragOver,
     handleDragLeave,
     handleDrop,
+    handleCanvasClick,
     createComponentElement,
     selectComponent,
-    updatePropertiesPanel,
-    syncCanvasStateToBridge
+    deselectComponent,
+    deleteSelectedComponent,
+    syncCanvasStateToBridge,
+    getCanvasComponents
 };
