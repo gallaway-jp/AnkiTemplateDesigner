@@ -47,9 +47,15 @@ function createDebugConsole() {
     
     // Multiple keyboard shortcuts to toggle debug console
     document.addEventListener('keydown', (e) => {
+        // Log all Ctrl+Alt or Ctrl+Shift key combinations for debugging
+        if ((e.ctrlKey && e.altKey) || (e.ctrlKey && e.shiftKey)) {
+            console.log(`[Debug Console] Key combination detected: Ctrl+${e.altKey ? 'Alt' : 'Shift'}+${e.key}`);
+        }
+        
         // Ctrl+Alt+D or Ctrl+Shift+D
         if ((e.ctrlKey && e.altKey && e.key.toLowerCase() === 'd') ||
             (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'd')) {
+            console.log('[Debug Console] Toggle debug console');
             e.preventDefault();
             e.stopPropagation();
             debugConsole.classList.toggle('hidden');

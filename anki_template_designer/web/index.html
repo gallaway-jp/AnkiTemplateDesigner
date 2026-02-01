@@ -6,21 +6,23 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' qrc:; style-src 'self' 'unsafe-inline';">
     <title>Anki Template Designer</title>
     <link rel="stylesheet" href="css/designer.css">
+    <link rel="stylesheet" href="css/preview.css">
+    <link rel="stylesheet" href="css/export.css">
     <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
 </head>
 <body>
     <div id="app">
-        <!-- Loading Overlay -->
-        <div class="loading-overlay" id="loadingOverlay">
-            <div class="loading-spinner">
-                <span class="loading-text">Loading editor...</span>
-            </div>
-        </div>
-
         <!-- Header -->
         <header class="header">
             <div class="header-left">
                 <h1>Anki Template Designer</h1>
+                <div class="template-selector-wrapper">
+                    <label for="templateSelect" class="template-label">Template:</label>
+                    <select id="templateSelect" class="template-selector">
+                        <option value="">Loading templates...</option>
+                    </select>
+                    <span id="unsavedIndicator" class="unsaved-indicator hidden" title="Unsaved changes">●</span>
+                </div>
                 <span class="header-status" id="headerStatus">Connecting...</span>
             </div>
             <div>
@@ -238,6 +240,69 @@
             <div class="settings-modal-footer">
                 <button class="settings-btn cancel" onclick="closeSettingsModal()">Cancel</button>
                 <button class="settings-btn save" onclick="saveSettings()">Save Settings</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Preview Modal -->
+    <div id="previewModal" class="preview-modal hidden">
+        <div class="preview-modal-overlay" onclick="closePreviewModal()"></div>
+        <div class="preview-modal-content">
+            <div class="preview-modal-header">
+                <h2>Preview</h2>
+                <div style="display: flex; gap: 8px;">
+                    <button class="preview-btn" onclick="switchCardSide()">🔄 Flip Card</button>
+                    <button class="preview-btn" onclick="refreshPreview()">🔄 Refresh</button>
+                    <button class="preview-modal-close" onclick="closePreviewModal()">&times;</button>
+                </div>
+            </div>
+            <div class="preview-modal-body">
+                <div id="previewContent" class="preview-content">
+                    <div style="text-align: center; padding: 40px; color: #999;">
+                        Loading preview...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Export Modal -->
+    <div id="exportModal" class="export-modal hidden">
+        <div class="export-modal-overlay" onclick="closeExportModal()"></div>
+        <div class="export-modal-content">
+            <div class="export-modal-header">
+                <h2>Export Template</h2>
+                <button class="export-modal-close" onclick="closeExportModal()">&times;</button>
+            </div>
+            <div class="export-modal-body">
+                <div class="export-group">
+                    <label class="export-label">Export Format</label>
+                    <div class="export-options">
+                        <label class="export-option">
+                            <input type="radio" name="exportFormat" value="html" checked>
+                            <span>HTML (Template only)</span>
+                        </label>
+                        <label class="export-option">
+                            <input type="radio" name="exportFormat" value="json">
+                            <span>JSON (With metadata)</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="export-group">
+                    <label class="export-label">Options</label>
+                    <label class="export-checkbox">
+                        <input type="checkbox" id="exportIncludeCSS" checked>
+                        <span>Include CSS</span>
+                    </label>
+                    <label class="export-checkbox">
+                        <input type="checkbox" id="exportIncludeMetadata">
+                        <span>Include metadata</span>
+                    </label>
+                </div>
+            </div>
+            <div class="export-modal-footer">
+                <button class="export-btn cancel" onclick="closeExportModal()">Cancel</button>
+                <button class="export-btn download" onclick="performExport()">📥 Download</button>
             </div>
         </div>
     </div>

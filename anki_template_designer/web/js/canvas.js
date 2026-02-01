@@ -86,6 +86,14 @@ function handleDrop(event) {
         
         canvas.appendChild(element);
         
+        // Mark changes as unsaved
+        if (typeof markUnsavedChanges === 'function') {
+            markUnsavedChanges();
+        }
+        
+        // Sync with bridge
+        syncCanvasStateToBridge();
+        
         window.debugUtils.showErrorToast(
             'Component Added',
             `Added ${component.label} to canvas`,
@@ -96,6 +104,53 @@ function handleDrop(event) {
         console.error('Drop failed:', error);
         window.debugUtils.handleError(error, 'Canvas Drop');
     }
+}
+
+function syncCanvasStateToBridge() {
+    console.log('Syncing canvas state to bridge...');
+    
+    const canvas = document.getElementById('designCanvas');
+    if (!canvas || !window.bridge || !window.bridge.updateTemplate) {
+        console.warn('Cannot sync: canvas or bridge not ready');
+        return;
+    }
+    
+    // Get all components on canvas
+    const components = [];
+    canvas.querySelectorAll('.canvas-component').forEach((element, index) => {
+        const type = element.querySelector('[data-type]')?.getAttribute('data-type') || 'unknown';
+        const label = element.querySelector('div')?.textContent || 'Component';
+        components.push({
+            id: `component-${index}`,
+            type: type,
+            label: label,
+            position: index
+        });
+    });
+    
+    console.log(`Syncing ${components.length} components`);
+    
+    // Get current template ID
+    if (typeof currentTemplateId === 'undefined' || !currentTemplateId) {
+        console.warn('No current template selected');
+        return;
+    }
+    
+    // Build template HTML from components
+    const templateHTML = components
+        .map(c => `<!-- ${c.label} (${c.type}) -->\n<div data-type="${c.type}">${c.label}</div>`)
+        .join('\n');
+    
+    // Send to bridge
+    window.bridge.updateTemplate(
+        currentTemplateId,
+        0,  // card side (0=front, 1=back)
+        templateHTML,
+        '',  // CSS (empty for now)
+        () => {
+            console.log('Canvas state synced to bridge');
+        }
+    );
 }
 
 function createComponentElement(component) {
@@ -173,5 +228,6 @@ window.canvasModule = {
     handleDrop,
     createComponentElement,
     selectComponent,
-    updatePropertiesPanel
+    updatePropertiesPanel,
+    syncCanvasStateToBridge
 };

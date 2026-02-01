@@ -53,6 +53,59 @@ html, body {
     letter-spacing: -0.5px;
 }
 
+.template-selector-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 20px;
+    padding: 0 12px;
+    border-left: 1px solid rgba(255,255,255,0.2);
+}
+
+.template-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.9);
+    white-space: nowrap;
+}
+
+.template-selector {
+    padding: 6px 10px;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 4px;
+    background: rgba(255,255,255,0.95);
+    color: #333;
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    min-width: 200px;
+    transition: all 0.2s ease;
+}
+
+.template-selector:hover {
+    border-color: rgba(255,255,255,0.5);
+    background: white;
+}
+
+.template-selector:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+.unsaved-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #e74c3c;
+    display: inline-block;
+    margin-left: 8px;
+}
+
+.unsaved-indicator.hidden {
+    display: none;
+}
+
 .header-status {
     font-size: 11px;
     opacity: 0.8;
@@ -279,48 +332,6 @@ html, body {
     display: flex;
     justify-content: space-between;
 }
-
-/* ===== Loading Overlay ===== */
-.loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(255,255,255,0.95);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-
-.loading-spinner {
-    text-align: center;
-}
-
-.loading-spinner::before {
-    content: '';
-    display: block;
-    width: 40px;
-    height: 40px;
-    margin: 0 auto 16px;
-    border: 3px solid #eee;
-    border-top-color: #3498db;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-.loading-text {
-    font-size: 14px;
-    color: #666;
-}
-
 /* ===== Utility Classes ===== */
 .hidden {
     display: none !important;
