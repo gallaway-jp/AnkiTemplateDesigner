@@ -37,6 +37,12 @@ function initializeSideState(templateId) {
 function saveSideState() {
     if (!currentTemplateId) return;
     
+    // Don't save state for preview mode - it's read-only
+    if (currentSide === 'preview') {
+        console.log(`[saveSideState] Preview mode - skipping state save`);
+        return;
+    }
+    
     const state = initializeSideState(currentTemplateId);
     const sideState = state[currentSide];
     
@@ -53,8 +59,19 @@ function saveSideState() {
 function loadSideState() {
     if (!currentTemplateId) return;
     
+    // Don't load state for preview mode - it's read-only
+    if (currentSide === 'preview') {
+        console.log(`[loadSideState] Preview mode - skipping state load`);
+        return;
+    }
+    
     const state = initializeSideState(currentTemplateId);
     const sideState = state[currentSide];
+    
+    if (!sideState) {
+        console.warn(`[loadSideState] No state found for side ${currentSide}`);
+        return;
+    }
     
     // Load components and selection into canvas
     if (window.designCanvas) {
@@ -331,6 +348,9 @@ function switchSide(side) {
     updateSideTabUI();
     updateSideInfo();
     
+    // Validate side content
+    validateSideContent();
+    
     console.log(`[switchSide] Now on ${side} side`);
 }
 
@@ -368,6 +388,42 @@ function markUnsavedChanges() {
 function markChangesAsSaved() {
     hasUnsavedChanges = false;
     updateUnsavedIndicator();
+}
+
+// Validate side content and warn if empty
+function validateSideContent() {
+    if (!currentTemplateId || currentSide === 'preview') return;
+    
+    const state = templateSideState[currentTemplateId];
+    if (!state) return;
+    
+    const sideState = state[currentSide];
+    const hasComponents = sideState.components && sideState.components.length > 0;
+    
+    // Check if front side is empty
+    if (currentSide === 'front' && !hasComponents) {
+        const warning = document.getElementById('validationWarning');
+        if (warning) {
+            warning.textContent = '⚠️ Front side is empty - add a field or component';
+            warning.style.display = 'block';
+        } else {
+            // Create warning if it doesn't exist
+            const canvasContainer = document.getElementById('canvas');
+            if (canvasContainer) {
+                const warn = document.createElement('div');
+                warn.id = 'validationWarning';
+                warn.style.cssText = 'background:#fff3cd;color:#856404;padding:12px;margin:10px 0;border-radius:4px;border-left:4px solid #ffc107;';
+                warn.textContent = '⚠️ Front side is empty - add a field or component';
+                canvasContainer.parentNode.insertBefore(warn, canvasContainer);
+            }
+        }
+    } else {
+        // Hide warning if content exists
+        const warning = document.getElementById('validationWarning');
+        if (warning) {
+            warning.style.display = 'none';
+        }
+    }
 }
 
 // Settings Modal Functions
@@ -554,18 +610,42 @@ function loadPreview() {
     
     console.log('Loading preview for template:', currentTemplateId);
     
-    showPreviewContent('<div style="text-align: center; padding: 40px; color: #999;">Loading preview...</div>');
+    showPreviewContent('<div style="text-align: center; padding: 40px; color: #999;">Loading split preview...</div>');
     
     // Get sample data
     if (window.bridge && window.bridge.getSampleData) {
         window.bridge.getSampleData(currentTemplateId, (sampleData) => {
             console.log('Sample data:', sampleData);
             
-            // Render preview
+            // Render both front and back for split view
             if (window.bridge && window.bridge.renderPreview) {
-                window.bridge.renderPreview(currentTemplateId, currentCardSide, sampleData, (html) => {
-                    console.log('Preview rendered');
-                    showPreviewContent(html || '<div style="color: #999;">No preview available</div>');
+                let frontHtml = '';
+                let backHtml = '';
+                
+                // Render front side (side 0)
+                window.bridge.renderPreview(currentTemplateId, 0, sampleData, (html) => {
+                    frontHtml = html || '<div style="color: #999;">No front preview available</div>';
+                    
+                    // Render back side (side 1)
+                    window.bridge.renderPreview(currentTemplateId, 1, sampleData, (html) => {
+                        backHtml = html || '<div style="color: #999;">No back preview available</div>';
+                        
+                        // Show split view
+                        const splitView = `
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 100%; padding: 20px;">
+                                <div style="border: 2px solid #4a90e2; border-radius: 8px; padding: 20px; overflow-y: auto; background: #f5f7fa;">
+                                    <div style="font-weight: bold; color: #4a90e2; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #4a90e2;">📄 Front (Question)</div>
+                                    <div style="font-size: 14px; line-height: 1.6;">${frontHtml}</div>
+                                </div>
+                                <div style="border: 2px solid #27ae60; border-radius: 8px; padding: 20px; overflow-y: auto; background: #f5faf7;">
+                                    <div style="font-weight: bold; color: #27ae60; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #27ae60;">📄 Back (Answer)</div>
+                                    <div style="font-size: 14px; line-height: 1.6;">${backHtml}</div>
+                                </div>
+                            </div>
+                        `;
+                        console.log('Preview rendered');
+                        showPreviewContent(splitView);
+                    });
                 });
             }
         });
@@ -748,7 +828,6 @@ function initializeToolbar() {
         'saveBtn': handleSave,
         'undoBtn': handleUndo,
         'redoBtn': handleRedo,
-        'previewBtn': handlePreview,
         'exportBtn': handleExport,
         'settingsBtn': handleSettings,
         'debugBtn': handleDebug
@@ -866,9 +945,30 @@ function initializeKeyboardShortcuts() {
             e.preventDefault();
             handleExport();
         }
+        
+        // Ctrl+1 - Front side
+        if (e.ctrlKey && e.key === '1') {
+            console.log('[Keyboard Shortcuts] Ctrl+1 detected - Front side');
+            e.preventDefault();
+            switchSide('front');
+        }
+        
+        // Ctrl+2 - Back side
+        if (e.ctrlKey && e.key === '2') {
+            console.log('[Keyboard Shortcuts] Ctrl+2 detected - Back side');
+            e.preventDefault();
+            switchSide('back');
+        }
+        
+        // Ctrl+3 - Preview
+        if (e.ctrlKey && e.key === '3') {
+            console.log('[Keyboard Shortcuts] Ctrl+3 detected - Preview');
+            e.preventDefault();
+            switchSide('preview');
+        }
     });
     
-    console.log('✓ Keyboard shortcuts initialized');
+    console.log('✓ Keyboard shortcuts initialized (Ctrl+1: Front, Ctrl+2: Back, Ctrl+3: Preview)');
 }
 
 // Initialize error handling
