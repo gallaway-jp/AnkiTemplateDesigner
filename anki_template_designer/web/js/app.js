@@ -8,6 +8,65 @@ let currentTemplateId = null;
 let hasUnsavedChanges = false;
 let loadedTemplates = [];
 
+// Side Management (Front/Back)
+let currentSide = 'front'; // 'front', 'back', or 'preview'
+let templateSideState = {}; // { [templateId]: { front: {...}, back: {...} } }
+
+// Initialize side state for a template
+function initializeSideState(templateId) {
+    if (!templateSideState[templateId]) {
+        templateSideState[templateId] = {
+            front: {
+                components: [],
+                selectedComponent: null,
+                history: [],
+                historyIndex: -1
+            },
+            back: {
+                components: [],
+                selectedComponent: null,
+                history: [],
+                historyIndex: -1
+            }
+        };
+    }
+    return templateSideState[templateId];
+}
+
+// Save current side state before switching
+function saveSideState() {
+    if (!currentTemplateId) return;
+    
+    const state = initializeSideState(currentTemplateId);
+    const sideState = state[currentSide];
+    
+    // Save current canvas components and selection
+    if (window.designCanvas) {
+        sideState.components = window.designCanvas.getComponents?.() || [];
+        sideState.selectedComponent = window.designCanvas.getSelected?.() || null;
+    }
+    
+    console.log(`[saveSideState] Saved ${currentSide} state for ${currentTemplateId}`);
+}
+
+// Load side state after switching
+function loadSideState() {
+    if (!currentTemplateId) return;
+    
+    const state = initializeSideState(currentTemplateId);
+    const sideState = state[currentSide];
+    
+    // Load components and selection into canvas
+    if (window.designCanvas) {
+        window.designCanvas.setComponents?.(sideState.components || []);
+        if (sideState.selectedComponent) {
+            window.designCanvas.selectComponent?.(sideState.selectedComponent);
+        }
+    }
+    
+    console.log(`[loadSideState] Loaded ${currentSide} state for ${currentTemplateId}`);
+}
+
 function loadTemplates() {
     console.log('[loadTemplates] Starting template load...');
     
@@ -213,6 +272,13 @@ function loadTemplate(templateId) {
     hasUnsavedChanges = false;
     updateUnsavedIndicator();
     
+    // Initialize side state for this template
+    initializeSideState(templateId);
+    currentSide = 'front'; // Reset to front side
+    loadSideState();
+    updateSideTabUI();
+    updateSideInfo();
+    
     // Update dropdown selection
     const select = document.getElementById('templateSelect');
     if (select) {
@@ -242,6 +308,56 @@ function updateUnsavedIndicator() {
             indicator.classList.add('hidden');
         }
     }
+}
+
+// Switch between front/back/preview sides
+function switchSide(side) {
+    if (side === currentSide) return; // Already on this side
+    
+    console.log(`[switchSide] Switching from ${currentSide} to ${side}`);
+    
+    // Save current side state
+    saveSideState();
+    
+    // Update current side
+    currentSide = side;
+    
+    // Load new side state
+    if (side !== 'preview') {
+        loadSideState();
+    }
+    
+    // Update UI
+    updateSideTabUI();
+    updateSideInfo();
+    
+    console.log(`[switchSide] Now on ${side} side`);
+}
+
+// Update side tab active states
+function updateSideTabUI() {
+    document.querySelectorAll('.side-tab').forEach(tab => {
+        const tabSide = tab.getAttribute('data-side') || tab.getAttribute('data-mode');
+        if (tabSide === currentSide) {
+            tab.classList.add('active');
+        } else {
+            tab.classList.remove('active');
+        }
+    });
+}
+
+// Update side info display
+function updateSideInfo() {
+    const infoEl = document.getElementById('sideInfo');
+    if (!infoEl) return;
+    
+    const labels = {
+        'front': 'Front Side (Question)',
+        'back': 'Back Side (Answer)',
+        'preview': 'Preview Mode'
+    };
+    
+    infoEl.textContent = labels[currentSide] || 'Unknown';
 }
 
 function markUnsavedChanges() {
@@ -673,6 +789,31 @@ async function initializeTemplateSelection() {
     console.log('✓ Template selection initialized');
 }
 
+// Initialize side tabs (Front/Back/Preview)
+async function initializeSideTabs() {
+    console.log('Initializing side tabs...');
+    
+    const sideTabs = document.querySelectorAll('.side-tab');
+    
+    sideTabs.forEach(tab => {
+        tab.addEventListener('click', (e) => {
+            const side = e.target.getAttribute('data-side');
+            const mode = e.target.getAttribute('data-mode');
+            const target = side || mode;
+            
+            if (target) {
+                switchSide(target);
+            }
+        });
+    });
+    
+    // Initialize UI
+    updateSideTabUI();
+    updateSideInfo();
+    
+    console.log('✓ Side tabs initialized');
+}
+
 // Initialize drag and drop on component items
 function initializeDragAndDrop() {
     console.log('Initializing drag and drop...');
@@ -825,6 +966,9 @@ async function initializeApp() {
         
         // Initialize template selection and wait for templates to load
         await initializeTemplateSelection();
+        
+        // Initialize side tabs (Front/Back/Preview)
+        await initializeSideTabs();
         
         initializeDragAndDrop();
         console.log('✓ Drag and drop initialized');
