@@ -5,143 +5,172 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' qrc:; style-src 'self' 'unsafe-inline';">
     <title>Anki Template Designer</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { width: 100%; height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; font-size: 14px; line-height: 1.5; background: #f5f5f5; color: #333; }
-        #app { width: 100%; height: 100%; display: flex; flex-direction: column; overflow: hidden; }
-        .header { background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 100; }
-        .header-left { display: flex; align-items: center; gap: 16px; }
-        .header h1 { font-size: 18px; font-weight: 600; letter-spacing: -0.5px; }
-        .header-status { font-size: 11px; opacity: 0.8; padding: 4px 8px; background: rgba(255,255,255,0.1); border-radius: 4px; }
-        .toolbar { background: #ecf0f1; padding: 8px 16px; border-bottom: 1px solid #ddd; display: flex; gap: 8px; align-items: center; }
-        .toolbar-group { display: flex; gap: 4px; padding-right: 12px; border-right: 1px solid #ddd; }
-        .toolbar-group:last-child { border-right: none; }
-        .toolbar-btn { padding: 6px 12px; background: white; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; color: #555; transition: all 0.15s ease; }
-        .toolbar-btn:hover { background: #fff; border-color: #999; color: #333; }
-        .toolbar-btn.primary { background: #3498db; border-color: #2980b9; color: white; }
-        .toolbar-btn.primary:hover { background: #2980b9; }
-        .main-container { display: flex; flex: 1; overflow: hidden; }
-        .sidebar { width: 240px; background: white; border-right: 1px solid #ddd; display: flex; flex-direction: column; overflow: hidden; }
-        .sidebar-header { padding: 12px 16px; border-bottom: 1px solid #eee; font-weight: 600; font-size: 13px; color: #555; background: #fafafa; }
-        .sidebar-content { flex: 1; overflow-y: auto; padding: 12px; }
-        .component-section { margin-bottom: 20px; }
-        .component-section-title { font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #eee; }
-        .component-item { padding: 10px 12px; background: #f9f9f9; border: 1px solid #eee; border-radius: 6px; margin-bottom: 8px; cursor: grab; font-size: 13px; color: #555; transition: all 0.15s ease; user-select: none; display: flex; align-items: center; gap: 8px; }
-        .component-item:hover { background: #f0f7ff; border-color: #3498db; color: #2980b9; }
-        .component-icon { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 14px; opacity: 0.7; }
-        .canvas-area { flex: 1; display: flex; flex-direction: column; background: #e8e8e8; overflow: hidden; }
-        .canvas-wrapper { flex: 1; overflow: auto; padding: 24px; display: flex; justify-content: center; }
-        .canvas { background: white; min-width: 600px; min-height: 400px; max-width: 900px; width: 100%; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: relative; }
-        .canvas-empty { display: flex; justify-content: center; align-items: center; height: 100%; color: #999; font-size: 14px; text-align: center; padding: 40px; flex-direction: column; }
-        .canvas-empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.3; }
-        .properties-panel { width: 280px; background: white; border-left: 1px solid #ddd; display: flex; flex-direction: column; overflow: hidden; }
-        .properties-header { padding: 12px 16px; border-bottom: 1px solid #eee; font-weight: 600; font-size: 13px; color: #555; background: #fafafa; }
-        .properties-content { flex: 1; overflow-y: auto; padding: 16px; }
-        .no-selection { color: #999; text-align: center; padding: 40px 20px; font-size: 13px; }
-        .status-bar { background: #f8f8f8; border-top: 1px solid #ddd; padding: 6px 16px; font-size: 11px; color: #888; display: flex; justify-content: space-between; }
-        .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.95); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-        .loading-spinner::before { content: ''; display: block; width: 40px; height: 40px; margin: 0 auto 16px; border: 3px solid #eee; border-top-color: #3498db; border-radius: 50%; animation: spin 0.8s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .loading-spinner { text-align: center; }
-        .loading-text { font-size: 14px; color: #666; }
-        .hidden { display: none !important; }
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #aaa; }
-        #debugConsole { position: fixed; bottom: 0; right: 0; width: 400px; height: 250px; background: #1e1e1e; color: #00ff00; font-family: monospace; font-size: 11px; border: 1px solid #444; border-radius: 4px 4px 0 0; display: flex; flex-direction: column; z-index: 9999; box-shadow: 0 -2px 10px rgba(0,0,0,0.3); }
-        #debugConsole.hidden { display: none; }
-        #debugHeader { background: #333; padding: 6px 10px; border-bottom: 1px solid #444; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
-        #debugClose { background: none; border: none; color: #00ff00; cursor: pointer; font-size: 16px; padding: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
-        #debugClose:hover { color: #00ff00; }
-        #debugOutput { flex: 1; overflow-y: auto; padding: 8px; line-height: 1.4; }
-        .debug-log { color: #00ff00; }
-        .debug-error { color: #ff4444; }
-        .debug-warn { color: #ffaa00; }
-        .debug-info { color: #00aaff; }
-        /* Error Toast Styles */
-        #errorToastContainer { position: fixed; top: 70px; right: 20px; z-index: 9998; display: flex; flex-direction: column; gap: 10px; max-width: 400px; }
-        .error-toast { background: white; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); padding: 16px; display: flex; gap: 12px; align-items: flex-start; animation: slideIn 0.3s ease; border-left: 4px solid #e74c3c; }
-        .error-toast.warning { border-left-color: #f39c12; }
-        .error-toast.info { border-left-color: #3498db; }
-        .error-toast.success { border-left-color: #27ae60; }
-        .error-toast-icon { font-size: 20px; flex-shrink: 0; }
-        .error-toast-content { flex: 1; min-width: 0; }
-        .error-toast-title { font-weight: 600; color: #333; margin-bottom: 4px; font-size: 14px; }
-        .error-toast-message { color: #666; font-size: 13px; line-height: 1.4; }
-        .error-toast-suggestion { color: #888; font-size: 12px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee; }
-        .error-toast-close { background: none; border: none; color: #999; cursor: pointer; font-size: 18px; padding: 0; margin-left: 8px; flex-shrink: 0; }
-        .error-toast-close:hover { color: #666; }
-        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
-        .error-toast.removing { animation: slideOut 0.3s ease forwards; }
-    </style>
+    <link rel="stylesheet" href="css/designer.css">
     <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
 </head>
 <body>
     <div id="app">
+        <!-- Loading Overlay -->
         <div class="loading-overlay" id="loadingOverlay">
             <div class="loading-spinner">
                 <span class="loading-text">Loading editor...</span>
             </div>
         </div>
+
+        <!-- Header -->
         <header class="header">
             <div class="header-left">
                 <h1>Anki Template Designer</h1>
-                <span class="header-status" id="status">Connecting...</span>
+                <span class="header-status" id="headerStatus">Connecting...</span>
             </div>
             <div>
-                <button class="toolbar-btn" id="btnHelp" title="Help">?</button>
+                <button class="toolbar-btn" id="settingsBtn" title="Settings">⚙</button>
             </div>
         </header>
+
+        <!-- Toolbar -->
         <div class="toolbar">
             <div class="toolbar-group">
-                <button class="toolbar-btn" id="btnNew">New</button>
-                <button class="toolbar-btn" id="btnOpen">Open</button>
-                <button class="toolbar-btn primary" id="btnSave">Save</button>
+                <button class="toolbar-btn primary" id="saveBtn">💾 Save</button>
             </div>
             <div class="toolbar-group">
-                <button class="toolbar-btn" id="btnUndo">Undo</button>
-                <button class="toolbar-btn" id="btnRedo">Redo</button>
+                <button class="toolbar-btn" id="undoBtn">↶ Undo</button>
+                <button class="toolbar-btn" id="redoBtn">↷ Redo</button>
             </div>
             <div class="toolbar-group">
-                <button class="toolbar-btn" id="btnPreview">Preview</button>
-                <button class="toolbar-btn" id="btnExport">Export</button>
+                <button class="toolbar-btn" id="previewBtn">👁 Preview</button>
+                <button class="toolbar-btn" id="exportBtn">📤 Export</button>
             </div>
             <div class="toolbar-group">
-                <button class="toolbar-btn" id="btnInspector" title="Toggle Inspector (F12)">🔧 Inspector</button>
+                <button class="toolbar-btn" id="debugBtn" title="Toggle Debug Console (Ctrl+Alt+D)">🐛 Debug</button>
             </div>
         </div>
+
+        <!-- Main Container -->
         <div class="main-container">
+            <!-- Components Sidebar -->
             <aside class="sidebar">
                 <div class="sidebar-header">Components</div>
                 <div class="sidebar-content">
-                    <div class="component-section">
-                        <div class="component-section-title">Layout</div>
-                        <div class="component-item" draggable="true" data-type="container"><span class="component-icon">☐</span> Container</div>
-                        <div class="component-item" draggable="true" data-type="row"><span class="component-icon">⫿</span> Row</div>
-                        <div class="component-item" draggable="true" data-type="column"><span class="component-icon">⸾</span> Column</div>
-                    </div>
-                    <div class="component-section">
-                        <div class="component-section-title">Text</div>
-                        <div class="component-item" draggable="true" data-type="text"><span class="component-icon">T</span> Text</div>
-                        <div class="component-item" draggable="true" data-type="heading"><span class="component-icon">H</span> Heading</div>
-                    </div>
+                    <!-- Anki Fields -->
                     <div class="component-section">
                         <div class="component-section-title">Anki Fields</div>
-                        <div class="component-item" draggable="true" data-type="field"><span class="component-icon">{{</span> Field</div>
-                        <div class="component-item" draggable="true" data-type="cloze"><span class="component-icon">…</span> Cloze</div>
+                        <div class="component-item" draggable="true" data-type="anki-field">
+                            <span class="component-icon" style="color:#1565c0;">{{</span> Field
+                        </div>
+                        <div class="component-item" draggable="true" data-type="cloze">
+                            <span class="component-icon" style="color:#e65100;">…</span> Cloze
+                        </div>
+                        <div class="component-item" draggable="true" data-type="hint-field">
+                            <span class="component-icon" style="color:#1976d2;">?</span> Hint
+                        </div>
+                        <div class="component-item" draggable="true" data-type="type-answer">
+                            <span class="component-icon">⌨</span> Type Answer
+                        </div>
+                        <div class="component-item" draggable="true" data-type="conditional">
+                            <span class="component-icon" style="color:#9c27b0;">#</span> Conditional
+                        </div>
+                        <div class="component-item" draggable="true" data-type="tags-display">
+                            <span class="component-icon" style="color:#757575;">🏷</span> Tags
+                        </div>
                     </div>
+
+                    <!-- Layout & Structure -->
+                    <div class="component-section">
+                        <div class="component-section-title">Layout & Structure</div>
+                        <div class="component-item" draggable="true" data-type="container">
+                            <span class="component-icon">☐</span> Container
+                        </div>
+                        <div class="component-item" draggable="true" data-type="section">
+                            <span class="component-icon">§</span> Section
+                        </div>
+                        <div class="component-item" draggable="true" data-type="panel">
+                            <span class="component-icon">▢</span> Panel
+                        </div>
+                        <div class="component-item" draggable="true" data-type="card">
+                            <span class="component-icon">🗃</span> Card
+                        </div>
+                        <div class="component-item" draggable="true" data-type="surface">
+                            <span class="component-icon">▫</span> Surface
+                        </div>
+                        <div class="component-item" draggable="true" data-type="padding-wrapper">
+                            <span class="component-icon">⬚</span> Padding Box
+                        </div>
+                        <div class="component-item" draggable="true" data-type="margin-wrapper">
+                            <span class="component-icon">⬜</span> Margin Box
+                        </div>
+                    </div>
+
+                    <!-- Grid & Columns -->
+                    <div class="component-section">
+                        <div class="component-section-title">Grid & Columns</div>
+                        <div class="component-item" draggable="true" data-type="grid">
+                            <span class="component-icon">⊞</span> Grid
+                        </div>
+                        <div class="component-item" draggable="true" data-type="row-2-col">
+                            <span class="component-icon">⫿</span> 2 Columns
+                        </div>
+                        <div class="component-item" draggable="true" data-type="row-3-col">
+                            <span class="component-icon">⫿</span> 3 Columns
+                        </div>
+                        <div class="component-item" draggable="true" data-type="flow-layout">
+                            <span class="component-icon">↻</span> Flow Layout
+                        </div>
+                    </div>
+
+                    <!-- Flexbox -->
+                    <div class="component-section">
+                        <div class="component-section-title">Flexbox</div>
+                        <div class="component-item" draggable="true" data-type="h-stack">
+                            <span class="component-icon">↔</span> H-Stack
+                        </div>
+                        <div class="component-item" draggable="true" data-type="v-stack">
+                            <span class="component-icon">↕</span> V-Stack
+                        </div>
+                        <div class="component-item" draggable="true" data-type="center">
+                            <span class="component-icon">◎</span> Center
+                        </div>
+                    </div>
+
+                    <!-- Spacing -->
+                    <div class="component-section">
+                        <div class="component-section-title">Spacing</div>
+                        <div class="component-item" draggable="true" data-type="spacer">
+                            <span class="component-icon">⤓</span> Spacer
+                        </div>
+                        <div class="component-item" draggable="true" data-type="divider">
+                            <span class="component-icon">—</span> Divider
+                        </div>
+                    </div>
+
+                    <!-- Text & Typography -->
+                    <div class="component-section">
+                        <div class="component-section-title">Text & Typography</div>
+                        <div class="component-item" draggable="true" data-type="text">
+                            <span class="component-icon">T</span> Text
+                        </div>
+                        <div class="component-item" draggable="true" data-type="heading">
+                            <span class="component-icon">H</span> Heading
+                        </div>
+                    </div>
+
+                    <!-- Media -->
                     <div class="component-section">
                         <div class="component-section-title">Media</div>
-                        <div class="component-item" draggable="true" data-type="image"><span class="component-icon">🖼</span> Image</div>
-                        <div class="component-item" draggable="true" data-type="audio"><span class="component-icon">🔊</span> Audio</div>
+                        <div class="component-item" draggable="true" data-type="image">
+                            <span class="component-icon">🖼</span> Image
+                        </div>
+                        <div class="component-item" draggable="true" data-type="audio">
+                            <span class="component-icon">🔊</span> Audio
+                        </div>
                     </div>
                 </div>
             </aside>
+
+            <!-- Canvas Area -->
             <main class="canvas-area">
                 <div class="canvas-wrapper">
-                    <div class="canvas" id="canvas">
+                    <div class="canvas" id="designCanvas">
                         <div class="canvas-empty">
                             <div class="canvas-empty-icon">📄</div>
                             <div>Drag components here to start building</div>
@@ -149,433 +178,89 @@
                     </div>
                 </div>
             </main>
+
+            <!-- Properties Panel -->
             <aside class="properties-panel">
                 <div class="properties-header">Properties</div>
-                <div class="properties-content" id="propertiesContent">
-                    <div class="no-selection">Select a component to edit</div>
+                <div class="properties-content">
+                    <div class="no-selection">Select a component to view its properties</div>
                 </div>
             </aside>
         </div>
+
+        <!-- Status Bar -->
         <footer class="status-bar">
             <span id="statusLeft">Ready</span>
-            <span id="statusRight">v2.0.0</span>
+            <span id="statusRight">v2.0.0 (Refactored)</span>
         </footer>
     </div>
     
     <!-- Error Toast Container -->
     <div id="errorToastContainer"></div>
     
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="settings-modal hidden">
+        <div class="settings-modal-overlay" onclick="closeSettingsModal()"></div>
+        <div class="settings-modal-content">
+            <div class="settings-modal-header">
+                <h2>Settings</h2>
+                <button class="settings-modal-close" onclick="closeSettingsModal()">&times;</button>
+            </div>
+            <div class="settings-modal-body">
+                <div class="settings-group">
+                    <label for="autoSaveCheckbox" class="settings-label">
+                        <input type="checkbox" id="autoSaveCheckbox" class="settings-checkbox">
+                        <span>Enable Auto-Save</span>
+                    </label>
+                </div>
+                <div class="settings-group">
+                    <label for="autoSaveInterval" class="settings-label">Auto-Save Interval (seconds)</label>
+                    <input type="number" id="autoSaveInterval" class="settings-input" min="5" max="300" step="5" value="30">
+                </div>
+                <div class="settings-group">
+                    <label for="themeSelect" class="settings-label">Theme</label>
+                    <select id="themeSelect" class="settings-select">
+                        <option value="system">System Default</option>
+                        <option value="light">Light</option>
+                        <option value="dark">Dark</option>
+                    </select>
+                </div>
+                <div class="settings-group">
+                    <label for="logLevelSelect" class="settings-label">Log Level</label>
+                    <select id="logLevelSelect" class="settings-select">
+                        <option value="DEBUG">Debug</option>
+                        <option value="INFO">Info</option>
+                        <option value="WARNING">Warning</option>
+                        <option value="ERROR">Error</option>
+                    </select>
+                </div>
+            </div>
+            <div class="settings-modal-footer">
+                <button class="settings-btn cancel" onclick="closeSettingsModal()">Cancel</button>
+                <button class="settings-btn save" onclick="saveSettings()">Save Settings</button>
+            </div>
+        </div>
+    </div>
+    
     <!-- Debug Console Panel -->
     <div id="debugConsole" class="hidden">
         <div id="debugHeader">
             <span>Debug Console (Press Ctrl+Alt+D to toggle)</span>
-            <button id="debugClose">&times;</button>
+            <div style="display: flex; gap: 8px;">
+                <button id="debugCopy" title="Copy to clipboard">📋</button>
+                <button id="debugClear" title="Clear console">🗑️</button>
+                <button id="debugClose">&times;</button>
+            </div>
         </div>
         <div id="debugOutput"></div>
     </div>
-    
-    <script>
-        let bridge = null;
-        let isConnected = false;
-        
-        // Console output capture with debug panel
-        const originalLog = console.log;
-        const originalError = console.error;
-        const originalWarn = console.warn;
-        const consoleLogs = [];
-        
-        function addDebugLog(message, type = 'log') {
-            const timestamp = new Date().toLocaleTimeString();
-            const line = `[${timestamp}] ${message}`;
-            consoleLogs.push(line);
-            
-            const debugOutput = document.getElementById('debugOutput');
-            if (debugOutput) {
-                const entry = document.createElement('div');
-                entry.className = `debug-${type}`;
-                entry.textContent = line;
-                debugOutput.appendChild(entry);
-                debugOutput.scrollTop = debugOutput.scrollHeight;
-            }
-        }
-        
-        console.log = function(...args) {
-            const msg = args.join(' ');
-            addDebugLog(msg, 'log');
-            originalLog.apply(console, args);
-        };
-        
-        console.error = function(...args) {
-            const msg = args.join(' ');
-            addDebugLog(msg, 'error');
-            originalError.apply(console, args);
-        };
-        
-        console.warn = function(...args) {
-            const msg = args.join(' ');
-            addDebugLog(msg, 'warn');
-            originalWarn.apply(console, args);
-        };
-        
-        console.info = function(...args) {
-            const msg = args.join(' ');
-            addDebugLog(msg, 'info');
-        };
-        
-        // Toggle debug console with Ctrl+Alt+D
-        document.addEventListener('keydown', function(e) {
-            if (e.ctrlKey && e.altKey && e.code === 'KeyD') {
-                const panel = document.getElementById('debugConsole');
-                if (panel) {
-                    panel.classList.toggle('hidden');
-                    e.preventDefault();
-                }
-            }
-            // Toggle Inspector with F12 or Ctrl+Shift+J (F12 also handled at Qt level)
-            if (e.code === 'F12' || (e.ctrlKey && e.shiftKey && e.code === 'KeyJ')) {
-                e.preventDefault();
-                if (bridge) {
-                    bridge.toggleInspector();
-                }
-            }
-            // Undo with Ctrl+Z
-            if (e.ctrlKey && !e.shiftKey && e.code === 'KeyZ') {
-                e.preventDefault();
-                doUndo();
-            }
-            // Redo with Ctrl+Y or Ctrl+Shift+Z
-            if ((e.ctrlKey && e.code === 'KeyY') || (e.ctrlKey && e.shiftKey && e.code === 'KeyZ')) {
-                e.preventDefault();
-                doRedo();
-            }
-        });
-        
-        // Close button for debug console
-        document.addEventListener('DOMContentLoaded', function() {
-            const closeBtn = document.getElementById('debugClose');
-            if (closeBtn) {
-                closeBtn.addEventListener('click', function() {
-                    document.getElementById('debugConsole').classList.add('hidden');
-                });
-            }
-            
-            // Inspector button click handler
-            const inspectorBtn = document.getElementById('btnInspector');
-            if (inspectorBtn) {
-                inspectorBtn.addEventListener('click', function() {
-                    if (bridge) {
-                        bridge.toggleInspector();
-                    }
-                });
-            }
-        });
-        
-        // Helper to test bridge
-        window.testBridge = function() {
-            if (!bridge) {
-                console.error('Bridge not connected yet');
-                return;
-            }
-            console.log('Testing bridge: listing templates...');
-            bridge.listTemplates(result => {
-                console.log('List templates result:', result);
-            });
-        };
-        
-        // Undo/Redo state
-        let canUndo = false;
-        let canRedo = false;
-        
-        function updateUndoRedoButtons() {
-            const undoBtn = document.getElementById('btnUndo');
-            const redoBtn = document.getElementById('btnRedo');
-            if (undoBtn) {
-                undoBtn.disabled = !canUndo;
-                undoBtn.style.opacity = canUndo ? '1' : '0.5';
-            }
-            if (redoBtn) {
-                redoBtn.disabled = !canRedo;
-                redoBtn.style.opacity = canRedo ? '1' : '0.5';
-            }
-        }
-        
-        function doUndo() {
-            if (!bridge) {
-                console.error('Bridge not connected');
-                return;
-            }
-            bridge.undo(function(response) {
-                try {
-                    const result = JSON.parse(response);
-                    if (result.success) {
-                        console.log('Undo successful, state:', result.state);
-                        setStatusLeft('Undo');
-                        // Apply state to editor (implementation in later plans)
-                    } else {
-                        console.warn('Undo failed:', result.error);
-                    }
-                } catch (e) {
-                    console.error('Undo parse error:', e);
-                }
-            });
-        }
-        
-        function doRedo() {
-            if (!bridge) {
-                console.error('Bridge not connected');
-                return;
-            }
-            bridge.redo(function(response) {
-                try {
-                    const result = JSON.parse(response);
-                    if (result.success) {
-                        console.log('Redo successful, state:', result.state);
-                        setStatusLeft('Redo');
-                        // Apply state to editor (implementation in later plans)
-                    } else {
-                        console.warn('Redo failed:', result.error);
-                    }
-                } catch (e) {
-                    console.error('Redo parse error:', e);
-                }
-            });
-        }
-        
-        function refreshHistoryState() {
-            if (!bridge) return;
-            bridge.getHistoryState(function(response) {
-                try {
-                    const state = JSON.parse(response);
-                    canUndo = state.canUndo;
-                    canRedo = state.canRedo;
-                    updateUndoRedoButtons();
-                } catch (e) {
-                    console.error('History state parse error:', e);
-                }
-            });
-        }
-        
-        // Helper to push undo state (called by editor when changes occur)
-        window.pushUndoState = function(stateBefore, stateAfter, description) {
-            if (!bridge) {
-                console.error('Bridge not connected');
-                return;
-            }
-            bridge.pushUndoState(JSON.stringify(stateBefore), JSON.stringify(stateAfter), description);
-            console.log('Pushed undo state:', description);
-        };
-        
-        // ===== Error Toast System =====
-        let toastIdCounter = 0;
-        const ERROR_TOAST_DURATION = 8000; // 8 seconds
-        
-        function showErrorToast(errorInfo) {
-            const container = document.getElementById('errorToastContainer');
-            if (!container) return;
-            
-            const toastId = ++toastIdCounter;
-            const toast = document.createElement('div');
-            toast.className = 'error-toast';
-            toast.id = `toast-${toastId}`;
-            
-            // Determine icon based on error type
-            let icon = '❌';
-            if (errorInfo.recoverable === false) {
-                toast.classList.add('critical');
-            }
-            
-            // Build toast HTML
-            let html = `
-                <span class="error-toast-icon">${icon}</span>
-                <div class="error-toast-content">
-                    <div class="error-toast-title">${escapeHtml(errorInfo.code_name || 'Error')}</div>
-                    <div class="error-toast-message">${escapeHtml(errorInfo.message)}</div>
-            `;
-            
-            if (errorInfo.recovery_suggestion) {
-                html += `<div class="error-toast-suggestion">💡 ${escapeHtml(errorInfo.recovery_suggestion)}</div>`;
-            }
-            
-            html += `</div><button class="error-toast-close" onclick="dismissToast(${toastId})">&times;</button>`;
-            
-            toast.innerHTML = html;
-            container.appendChild(toast);
-            
-            // Auto-dismiss after duration
-            setTimeout(() => dismissToast(toastId), ERROR_TOAST_DURATION);
-            
-            // Log to console as well
-            console.error(`[${errorInfo.code_name}] ${errorInfo.message}`);
-        }
-        
-        function dismissToast(toastId) {
-            const toast = document.getElementById(`toast-${toastId}`);
-            if (toast) {
-                toast.classList.add('removing');
-                setTimeout(() => toast.remove(), 300);
-            }
-        }
-        
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-        
-        // Report JS error to Python
-        window.reportError = function(message, context = {}) {
-            if (!bridge) {
-                console.error('[Local Error]', message, context);
-                return;
-            }
-            bridge.reportError(message, JSON.stringify(context));
-        };
-        
-        // Global error handler for uncaught JS errors
-        window.onerror = function(message, source, lineno, colno, error) {
-            console.error('Uncaught error:', message);
-            reportError(message, {
-                source: source,
-                line: lineno,
-                column: colno,
-                stack: error ? error.stack : null
-            });
-            return false; // Let default handler run too
-        };
-        
-        // Promise rejection handler
-        window.onunhandledrejection = function(event) {
-            console.error('Unhandled promise rejection:', event.reason);
-            reportError(String(event.reason), { type: 'unhandled_promise_rejection' });
-        };
-        
-        document.addEventListener('DOMContentLoaded', function() {
-            initWebChannel();
-            initToolbar();
-            initDragDrop();
-        });
-        function initWebChannel() {
-            if (typeof QWebChannel === 'undefined') {
-                updateStatus('Standalone');
-                hideLoading();
-                return;
-            }
-            new QWebChannel(qt.webChannelTransport, function(channel) {
-                bridge = channel.objects.bridge;
-                if (!bridge) {
-                    updateStatus('Error');
-                    hideLoading();
-                    return;
-                }
-                isConnected = true;
-                
-                // Listen for history changes from Python
-                bridge.messageReceived.connect(function(method, data) {
-                    if (method === 'historyChanged') {
-                        try {
-                            const state = JSON.parse(data);
-                            canUndo = state.canUndo;
-                            canRedo = state.canRedo;
-                            updateUndoRedoButtons();
-                            console.log('History changed:', state.description, '| canUndo:', canUndo, '| canRedo:', canRedo);
-                        } catch (e) {
-                            console.error('History change parse error:', e);
-                        }
-                    }
-                    // Listen for errors from Python
-                    else if (method === 'errorOccurred') {
-                        try {
-                            const errorInfo = JSON.parse(data);
-                            showErrorToast(errorInfo);
-                        } catch (e) {
-                            console.error('Error notification parse error:', e);
-                        }
-                    }
-                });
-                
-                bridge.getVersion(function(response) {
-                    try {
-                        const data = JSON.parse(response);
-                        updateStatus('Connected');
-                        document.getElementById('statusRight').textContent = 'v' + data.version;
-                    } catch (e) {
-                        console.error('Parse error:', e);
-                    }
-                });
-                
-                // Initialize undo/redo state
-                refreshHistoryState();
-                
-                bridge.log('UI shell loaded');
-                hideLoading();
-            });
-        }
-        function updateStatus(text) {
-            const status = document.getElementById('status');
-            if (status) status.textContent = text;
-        }
-        function hideLoading() {
-            const overlay = document.getElementById('loadingOverlay');
-            if (overlay) overlay.classList.add('hidden');
-        }
-        function initToolbar() {
-            document.getElementById('btnNew').addEventListener('click', () => setStatusLeft('New'));
-            document.getElementById('btnOpen').addEventListener('click', () => setStatusLeft('Open'));
-            document.getElementById('btnSave').addEventListener('click', () => setStatusLeft('Saved'));
-            document.getElementById('btnUndo').addEventListener('click', doUndo);
-            document.getElementById('btnRedo').addEventListener('click', doRedo);
-            document.getElementById('btnPreview').addEventListener('click', () => setStatusLeft('Preview'));
-            document.getElementById('btnExport').addEventListener('click', () => setStatusLeft('Export'));
-            document.getElementById('btnHelp').addEventListener('click', () => setStatusLeft('Help'));
-            
-            // Initialize button states
-            updateUndoRedoButtons();
-        }
-        function setStatusLeft(text) {
-            const el = document.getElementById('statusLeft');
-            if (el) el.textContent = text;
-        }
-        function initDragDrop() {
-            const canvas = document.getElementById('canvas');
-            const components = document.querySelectorAll('.component-item');
-            components.forEach(comp => {
-                comp.addEventListener('dragstart', onDragStart);
-                comp.addEventListener('dragend', onDragEnd);
-            });
-            canvas.addEventListener('dragover', onDragOver);
-            canvas.addEventListener('drop', onDrop);
-            canvas.addEventListener('dragleave', onDragLeave);
-        }
-        let draggedType = null;
-        function onDragStart(e) {
-            draggedType = e.target.closest('.component-item').dataset.type;
-            e.target.closest('.component-item').style.opacity = '0.5';
-            e.dataTransfer.effectAllowed = 'copy';
-        }
-        function onDragEnd(e) {
-            e.target.closest('.component-item').style.opacity = '1';
-        }
-        function onDragOver(e) {
-            e.preventDefault();
-            document.getElementById('canvas').style.borderColor = '#3498db';
-        }
-        function onDragLeave(e) {
-            document.getElementById('canvas').style.borderColor = '#ccc';
-        }
-        function onDrop(e) {
-            e.preventDefault();
-            document.getElementById('canvas').style.borderColor = '#ccc';
-            if (draggedType) {
-                const empty = document.querySelector('.canvas-empty');
-                if (empty) {
-                    empty.innerHTML = `<p style="padding: 20px; color: #666;">Component "${draggedType}" added.<br><small>Full implementation in later steps.</small></p>`;
-                }
-                setStatusLeft('Added: ' + draggedType);
-            }
-        }
-        window.editorReady = function() {
-            return isConnected;
-        };
-    </script>
+
+    <!-- JavaScript Modules (load in dependency order) -->
+    <script src="js/utils.js"></script>
+    <script src="js/bridge.js"></script>
+    <script src="js/components.js"></script>
+    <script src="js/canvas.js"></script>
+    <script src="js/properties.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>

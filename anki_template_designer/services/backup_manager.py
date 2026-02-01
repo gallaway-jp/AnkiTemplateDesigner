@@ -1155,5 +1155,5 @@ def init_backup_manager(backup_dir: str, templates_dir: Optional[str] = None) ->
     """
     global _backup_manager
     _backup_manager = BackupManager(backup_dir, templates_dir)
-    logger.info("Backup manager initialized")
+    logger.debug("Backup manager initialized")
     return _backup_manager

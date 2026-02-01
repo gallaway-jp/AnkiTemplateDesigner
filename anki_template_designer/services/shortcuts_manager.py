@@ -439,7 +439,7 @@ class ShortcutsManager:
         # Create default profile
         self._create_default_profile(default_profile_name)
         
-        logger.info("ShortcutsManager initialized")
+        logger.debug("ShortcutsManager initialized")
 
     def _create_default_profile(self, name: str) -> None:
         """Create the default profile with built-in shortcuts."""

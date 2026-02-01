@@ -88,64 +88,6 @@ window.registerAnkiBlocks = async function(editor) {
             registerAccessibilityBlocks: accessibilityModule.registerAccessibilityBlocks
         };
         
-        // ========== Anki Specific Blocks ==========
-        
-        // Anki Field Block
-        blockManager.add('anki-field', {
-            label: 'Anki Field',
-            category: 'Anki Special',
-            content: {
-                type: 'text',
-                content: '{{Front}}',
-                attributes: {
-                    'data-anki-field': 'Front',
-                    'class': 'anki-field'
-                },
-                traits: [
-                    {
-                        type: 'anki-field-select',
-                        label: 'Field',
-                        name: 'data-anki-field'
-                    }
-                ]
-            },
-            attributes: {
-                class: 'fa fa-bookmark'
-            }
-        });
-        
-        // Cloze Deletion Block
-        blockManager.add('anki-cloze', {
-            label: 'Cloze',
-            category: 'Anki Special',
-            content: {
-                type: 'text',
-                content: '{{cloze:Text}}',
-                attributes: {
-                    'class': 'anki-cloze'
-                }
-            },
-            attributes: {
-                class: 'fa fa-eye-slash'
-            }
-        });
-        
-        // Hint Block
-        blockManager.add('anki-hint', {
-            label: 'Hint',
-            category: 'Anki Special',
-            content: {
-                type: 'text',
-                content: '{{hint:Hint Text}}',
-                attributes: {
-                    'class': 'anki-hint'
-                }
-            },
-            attributes: {
-                class: 'fa fa-question-circle'
-            }
-        });
-        
         // ========== Register All Modular Block Categories ==========
         
         // Count blocks before registration

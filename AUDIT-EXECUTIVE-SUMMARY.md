@@ -51,6 +51,27 @@ Overall:               42% ⚠️
 
 ---
 
+## ADDON GOAL & VISION
+
+### Purpose
+The **Anki Template Designer** addon provides a visual editor for modifying Anki note type templates. Users can customize the HTML/CSS of their card templates using a drag-and-drop interface.
+
+### Core Concept
+- **Edit existing Anki templates** - NOT create templates from scratch
+- **Visual WYSIWYG editing** - Drag components, edit properties visually
+- **Seamless integration** - Works with Anki's existing note types
+- **Auto-resume workflow** - Opens to last edited template automatically
+
+### Design Philosophy
+Users don't "create" templates in isolation. Instead:
+1. Open Template Designer → Auto-loads last edited template (or first available)
+2. Select a different template from dropdown if needed
+3. Edit visually with GrapeJS editor
+4. Save changes back to Anki note type
+5. Preview how cards will look
+
+---
+
 ## VERIFIED FUNCTIONALITY
 
 ### Working in Anki ✅
@@ -69,15 +90,13 @@ sm.get_statistics()              # ✅ Shows breakdown
 ### NOT Working Yet ❌
 ```python
 # You cannot do this from the UI:
-# - Create a template
-# - Edit a template
-# - Save a template
-# - Load a template
-# - View template list
-# - Drag components
-# - Edit properties
-# - Preview template
-# - Export template
+# - Select/switch templates (dropdown)
+# - Edit template visually (GrapeJS editor)
+# - Save template changes
+# - Drag components onto canvas
+# - Edit component properties
+# - Preview template rendering
+# - Export template as HTML/CSS
 ```
 
 ---
@@ -105,14 +124,15 @@ But currently:
    - Users can see and interact with editor
    - Can add components visually
 
-2. **Complete Save/Load Flow** (1 day)
-   - Users can save their templates
-   - Can load existing templates
+2. **Implement Template Selection & Auto-Load** (1 day)
+   - Auto-load last opened template on dialog open
+   - Template dropdown to switch between templates
+   - Save changes back to Anki note type
 
 3. **Implement Component System** (2-3 days)
-   - Can add real components
-   - Can edit properties
-   - Can see preview
+   - Can add real components via drag-drop
+   - Can edit component properties
+   - Can see live preview
 
 4. **Add UI Polish** (1 day)
    - Settings dialog
@@ -172,13 +192,24 @@ Three comprehensive documents have been created:
 | Backend Services | 10/10 | 10/10 | ✅ Complete |
 | Bridge Methods | 38/38 | 38/38 | ✅ Complete |
 | Unit Tests Passing | 834 | 834 | ✅ 100% |
-| Frontend Views | 1 | 5 | ❌ 20% |
-| UI Components Ready | 0 | 12 | ❌ 0% |
+| Frontend Views | 1 | 3 | ❌ 33% |
+| UI Actions Ready | 0 | 7 | ❌ 0% |
 | Keyboard Shortcuts | 0 | 28 | ❌ 0% |
 | Template Persistence | ✅ | ✅ | ✅ Ready |
 | Plugin System | ✅ | ✅ | ✅ Ready |
 | Error Handling | ✅ | ✅ | ✅ Ready |
 | Overall Completion | 42% | 100% | ⚠️ In Progress |
+
+### Required UI Actions (7 total)
+| Action | Button/Control | Description |
+|--------|----------------|-------------|
+| **Select Template** | Dropdown | Switch between available Anki note type templates |
+| **Save** | Button | Save current changes to Anki note type |
+| **Undo** | Button | Undo last editing action |
+| **Redo** | Button | Redo previously undone action |
+| **Preview** | Button | Show how card will render with sample data |
+| **Export** | Button | Export template as standalone HTML/CSS |
+| **Settings** | Button | Open settings/preferences dialog |
 
 ---
 
@@ -259,8 +290,43 @@ Week 4:    Buffer/other features
 1. **FEATURE-COMPLETENESS-AUDIT.md** - Full audit of what's done
 2. **AUDIT-DETAILED-FINDINGS.md** - Deep technical analysis  
 3. **IMPLEMENTATION-PLAN-PHASES.md** - Step-by-step roadmap
+4. **COMPONENT-ANALYSIS-ANKI.md** - GrapeJS component suitability analysis (NEW)
 
 All three documents provide code examples, effort estimates, and detailed guidance.
+
+---
+
+## COMPONENT LIBRARY STATUS
+
+### GrapeJS Clarification
+GrapeJS does **NOT** have built-in "Container", "Stack", or "Box" components. These are custom implementations. The project already has:
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| H-Stack | ✅ Exists | Horizontal flexbox |
+| V-Stack | ✅ Exists | Vertical flexbox |
+| Container | ⚠️ Missing in blocks | Exists in React, needs GrapeJS block |
+| Row/Column layouts | ✅ Exists | 2-col, 3-col grids |
+
+### Components to REMOVE (Not Anki-compatible)
+- Modal Container (JS-dependent)
+- Drawer (navigation pattern)
+- Tab Container (JS-dependent)
+- Tabs Nav (JS-dependent)
+- Accordion (JS-dependent)
+- Stepper (irrelevant)
+- Masonry (too complex)
+- Frame (confusing purpose)
+
+### Components to ADD
+1. **Container** - Basic centered max-width box
+2. **Anki Field** - `{{FieldName}}` placeholder
+3. **Cloze** - `{{c1::answer}}` syntax
+4. **Hint Field** - `{{hint:Field}}`
+5. **Type Answer** - `{{type:Field}}`
+6. **Conditional** - Front/Back side blocks
+
+See **COMPONENT-ANALYSIS-ANKI.md** for full details.
 
 ---
 
@@ -283,6 +349,12 @@ A: Yes. Verified in Anki with shortcuts manager. 834+ tests passing.
 
 **Q: What if we skip frontend and just do API?**  
 A: No one would know how to use it. Onboarding without UI is useless.
+
+**Q: Why no "Create Template" button?**  
+A: Templates are tied to Anki note types. Users edit existing templates, not create new ones in isolation. New note types are created through Anki's native interface.
+
+**Q: What happens when dialog opens?**  
+A: Auto-loads the last edited template. If no history, loads the first available template. Users can switch templates via dropdown.
 
 ---
 

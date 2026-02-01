@@ -1,8 +1,14 @@
 """Main designer dialog with WebView for GrapeJS editor."""
 
 import os
+import sys
+import warnings
 from typing import Optional, Any
 import logging
+
+# Suppress Qt/WebEngine warnings that trigger Anki error dialogs
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=PendingDeprecationWarning)
 
 try:
     from aqt.qt import (
@@ -50,6 +56,9 @@ class DesignerDialog(QDialog):
         Args:
             parent: Parent widget, defaults to Anki main window.
         """
+        # Suppress Qt warnings before creating dialog
+        self._setup_qt_message_handler()
+        
         super().__init__(parent or mw)
         
         self._webview: Optional[QWebEngineView] = None
@@ -63,6 +72,29 @@ class DesignerDialog(QDialog):
         self._load_editor()
         
         logger.debug("DesignerDialog initialized")
+    
+    def _setup_qt_message_handler(self) -> None:
+        """Install Qt message handler to suppress warnings."""
+        try:
+            if HAS_ANKI:
+                from aqt.qt import qInstallMessageHandler, QtMsgType
+            else:
+                from PyQt6.QtCore import qInstallMessageHandler, QtMsgType
+            
+            def qt_message_handler(msg_type, context, message):
+                """Custom Qt message handler that suppresses non-critical warnings."""
+                # Only log critical errors, suppress warnings
+                if msg_type == QtMsgType.QtCriticalMsg or msg_type == QtMsgType.QtFatalMsg:
+                    logger.error(f"Qt Error: {message}")
+                elif msg_type == QtMsgType.QtWarningMsg:
+                    # Log as debug instead of warning to avoid Anki error dialog
+                    logger.debug(f"Qt Warning (suppressed): {message}")
+                # Suppress debug and info messages completely
+            
+            qInstallMessageHandler(qt_message_handler)
+            logger.debug("Qt message handler installed")
+        except Exception as e:
+            logger.debug(f"Could not install Qt message handler: {e}")
     
     def _setup_window(self) -> None:
         """Configure window properties and sizing."""

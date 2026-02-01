@@ -102,7 +102,7 @@ class PerformanceOptimizer:
             name="previews"
         )
         
-        logger.info(f"PerformanceOptimizer initialized: cache={cache_size_mb}MB, ttl={cache_ttl}s")
+        logger.debug(f"PerformanceOptimizer initialized: cache={cache_size_mb}MB, ttl={cache_ttl}s")
     
     # ===== Cache Operations =====
     
@@ -456,5 +456,5 @@ def init_optimizer(
         cache_size_mb=cache_size_mb,
         cache_ttl=cache_ttl
     )
-    logger.info("Global optimizer initialized")
+    logger.debug("Global optimizer initialized")
     return _optimizer

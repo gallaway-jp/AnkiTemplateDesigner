@@ -1,39 +1,26 @@
 /**
  * Layout & Structure Blocks
- * Containers, spacing, and alignment components
+ * Containers, spacing, grid, and flexbox components
+ * 
+ * Updated Feb 1, 2026: Removed 9 unsuitable blocks (modal, drawer, split-view, 
+ * accordion, tabs, stepper, masonry, frame). Added container. Now 16 blocks.
+ * Also imports and registers 6 Anki-specific template syntax blocks.
  */
+
+import { registerAnkiBlocks } from './anki-blocks.js';
 
 export function registerLayoutBlocks(editor) {
     const bm = editor.BlockManager;
-    const category = 'Layout & Structure';
     
-    // ========== CONTAINERS ==========
+    // Register Anki-specific blocks
+    registerAnkiBlocks(editor);
     
-    // Frame / Artboard
-    bm.add('frame', {
-        label: 'Frame',
-        category,
-        attributes: { class: 'gjs-block-frame' },
-        content: {
-            type: 'frame',
-            tagName: 'div',
-            classes: ['atd-frame'],
-            style: {
-                width: '375px',
-                height: '667px',
-                margin: '0 auto',
-                background: '#ffffff',
-                'box-shadow': '0 4px 20px rgba(0,0,0,0.15)',
-                overflow: 'hidden'
-            },
-            components: []
-        }
-    });
+    // ========== LAYOUT & STRUCTURE CONTAINERS ==========
     
     // Section
     bm.add('section', {
         label: 'Section',
-        category,
+        category: 'Layout & Structure',
         attributes: { class: 'gjs-block-section' },
         content: {
             type: 'section',
@@ -49,10 +36,9 @@ export function registerLayoutBlocks(editor) {
         }
     });
     
-    // Panel
     bm.add('panel', {
         label: 'Panel',
-        category,
+        category: 'Layout & Structure',
         content: {
             tagName: 'div',
             classes: ['atd-panel'],
@@ -68,10 +54,9 @@ export function registerLayoutBlocks(editor) {
         }
     });
     
-    // Card
     bm.add('card', {
         label: 'Card',
-        category,
+        category: 'Layout & Structure',
         content: {
             type: 'card',
             tagName: 'div',
@@ -97,10 +82,9 @@ export function registerLayoutBlocks(editor) {
         }
     });
     
-    // Surface
     bm.add('surface', {
         label: 'Surface',
-        category,
+        category: 'Layout & Structure',
         content: {
             tagName: 'div',
             classes: ['atd-surface'],
@@ -113,134 +97,20 @@ export function registerLayoutBlocks(editor) {
         }
     });
     
-    // Modal Container
-    bm.add('modal-container', {
-        label: 'Modal Container',
-        category,
+    // Container (centered, max-width wrapper)
+    bm.add('container', {
+        label: 'Container',
+        category: 'Layout & Structure',
         content: {
             tagName: 'div',
-            classes: ['atd-modal-container'],
+            classes: ['atd-container'],
             style: {
-                position: 'fixed',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                'min-width': '300px',
-                'max-width': '90%',
-                padding: '24px',
-                background: '#ffffff',
-                'border-radius': '12px',
-                'box-shadow': '0 10px 40px rgba(0,0,0,0.2)',
-                'z-index': '1000'
+                maxWidth: '800px',
+                margin: '0 auto',
+                padding: '0 16px'
             },
             components: [
-                { tagName: 'h3', content: 'Modal Title' },
-                { tagName: 'p', content: 'Modal content' }
-            ]
-        }
-    });
-    
-    // Drawer / Sidebar
-    bm.add('drawer', {
-        label: 'Drawer',
-        category,
-        content: {
-            tagName: 'aside',
-            classes: ['atd-drawer'],
-            style: {
-                width: '280px',
-                height: '100%',
-                padding: '16px',
-                background: '#ffffff',
-                'border-right': '1px solid #e0e0e0'
-            },
-            components: [
-                { tagName: 'h4', content: 'Drawer Menu' }
-            ]
-        }
-    });
-    
-    // Split View
-    bm.add('split-view', {
-        label: 'Split View',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-split-view'],
-            style: {
-                display: 'flex',
-                gap: '1px',
-                background: '#e0e0e0'
-            },
-            components: [
-                {
-                    tagName: 'div',
-                    classes: ['atd-split-pane'],
-                    style: { flex: '1', padding: '16px', background: '#fff' },
-                    components: [{ type: 'text', content: 'Left pane' }]
-                },
-                {
-                    tagName: 'div',
-                    classes: ['atd-split-pane'],
-                    style: { flex: '1', padding: '16px', background: '#fff' },
-                    components: [{ type: 'text', content: 'Right pane' }]
-                }
-            ]
-        }
-    });
-    
-    // Accordion Container
-    bm.add('accordion', {
-        label: 'Accordion',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-accordion'],
-            components: [
-                {
-                    tagName: 'details',
-                    classes: ['atd-accordion-item'],
-                    style: { 'border-bottom': '1px solid #e0e0e0' },
-                    components: [
-                        { tagName: 'summary', content: 'Section 1', style: { padding: '12px', cursor: 'pointer' } },
-                        { tagName: 'div', content: 'Content 1', style: { padding: '12px' } }
-                    ]
-                },
-                {
-                    tagName: 'details',
-                    classes: ['atd-accordion-item'],
-                    components: [
-                        { tagName: 'summary', content: 'Section 2', style: { padding: '12px', cursor: 'pointer' } },
-                        { tagName: 'div', content: 'Content 2', style: { padding: '12px' } }
-                    ]
-                }
-            ]
-        }
-    });
-    
-    // Tab Container
-    bm.add('tab-container', {
-        label: 'Tab Container',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-tabs'],
-            components: [
-                {
-                    tagName: 'div',
-                    classes: ['atd-tab-list'],
-                    style: { display: 'flex', 'border-bottom': '2px solid #e0e0e0' },
-                    components: [
-                        { tagName: 'button', content: 'Tab 1', classes: ['atd-tab', 'active'], style: { padding: '12px 24px', border: 'none', background: 'transparent', 'border-bottom': '2px solid #1976d2', 'margin-bottom': '-2px' } },
-                        { tagName: 'button', content: 'Tab 2', classes: ['atd-tab'], style: { padding: '12px 24px', border: 'none', background: 'transparent' } }
-                    ]
-                },
-                {
-                    tagName: 'div',
-                    classes: ['atd-tab-panel'],
-                    style: { padding: '16px' },
-                    components: [{ type: 'text', content: 'Tab content' }]
-                }
+                { type: 'text', content: 'Container content' }
             ]
         }
     });
@@ -250,7 +120,7 @@ export function registerLayoutBlocks(editor) {
     // Grid
     bm.add('grid', {
         label: 'Grid',
-        category,
+        category: 'Grid & Columns',
         content: {
             tagName: 'div',
             classes: ['atd-grid'],
@@ -270,7 +140,7 @@ export function registerLayoutBlocks(editor) {
     // 2-Column Row
     bm.add('row-2-col', {
         label: '2 Columns',
-        category,
+        category: 'Grid & Columns',
         content: {
             tagName: 'div',
             classes: ['atd-row'],
@@ -289,7 +159,7 @@ export function registerLayoutBlocks(editor) {
     // 3-Column Row
     bm.add('row-3-col', {
         label: '3 Columns',
-        category,
+        category: 'Grid & Columns',
         content: {
             tagName: 'div',
             classes: ['atd-row'],
@@ -306,21 +176,19 @@ export function registerLayoutBlocks(editor) {
         }
     });
     
-    // Masonry Layout
-    bm.add('masonry', {
-        label: 'Masonry',
-        category,
+    // Flow Layout (auto-wrapping grid)
+    bm.add('flow-layout', {
+        label: 'Flow Layout',
+        category: 'Grid & Columns',
         content: {
             tagName: 'div',
-            classes: ['atd-masonry'],
+            classes: ['atd-flow'],
             style: {
-                'column-count': '3',
-                'column-gap': '16px'
+                display: 'flex',
+                'flex-wrap': 'wrap',
+                gap: '16px'
             },
-            components: [
-                { tagName: 'div', style: { 'break-inside': 'avoid', 'margin-bottom': '16px', padding: '16px', background: '#f0f0f0' }, components: [{ type: 'text', content: 'Item 1' }] },
-                { tagName: 'div', style: { 'break-inside': 'avoid', 'margin-bottom': '16px', padding: '16px', background: '#f0f0f0' }, components: [{ type: 'text', content: 'Item 2' }] }
-            ]
+            components: []
         }
     });
     
@@ -329,7 +197,7 @@ export function registerLayoutBlocks(editor) {
     // Horizontal Stack
     bm.add('h-stack', {
         label: 'H-Stack',
-        category,
+        category: 'Flexbox',
         content: {
             tagName: 'div',
             classes: ['atd-hstack'],
@@ -346,7 +214,7 @@ export function registerLayoutBlocks(editor) {
     // Vertical Stack
     bm.add('v-stack', {
         label: 'V-Stack',
-        category,
+        category: 'Flexbox',
         content: {
             tagName: 'div',
             classes: ['atd-vstack'],
@@ -359,28 +227,11 @@ export function registerLayoutBlocks(editor) {
         }
     });
     
-    // Flow Layout
-    bm.add('flow-layout', {
-        label: 'Flow Layout',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-flow'],
-            style: {
-                display: 'flex',
-                'flex-wrap': 'wrap',
-                gap: '8px'
-            },
-            components: []
-        }
-    });
     
-    // ========== SPACING & ALIGNMENT ==========
-    
-    // Spacer
-    bm.add('spacer', {
-        label: 'Spacer',
-        category,
+    // Center (flex center)
+    bm.add('center', {
+        label: 'Center',
+        category: 'Flexbox',
         content: {
             tagName: 'div',
             classes: ['atd-spacer'],
@@ -391,10 +242,13 @@ export function registerLayoutBlocks(editor) {
         }
     });
     
-    // Divider
-    bm.add('divider', {
-        label: 'Divider',
-        category,
+    
+    // ========== SPACING & DIVIDERS ==========
+    
+    // Spacer
+    bm.add('spacer', {
+        label: 'Spacer',
+        category: 'Spacing',
         content: {
             tagName: 'hr',
             classes: ['atd-divider'],
@@ -409,7 +263,7 @@ export function registerLayoutBlocks(editor) {
     // Padding Wrapper
     bm.add('padding-wrapper', {
         label: 'Padding Box',
-        category,
+        category: 'Spacing',
         content: {
             tagName: 'div',
             classes: ['atd-padding-wrapper'],
@@ -423,7 +277,7 @@ export function registerLayoutBlocks(editor) {
     // Margin Wrapper
     bm.add('margin-wrapper', {
         label: 'Margin Box',
-        category,
+        category: 'Spacing',
         content: {
             tagName: 'div',
             classes: ['atd-margin-wrapper'],
@@ -437,7 +291,7 @@ export function registerLayoutBlocks(editor) {
     // Center Container
     bm.add('center', {
         label: 'Center',
-        category,
+        category: 'Flexbox',
         content: {
             tagName: 'div',
             classes: ['atd-center'],
@@ -450,43 +304,10 @@ export function registerLayoutBlocks(editor) {
         }
     });
     
-    // ========== NAVIGATION HELPERS ==========
-    
-    // Tabs Navigation
-    bm.add('tabs-nav', {
-        label: 'Tabs',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-tabs-nav'],
-            style: { display: 'flex', 'border-bottom': '2px solid #e0e0e0' },
-            components: [
-                { tagName: 'button', content: 'Tab 1', classes: ['atd-tab', 'active'], style: { padding: '12px 24px', border: 'none', background: 'transparent', 'border-bottom': '2px solid #1976d2', 'margin-bottom': '-2px', cursor: 'pointer' } },
-                { tagName: 'button', content: 'Tab 2', classes: ['atd-tab'], style: { padding: '12px 24px', border: 'none', background: 'transparent', cursor: 'pointer' } }
-            ]
-        }
-    });
-    
-    // Stepper
-    bm.add('stepper', {
-        label: 'Stepper',
-        category,
-        content: {
-            tagName: 'div',
-            classes: ['atd-stepper'],
-            style: { display: 'flex', 'justify-content': 'space-between', 'align-items': 'center', padding: '20px' },
-            components: [
-                { tagName: 'div', classes: ['atd-step', 'completed'], style: { 'text-align': 'center' }, components: [{ tagName: 'div', content: '✓', style: { width: '32px', height: '32px', 'border-radius': '50%', background: '#4caf50', color: '#fff', display: 'flex', 'align-items': 'center', 'justify-content': 'center', margin: '0 auto 8px' } }, { tagName: 'span', content: 'Step 1' }] },
-                { tagName: 'div', classes: ['atd-step-line'], style: { flex: '1', height: '2px', background: '#4caf50', margin: '0 8px' } },
-                { tagName: 'div', classes: ['atd-step', 'active'], style: { 'text-align': 'center' }, components: [{ tagName: 'div', content: '2', style: { width: '32px', height: '32px', 'border-radius': '50%', background: '#1976d2', color: '#fff', display: 'flex', 'align-items': 'center', 'justify-content': 'center', margin: '0 auto 8px' } }, { tagName: 'span', content: 'Step 2' }] }
-            ]
-        }
-    });
-    
     // Anchor Link
     bm.add('anchor-link', {
         label: 'Anchor Link',
-        category,
+        category: 'Layout & Structure',
         content: {
             tagName: 'a',
             classes: ['atd-anchor-link'],

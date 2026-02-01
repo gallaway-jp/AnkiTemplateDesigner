@@ -40,9 +40,13 @@ if (Test-Path $DestAddonPath) {
     Write-Host "Existing addon removed." -ForegroundColor Green
 }
 
-# Copy new addon
-Write-Host "Copying addon from: $SourceAddonPath" -ForegroundColor Cyan
-Copy-Item -Path $SourceAddonPath -Destination $DestAddonPath -Recurse -Force
+# Create destination directory
+Write-Host "Creating addon directory: $DestAddonPath" -ForegroundColor Cyan
+New-Item -Path $DestAddonPath -ItemType Directory -Force | Out-Null
+
+# Copy addon files (contents of anki_template_designer, not the folder itself)
+Write-Host "Copying addon files from: $SourceAddonPath" -ForegroundColor Cyan
+Get-ChildItem -Path $SourceAddonPath | Copy-Item -Destination $DestAddonPath -Recurse -Force
 
 # Verify deployment
 if (Test-Path $DestAddonPath) {

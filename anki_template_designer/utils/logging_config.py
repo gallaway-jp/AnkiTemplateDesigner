@@ -15,7 +15,7 @@ from pathlib import Path
 
 
 # Module-level constants
-DEFAULT_LOG_LEVEL = logging.INFO
+DEFAULT_LOG_LEVEL = logging.DEBUG
 DEFAULT_LOG_FORMAT = "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s"
 DEFAULT_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 DEFAULT_MAX_BYTES = 5 * 1024 * 1024  # 5 MB

@@ -1547,7 +1547,7 @@ class PluginManager:
         
         self._lock = threading.RLock()
         
-        logger.info("Plugin manager initialized")
+        logger.debug("Plugin manager initialized")
     
     @property
     def hook_system(self) -> HookSystem:

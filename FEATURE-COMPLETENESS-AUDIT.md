@@ -16,6 +16,26 @@ The addon has **significant gaps** between implemented backend services and the 
 
 ---
 
+## ADDON GOAL & VISION
+
+### Purpose
+The **Anki Template Designer** addon provides a visual editor for modifying Anki note type templates. Users can customize the HTML/CSS of their card templates using a drag-and-drop interface.
+
+### Core Workflow
+1. **Open Template Designer** → Auto-loads last edited template (or first available)
+2. **Select template** → Use dropdown to switch between note type templates
+3. **Edit visually** → Drag components, edit properties in GrapeJS editor
+4. **Save changes** → Persist modifications back to Anki note type
+5. **Preview** → See how cards will render with sample data
+
+### Design Decisions
+- **NO "Create Template" button** - Templates are tied to Anki note types; users edit existing templates
+- **Auto-load behavior** - Dialog opens to last edited template for seamless workflow continuation
+- **Template switching** - Dropdown selector to switch between available templates
+- **Direct Anki integration** - Changes save directly to Anki's note type system
+
+---
+
 ## ARCHITECTURE OVERVIEW
 
 ### Current Stack
@@ -77,6 +97,46 @@ Services Layer (Python)
 | **Onboarding System** | ❌ Not started | (Planned for Plan 20) |
 
 ---
+
+## GRAPEJS COMPONENT LIBRARY STATUS
+
+### Clarification on GrapeJS Built-in Types
+GrapeJS does **NOT** have built-in "Container", "Stack", or "Box" components. These are custom implementations. The built-in types are HTML-element-specific: `default`, `text`, `image`, `video`, `link`, `table`, `row`, `cell`, etc.
+
+### Current Layout Blocks (layout.js)
+
+| Block | Status | Anki Compatible |
+|-------|--------|-----------------|
+| H-Stack | ✅ Exists | ✅ Yes |
+| V-Stack | ✅ Exists | ✅ Yes |
+| 2-Column Row | ✅ Exists | ✅ Yes |
+| 3-Column Row | ✅ Exists | ✅ Yes |
+| Grid | ✅ Exists | ✅ Yes |
+| Section | ✅ Exists | ✅ Yes |
+| Panel | ✅ Exists | ✅ Yes |
+| Card | ✅ Exists | ✅ Yes |
+| Surface | ✅ Exists | ✅ Yes |
+| Container | ⚠️ Missing | Needs to be added |
+| Modal Container | ✅ Exists | ❌ Remove - JS-dependent |
+| Drawer | ✅ Exists | ❌ Remove - navigation pattern |
+| Tab Container | ✅ Exists | ❌ Remove - JS-dependent |
+| Accordion | ✅ Exists | ❌ Remove - JS-dependent |
+| Stepper | ✅ Exists | ❌ Remove - irrelevant |
+| Masonry | ✅ Exists | ❌ Remove - too complex |
+| Frame | ✅ Exists | ❌ Remove - confusing purpose |
+
+### Anki-Specific Components NEEDED
+
+| Component | Purpose | Status |
+|-----------|---------|--------|
+| **Anki Field** | `{{FieldName}}` placeholder | ❌ Not implemented |
+| **Cloze** | `{{c1::answer}}` syntax | ❌ Not implemented |
+| **Hint Field** | `{{hint:Field}}` | ❌ Not implemented |
+| **Type Answer** | `{{type:Field}}` | ❌ Not implemented |
+| **Conditional** | Front/Back side blocks | ❌ Not implemented |
+| **Tags Display** | `{{Tags}}` | ❌ Not implemented |
+
+See **COMPONENT-ANALYSIS-ANKI.md** for full analysis and recommendations.
 
 ## WEBVIEW BRIDGE STATUS
 
@@ -154,14 +214,26 @@ Services Layer (Python)
 
 ### Current Frontend Issues
 ```
-❌ Load editor - No handler
-❌ Save template - No handler
-❌ Create component - No handler
-❌ Drag/drop - Not implemented
-❌ Preview - Not implemented
-❌ Publish - Not implemented
-❌ Real-time sync - Not implemented
+❌ Template selector dropdown - Not implemented
+❌ Auto-load last template - Not implemented
+❌ GrapeJS editor - Not loaded
+❌ Save to Anki - No handler
+❌ Drag/drop components - Not implemented
+❌ Edit properties panel - Not implemented
+❌ Preview rendering - Not implemented
+❌ Export HTML/CSS - Not implemented
 ```
+
+### Required UI Actions (7 total)
+| Action | Control | Status | Description |
+|--------|---------|--------|-------------|
+| Select Template | Dropdown | ❌ | Switch between Anki note type templates |
+| Save | Button | ❌ | Save changes to Anki note type |
+| Undo | Button | ❌ | Undo last editing action |
+| Redo | Button | ❌ | Redo previously undone action |
+| Preview | Button | ❌ | Show card rendering with sample data |
+| Export | Button | ❌ | Export as standalone HTML/CSS |
+| Settings | Button | ❌ | Open preferences dialog |
 
 ---
 
@@ -288,6 +360,11 @@ bridge.listPlugins()  # ✅ Bridge method exists
 - ❌ No preview
 - ❌ No export
 
+### Template Selection & Auto-Load
+- ❌ No template dropdown selector
+- ❌ No auto-load of last edited template
+- ❌ No persistence of "last opened" state
+
 ### UI/UX
 - ❌ Toolbar buttons not wired
 - ❌ Sidebar component items not functional
@@ -311,13 +388,18 @@ bridge.listPlugins()  # ✅ Bridge method exists
    - Implement event listeners for toolbar buttons
    - Wire up action handlers
 
-2. **Template Editor**
+2. **Template Selection & Auto-Load**
+   - Load last opened template on dialog open
+   - Template dropdown to switch templates
+   - Persist "last opened" state
+
+3. **Template Editor**
    - Load GrapeJS library
    - Initialize editor on canvas
-   - Implement save/load
+   - Implement save to Anki note type
    - Wire to backend via bridge
 
-3. **Component System**
+4. **Component System**
    - Render component library UI
    - Implement drag-drop
    - Handle component properties
@@ -327,8 +409,8 @@ bridge.listPlugins()  # ✅ Bridge method exists
 1. Settings dialog (config)
 2. Plugin management UI
 3. Backup/restore UI
-4. Template picker
-5. New/Open/Save dialogs
+4. Export dialog
+5. Preview modal
 
 ### Priority 3: User Experience
 1. Keyboard shortcuts (partially done)
@@ -349,8 +431,9 @@ bridge.listPlugins()  # ✅ Bridge method exists
 
 1. **Fix the Frontend (1-2 days)**
    - Wire JavaScript to bridge
+   - Implement template dropdown & auto-load
    - Implement basic editor with GrapeJS
-   - Get save/load/new working
+   - Get save working
    - Test end-to-end in Anki
 
 2. **Complete UI Components (2-3 days)**

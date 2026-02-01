@@ -8,6 +8,39 @@
 
 After comprehensive analysis, here's the actual state of the addon:
 
+---
+
+## ADDON GOAL & VISION
+
+### Purpose
+The **Anki Template Designer** provides a visual editor for modifying Anki note type templates. Users customize HTML/CSS of card templates using drag-and-drop.
+
+### Core Workflow
+1. **Open Dialog** → Auto-loads last edited template (or first available)
+2. **Select Template** → Dropdown to switch between note type templates  
+3. **Edit Visually** → Drag components, edit properties in GrapeJS editor
+4. **Save Changes** → Persist to Anki note type
+5. **Preview** → See card rendering with sample data
+
+### Key Design Decisions
+- **NO "Create Template" button** - Templates are tied to Anki note types
+- **NO "Open" button** - Use dropdown selector instead
+- **Auto-load last template** - Seamless workflow continuation
+- **Direct Anki integration** - Changes save to note type system
+
+### Required UI Actions (7 total)
+| Action | Control | Description |
+|--------|---------|-------------|
+| **Select Template** | Dropdown | Switch between Anki note type templates |
+| **Save** | Button | Save changes to Anki note type |
+| **Undo** | Button | Undo last editing action |
+| **Redo** | Button | Redo previously undone action |
+| **Preview** | Button | Show card rendering with sample data |
+| **Export** | Button | Export as standalone HTML/CSS |
+| **Settings** | Button | Open preferences dialog |
+
+---
+
 ### ✅ WHAT'S ACTUALLY WORKING
 
 **Backend (95% complete):**
@@ -76,9 +109,9 @@ After comprehensive analysis, here's the actual state of the addon:
 
 #### What's Missing:
 ```javascript
-❌ Actual template loading/saving to bridge
-❌ "New" button - no dialog, no action
-❌ "Open" button - no file picker, no loading
+❌ Template dropdown selector
+❌ Auto-load last edited template
+❌ Actual template saving to Anki note type
 ❌ "Save" button - no serialization, no bridge call
 ❌ "Preview" button - no preview generation
 ❌ "Export" button - no export logic
@@ -91,19 +124,35 @@ After comprehensive analysis, here's the actual state of the addon:
 #### Code Gaps:
 ```javascript
 // Toolbar buttons just set status:
-document.getElementById('btnNew').addEventListener('click', 
-    () => setStatusLeft('New'));  // ← Does nothing!
+document.getElementById('btnSave').addEventListener('click', 
+    () => setStatusLeft('Saved'));  // ← Does nothing!
 
 // Should be:
-document.getElementById('btnNew').addEventListener('click', 
+document.getElementById('btnSave').addEventListener('click', 
     () => {
-        let name = prompt("Template name:");
-        if (name) {
-            bridge.createTemplate(name, response => {
-                // Handle response, refresh UI
-            });
-        }
+        const template = getCurrentTemplateState();
+        bridge.saveTemplate(JSON.stringify(template), response => {
+            const result = JSON.parse(response);
+            if (result.success) {
+                showToast('Template saved to Anki');
+            } else {
+                showErrorToast(result);
+            }
+        });
     });
+
+// Template dropdown should auto-populate and auto-select:
+function initTemplateSelector() {
+    bridge.listTemplates(response => {
+        const templates = JSON.parse(response);
+        populateDropdown(templates);
+        
+        // Auto-load last opened or first template
+        const lastOpened = localStorage.getItem('lastOpenedTemplate');
+        const templateId = lastOpened || templates[0]?.id;
+        if (templateId) loadTemplate(templateId);
+    });
+}
 ```
 
 #### JavaScript Bridge Readiness:
@@ -347,6 +396,11 @@ get_backup_manager().create_backup()  # ✅
 
 ### ❌ CANNOT TEST YET
 
+**Template Selection:**
+- No dropdown to switch templates
+- No auto-load of last edited template
+- No persistence of "last opened" state
+
 **Template Editing:**
 - No GrapeJS editor loaded
 - Can't add/edit components
@@ -380,17 +434,40 @@ document.getElementById('btnSave').addEventListener('click',
 
 <!-- Should be: -->
 document.getElementById('btnSave').addEventListener('click', function() {
-    const template = getCurrentTemplate();  // Get editor state
+    const template = getCurrentTemplateState();  // Get editor state
     const json = JSON.stringify(template);
     bridge.saveTemplate(json, function(response) {
         const result = JSON.parse(response);
         if (result.success) {
-            showToast('Template saved');
+            showToast('Saved to Anki note type');
         } else {
             showErrorToast(result.error);
         }
     });
 });
+```
+
+**Example - Template Selector (missing entirely):**
+```html
+<!-- Need to add: -->
+<select id="templateSelector" onchange="loadTemplate(this.value)">
+    <!-- Populated dynamically from Anki note types -->
+</select>
+
+<!-- With JavaScript: -->
+function initTemplateSelector() {
+    bridge.listTemplates(response => {
+        const templates = JSON.parse(response);
+        const select = document.getElementById('templateSelector');
+        templates.forEach(t => {
+            select.innerHTML += `<option value="${t.id}">${t.name}</option>`;
+        });
+        // Auto-load last opened template
+        const lastId = localStorage.getItem('lastOpenedTemplate');
+        if (lastId) loadTemplate(lastId);
+        else if (templates.length) loadTemplate(templates[0].id);
+    });
+}
 ```
 
 ### Problem 2: Missing Editor Implementation
@@ -501,6 +578,7 @@ These test unimplemented UI/component system.
 - **Impact:** Cannot add/manage components
 - **Effort:** 3-5 days depending on complexity
 - **Blocker:** Core feature missing
+- **Note:** GrapeJS has NO built-in "Container", "Stack", or "Box" types - these are custom. Current layout.js has 25 blocks, but 9 should be removed (not Anki-compatible). Need to add Anki-specific blocks (Field, Cloze, Hint, etc.)
 
 ### P4: No Data Persistence
 - **Impact:** Template state not saved
@@ -522,11 +600,12 @@ These test unimplemented UI/component system.
 #### Phase 1: Frontend Wiring (1-2 days)
 1. Add GrapeJS library to index.html
 2. Initialize editor on page load
-3. Wire toolbar buttons to bridge methods
-4. Implement template save/load flow
-5. Test save → reload → verify
+3. Add template selector dropdown
+4. Implement auto-load of last template
+5. Wire Save button to bridge method
+6. Test save → reload → verify
 
-**Definition of Done:** Users can create, save, and reload a template.
+**Definition of Done:** Dialog opens with last template loaded, users can edit and save.
 
 #### Phase 2: Component System (3-5 days)
 1. Implement component rendering in editor

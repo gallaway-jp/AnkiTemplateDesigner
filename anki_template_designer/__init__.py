@@ -98,18 +98,38 @@ def open_designer() -> None:
     
     Creates a new dialog instance or shows existing one.
     This is the main entry point for users.
+    
+    All exceptions are caught and logged to prevent Anki error dialogs.
     """
     global _designer_dialog
     
-    from .gui.designer_dialog import DesignerDialog
-    from aqt import mw
-    
-    if _designer_dialog is None or not _designer_dialog.isVisible():
-        _designer_dialog = DesignerDialog(mw)
-    
-    _designer_dialog.show()
-    _designer_dialog.raise_()
-    _designer_dialog.activateWindow()
+    try:
+        from .gui.designer_dialog import DesignerDialog
+        from aqt import mw
+        
+        if _designer_dialog is None or not _designer_dialog.isVisible():
+            _designer_dialog = DesignerDialog(mw)
+        
+        _designer_dialog.show()
+        _designer_dialog.raise_()
+        _designer_dialog.activateWindow()
+        
+    except Exception as e:
+        import logging
+        logger = logging.getLogger("anki_template_designer")
+        logger.error(f"Failed to open designer dialog: {e}", exc_info=True)
+        
+        # Show user-friendly error in Anki instead of crash dialog
+        try:
+            from aqt.utils import showWarning
+            showWarning(
+                f"Failed to open Template Designer:\n\n{str(e)}\n\n"
+                f"Check Tools → Add-ons → Template Designer → View Files → logs for details.",
+                title="Template Designer Error"
+            )
+        except Exception:
+            # If even showing warning fails, just log it
+            logger.error("Could not display error dialog to user")
 
 
 def _setup_menu() -> None:
@@ -131,6 +151,7 @@ def _on_profile_loaded() -> None:
     """Callback when Anki profile is loaded.
     
     Performs initialization that requires a loaded profile.
+    All exceptions are caught and logged to prevent Anki error dialogs.
     """
     global _initialized
     
@@ -139,57 +160,87 @@ def _on_profile_loaded() -> None:
     
     import logging
     logger = logging.getLogger("anki_template_designer")
-    logger.debug("Anki Template Designer initializing...")
     
-    # Initialize note type service with main window
-    from .services.note_type_service import init_note_type_service
-    from aqt import mw
-    init_note_type_service(mw)
-    logger.debug("Note type service initialized")
-    
-    # Initialize selection service
-    from .services.selection_service import init_selection_service
-    init_selection_service()
-    logger.debug("Selection service initialized")
-    
-    # Initialize performance optimizer
-    from .services.performance import init_optimizer
-    init_optimizer()
-    logger.debug("Performance optimizer initialized")
-    
-    # Initialize backup manager
-    from .services.backup_manager import init_backup_manager
-    addon_dir = _get_addon_dir()
-    backup_dir = os.path.join(addon_dir, "backups")
-    templates_dir = os.path.join(addon_dir, "templates")
-    init_backup_manager(backup_dir, templates_dir)
-    logger.debug("Backup manager initialized")
-    
-    # Initialize plugin manager
-    from .services.plugin_system import init_plugin_manager
-    plugins_dir = os.path.join(addon_dir, "plugins")
-    data_dir = os.path.join(addon_dir, "plugin_data")
-    init_plugin_manager(plugins_dir, data_dir)
-    logger.debug("Plugin manager initialized")
-    
-    # Initialize shortcuts manager
-    from .services.shortcuts_manager import init_shortcuts_manager
-    init_shortcuts_manager()
-    logger.debug("Shortcuts manager initialized")
-    
-    _setup_menu()
-    _initialized = True
-    
-    logger.debug("Anki Template Designer initialized successfully")
+    try:
+        logger.debug("Anki Template Designer initializing...")
+        
+        # Initialize note type service with main window
+        from .services.note_type_service import init_note_type_service
+        from aqt import mw
+        init_note_type_service(mw)
+        logger.debug("Note type service initialized")
+        
+        # Initialize selection service
+        from .services.selection_service import init_selection_service
+        init_selection_service()
+        logger.debug("Selection service initialized")
+        
+        # Initialize performance optimizer
+        from .services.performance import init_optimizer
+        init_optimizer()
+        logger.debug("Performance optimizer initialized")
+        
+        # Initialize backup manager
+        from .services.backup_manager import init_backup_manager
+        addon_dir = _get_addon_dir()
+        backup_dir = os.path.join(addon_dir, "backups")
+        templates_dir = os.path.join(addon_dir, "templates")
+        init_backup_manager(backup_dir, templates_dir)
+        logger.debug("Backup manager initialized")
+        
+        # Initialize plugin manager
+        from .services.plugin_system import init_plugin_manager
+        plugins_dir = os.path.join(addon_dir, "plugins")
+        data_dir = os.path.join(addon_dir, "plugin_data")
+        init_plugin_manager(plugins_dir, data_dir)
+        logger.debug("Plugin manager initialized")
+        
+        # Initialize shortcuts manager
+        from .services.shortcuts_manager import init_shortcuts_manager
+        init_shortcuts_manager()
+        logger.debug("Shortcuts manager initialized")
+        
+        _setup_menu()
+        _initialized = True
+        
+        logger.debug("Anki Template Designer initialized successfully")
+        
+    except Exception as e:
+        logger.error(f"Initialization failed: {e}", exc_info=True)
+        # Don't raise - just log the error and continue
+        # The addon menu item won't be added, but Anki will continue normally
 
 
 # Only run initialization when in Anki environment
 try:
     from aqt import gui_hooks
+    import sys
+    import io
     
-    _setup_logging()
-    _setup_config_service()
-    gui_hooks.profile_did_open.append(_on_profile_loaded)
+    # Wrap all initialization in try-except to prevent error dialogs
+    try:
+        # Temporarily suppress stderr to prevent Anki error dialog
+        old_stderr = sys.stderr
+        sys.stderr = io.StringIO()
+        
+        try:
+            _setup_logging()
+            _setup_config_service()
+            gui_hooks.profile_did_open.append(_on_profile_loaded)
+        finally:
+            # Restore stderr
+            sys.stderr = old_stderr
+            
+    except Exception as e:
+        import logging
+        # Restore stderr if it wasn't already
+        if 'old_stderr' in locals():
+            sys.stderr = old_stderr
+        # Create a basic logger if setup_logging failed
+        logging.basicConfig(level=logging.ERROR)
+        logger = logging.getLogger("anki_template_designer")
+        logger.error(f"Failed to initialize addon: {e}", exc_info=True)
+        # Don't re-raise - let Anki continue
     
 except ImportError:
     # Not running in Anki - allow for testing

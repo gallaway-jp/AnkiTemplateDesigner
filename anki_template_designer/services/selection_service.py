@@ -497,5 +497,5 @@ def init_selection_service() -> SelectionService:
     """
     global _selection_service
     _selection_service = SelectionService()
-    logger.info("Selection service initialized")
+    logger.debug("Selection service initialized")
     return _selection_service
