@@ -165,6 +165,18 @@ def _on_profile_loaded() -> None:
     init_backup_manager(backup_dir, templates_dir)
     logger.debug("Backup manager initialized")
     
+    # Initialize plugin manager
+    from .services.plugin_system import init_plugin_manager
+    plugins_dir = os.path.join(addon_dir, "plugins")
+    data_dir = os.path.join(addon_dir, "plugin_data")
+    init_plugin_manager(plugins_dir, data_dir)
+    logger.debug("Plugin manager initialized")
+    
+    # Initialize shortcuts manager
+    from .services.shortcuts_manager import init_shortcuts_manager
+    init_shortcuts_manager()
+    logger.debug("Shortcuts manager initialized")
+    
     _setup_menu()
     _initialized = True
     
