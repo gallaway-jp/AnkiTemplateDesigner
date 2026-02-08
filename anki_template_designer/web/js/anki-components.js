@@ -33,6 +33,9 @@ function registerAnkiComponents(editor) {
                 ],
             },
             init() {
+                // Hydrate from HTML data-field attr when loaded from converter
+                const df = this.getAttributes()['data-field'];
+                if (df) this.set('fieldName', df, { silent: true });
                 this.on('change:fieldName', this._updateContent);
                 this._updateContent();
             },
@@ -48,6 +51,7 @@ function registerAnkiComponents(editor) {
     });
 
     // ── Cloze Deletion ──────────────────────────────────────────
+    // Anki template syntax: {{cloze:FieldName}}
     dc.addType('anki-cloze', {
         isComponent: (el) => el?.dataset?.gjsType === 'anki-cloze',
         model: {
@@ -55,26 +59,24 @@ function registerAnkiComponents(editor) {
                 tagName: 'span',
                 droppable: false,
                 attributes: { 'data-gjs-type': 'anki-cloze' },
-                clozeIndex: '1',
-                clozeText: 'answer',
+                fieldName: 'Text',
                 traits: [
-                    { type: 'text', name: 'clozeIndex', label: 'Cloze #', changeProp: true },
-                    { type: 'text', name: 'clozeText', label: 'Text', changeProp: true },
+                    { type: 'text', name: 'fieldName', label: 'Field Name', changeProp: true },
                 ],
             },
             init() {
-                this.on('change:clozeIndex change:clozeText', this._updateContent);
+                const df = this.getAttributes()['data-field'];
+                if (df) this.set('fieldName', df, { silent: true });
+                this.on('change:fieldName', this._updateContent);
                 this._updateContent();
             },
             _updateContent() {
-                const idx = this.get('clozeIndex') || '1';
-                const txt = this.get('clozeText') || 'answer';
-                this.set('content', `{{c${idx}::${txt}}}`);
+                const name = this.get('fieldName') || 'Text';
+                this.set('content', `{{cloze:${name}}}`);
             },
             toHTML() {
-                const idx = this.get('clozeIndex') || '1';
-                const txt = this.get('clozeText') || 'answer';
-                return `{{c${idx}::${txt}}}`;
+                const name = this.get('fieldName') || 'Text';
+                return `{{cloze:${name}}}`;
             },
         },
     });
@@ -93,6 +95,8 @@ function registerAnkiComponents(editor) {
                 ],
             },
             init() {
+                const df = this.getAttributes()['data-field'];
+                if (df) this.set('fieldName', df, { silent: true });
                 this.on('change:fieldName', this._updateContent);
                 this._updateContent();
             },
@@ -121,6 +125,8 @@ function registerAnkiComponents(editor) {
                 ],
             },
             init() {
+                const df = this.getAttributes()['data-field'];
+                if (df) this.set('fieldName', df, { silent: true });
                 this.on('change:fieldName', this._updateContent);
                 this._updateContent();
             },
@@ -145,13 +151,18 @@ function registerAnkiComponents(editor) {
                 attributes: { 'data-gjs-type': 'anki-conditional' },
                 fieldName: 'Extra',
                 negate: false,
-                components: [
-                    { type: 'text', content: 'Conditional content here' },
-                ],
                 traits: [
                     { type: 'text', name: 'fieldName', label: 'Field Name', changeProp: true },
                     { type: 'checkbox', name: 'negate', label: 'Negate (hide if present)', changeProp: true },
                 ],
+            },
+            init() {
+                // Hydrate from HTML data attrs when loaded from converter
+                const attrs = this.getAttributes();
+                const df = attrs['data-field'];
+                if (df) this.set('fieldName', df, { silent: true });
+                const dc = attrs['data-condition'];
+                if (dc) this.set('negate', dc === 'hide', { silent: true });
             },
             toHTML() {
                 const name = this.get('fieldName') || 'Extra';
@@ -476,6 +487,122 @@ function registerAnkiComponents(editor) {
                 const style = { ...this.getStyle() };
                 style['height'] = this.get('spacerHeight') || '24px';
                 this.setStyle(style);
+            },
+        },
+    });
+
+    // ═══════════════════════════════════════════════════════════
+    //  Rich text & semantic component types
+    // ═══════════════════════════════════════════════════════════
+
+    // ── Text Block (with tag type switching) ────────────────────
+    // Replaces both the old "Text" and "Heading" blocks.
+    // User can switch between div, p, h1-h6, blockquote, pre, code,
+    // kbd, samp, var, abbr, cite, dfn, q, mark, small, sub, sup.
+    dc.addType('atd-text', {
+        extend: 'text',   // inherits GrapeJS inline-editing
+        isComponent: (el) => {
+            if (!el || !el.dataset) return false;
+            return el.dataset.gjsType === 'atd-text';
+        },
+        model: {
+            defaults: {
+                tagName: 'div',
+                droppable: false,
+                editable: true,
+                content: 'Insert your text here',
+                attributes: { 'data-gjs-type': 'atd-text' },
+                textTag: 'div',
+                traits: [
+                    {
+                        type: 'select', name: 'textTag', label: 'Element',
+                        changeProp: true,
+                        options: [
+                            { id: 'div',        name: 'Text (div)' },
+                            { id: 'p',          name: 'Paragraph' },
+                            { id: 'h1',         name: 'Heading 1' },
+                            { id: 'h2',         name: 'Heading 2' },
+                            { id: 'h3',         name: 'Heading 3' },
+                            { id: 'h4',         name: 'Heading 4' },
+                            { id: 'h5',         name: 'Heading 5' },
+                            { id: 'h6',         name: 'Heading 6' },
+                            { id: 'blockquote', name: 'Blockquote' },
+                            { id: 'pre',        name: 'Preformatted' },
+                            { id: 'code',       name: 'Code' },
+                            { id: 'kbd',        name: 'Keyboard Input' },
+                            { id: 'samp',       name: 'Sample Output' },
+                            { id: 'var',        name: 'Variable' },
+                            { id: 'abbr',       name: 'Abbreviation' },
+                            { id: 'cite',       name: 'Citation' },
+                            { id: 'dfn',        name: 'Definition' },
+                            { id: 'q',          name: 'Inline Quote' },
+                            { id: 'mark',       name: 'Highlight' },
+                            { id: 'small',      name: 'Small' },
+                            { id: 'sub',        name: 'Subscript' },
+                            { id: 'sup',        name: 'Superscript' },
+                        ],
+                    },
+                ],
+            },
+            init() {
+                this.on('change:textTag', this._updateTag);
+            },
+            _updateTag() {
+                const tag = this.get('textTag') || 'div';
+                if (tag !== this.get('tagName')) {
+                    this.set('tagName', tag);
+                }
+            },
+        },
+    });
+
+    // ── List (ol/ul with add/remove) ────────────────────────────
+    dc.addType('atd-list', {
+        isComponent: (el) => {
+            if (!el) return false;
+            return (el.tagName === 'UL' || el.tagName === 'OL') &&
+                   el.dataset?.gjsType === 'atd-list';
+        },
+        model: {
+            defaults: {
+                tagName: 'ul',
+                droppable: false,
+                attributes: { 'data-gjs-type': 'atd-list' },
+                listType: 'ul',
+                components: [
+                    { tagName: 'li', content: 'Item 1', editable: true, draggable: false, droppable: false },
+                    { tagName: 'li', content: 'Item 2', editable: true, draggable: false, droppable: false },
+                    { tagName: 'li', content: 'Item 3', editable: true, draggable: false, droppable: false },
+                ],
+                traits: [
+                    {
+                        type: 'select', name: 'listType', label: 'Type',
+                        changeProp: true,
+                        options: [
+                            { id: 'ul', name: 'Bullet (ul)' },
+                            { id: 'ol', name: 'Numbered (ol)' },
+                        ],
+                    },
+                    {
+                        type: 'button', name: 'addItem', label: 'Add Item',
+                        text: '+ Add Item',
+                        command: 'atd-list-add',
+                    },
+                    {
+                        type: 'button', name: 'removeItem', label: 'Remove Last',
+                        text: '− Remove Last',
+                        command: 'atd-list-remove',
+                    },
+                ],
+            },
+            init() {
+                this.on('change:listType', this._updateListType);
+            },
+            _updateListType() {
+                const tag = this.get('listType') || 'ul';
+                if (tag !== this.get('tagName')) {
+                    this.set('tagName', tag);
+                }
             },
         },
     });
