@@ -3,342 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' qrc:; style-src 'self' 'unsafe-inline';">
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src 'self' data: blob:;
+                   script-src 'self' 'unsafe-inline' 'unsafe-eval' qrc:;
+                   style-src 'self' 'unsafe-inline';
+                   img-src 'self' data: blob:;
+                   font-src 'self' data:;">
     <title>Anki Template Designer</title>
-    <link rel="stylesheet" href="css/designer.css">
-    <link rel="stylesheet" href="css/preview.css">
-    <link rel="stylesheet" href="css/export.css">
+
+    <!-- GrapeJS (local) -->
+    <link rel="stylesheet" href="lib/grapes.min.css">
+    <script src="lib/grapes.min.js"></script>
+
+    <!-- QWebChannel bridge for Anki communication -->
     <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+
+    <!-- Custom styles -->
+    <link rel="stylesheet" href="css/editor.css">
 </head>
 <body>
-    <div id="app">
-        <!-- Header -->
-        <header class="header">
-            <div class="header-left">
-                <h1>Anki Template Designer</h1>
-                <div class="template-selector-wrapper">
-                    <label for="templateSelect" class="template-label">Template:</label>
-                    <select id="templateSelect" class="template-selector">
-                        <option value="">Loading templates...</option>
-                    </select>
-                    <span id="unsavedIndicator" class="unsaved-indicator hidden" title="Unsaved changes">●</span>
-                </div>
-                <span class="header-status" id="headerStatus">Connecting...</span>
-            </div>
-            <div>
-                <button class="toolbar-btn" id="settingsBtn" title="Settings">⚙</button>
-            </div>
-        </header>
 
-        <!-- Toolbar -->
-        <div class="toolbar">
-            <div class="toolbar-group">
-                <button class="toolbar-btn primary" id="saveBtn">💾 Save</button>
+    <!-- Top toolbar -->
+    <div class="editor-toolbar">
+        <div class="toolbar-left">
+            <h1 class="toolbar-title">Anki Template Designer</h1>
+            <div class="template-selector-group">
+                <label for="templateSelect">Template:</label>
+                <select id="templateSelect">
+                    <option value="">Select template...</option>
+                </select>
+                <span id="unsavedDot" class="unsaved-dot hidden" title="Unsaved changes">&#9679;</span>
             </div>
-            <div class="toolbar-group">
-                <button class="toolbar-btn" id="undoBtn">↶ Undo</button>
-                <button class="toolbar-btn" id="redoBtn">↷ Redo</button>
-            </div>
-            <div class="toolbar-group">
-                <button class="toolbar-btn" id="exportBtn">📤 Export</button>
-            </div>
-            <div class="toolbar-group">
-                <button class="toolbar-btn" id="debugBtn" title="Toggle Debug Console (Ctrl+Alt+D)">🐛 Debug</button>
+            <span id="connectionStatus" class="status-badge">Connecting...</span>
+        </div>
+        <div class="toolbar-center">
+            <div class="side-toggle" id="sideToggle">
+                <button class="side-btn active" data-side="front">Front</button>
+                <button class="side-btn" data-side="back">Back</button>
             </div>
         </div>
-
-        <!-- Side Tabs (Front/Back) -->
-        <div class="side-tabs">
-            <button class="side-tab active" data-side="front" title="Edit front side (question/prompt)">
-                📄 Front
-            </button>
-            <button class="side-tab" data-side="back" title="Edit back side (answer)">
-                📄 Back
-            </button>
-            <button class="side-tab" data-mode="preview" title="Preview both sides">
-                👁 Preview
-            </button>
-            <span class="side-info" id="sideInfo">Front Side</span>
-        </div>
-
-        <!-- Main Container -->
-        <div class="main-container">
-            <!-- Components Sidebar -->
-            <aside class="sidebar">
-                <div class="sidebar-header">Components</div>
-                <div class="sidebar-content">
-                    <!-- Anki Fields -->
-                    <div class="component-section">
-                        <div class="component-section-title">Anki Fields</div>
-                        <div class="component-item" draggable="true" data-type="anki-field">
-                            <span class="component-icon" style="color:#1565c0;">{{</span> Field
-                        </div>
-                        <div class="component-item" draggable="true" data-type="cloze">
-                            <span class="component-icon" style="color:#e65100;">…</span> Cloze
-                        </div>
-                        <div class="component-item" draggable="true" data-type="hint-field">
-                            <span class="component-icon" style="color:#1976d2;">?</span> Hint
-                        </div>
-                        <div class="component-item" draggable="true" data-type="type-answer">
-                            <span class="component-icon">⌨</span> Type Answer
-                        </div>
-                        <div class="component-item" draggable="true" data-type="conditional">
-                            <span class="component-icon" style="color:#9c27b0;">#</span> Conditional
-                        </div>
-                        <div class="component-item" draggable="true" data-type="tags-display">
-                            <span class="component-icon" style="color:#757575;">🏷</span> Tags
-                        </div>
-                    </div>
-
-                    <!-- Layout & Structure -->
-                    <div class="component-section">
-                        <div class="component-section-title">Layout & Structure</div>
-                        <div class="component-item" draggable="true" data-type="container">
-                            <span class="component-icon">☐</span> Container
-                        </div>
-                        <div class="component-item" draggable="true" data-type="section">
-                            <span class="component-icon">§</span> Section
-                        </div>
-                        <div class="component-item" draggable="true" data-type="panel">
-                            <span class="component-icon">▢</span> Panel
-                        </div>
-                        <div class="component-item" draggable="true" data-type="card">
-                            <span class="component-icon">🗃</span> Card
-                        </div>
-                        <div class="component-item" draggable="true" data-type="surface">
-                            <span class="component-icon">▫</span> Surface
-                        </div>
-                        <div class="component-item" draggable="true" data-type="padding-wrapper">
-                            <span class="component-icon">⬚</span> Padding Box
-                        </div>
-                        <div class="component-item" draggable="true" data-type="margin-wrapper">
-                            <span class="component-icon">⬜</span> Margin Box
-                        </div>
-                    </div>
-
-                    <!-- Grid & Columns -->
-                    <div class="component-section">
-                        <div class="component-section-title">Grid & Columns</div>
-                        <div class="component-item" draggable="true" data-type="grid">
-                            <span class="component-icon">⊞</span> Grid
-                        </div>
-                        <div class="component-item" draggable="true" data-type="row-2-col">
-                            <span class="component-icon">⫿</span> 2 Columns
-                        </div>
-                        <div class="component-item" draggable="true" data-type="row-3-col">
-                            <span class="component-icon">⫿</span> 3 Columns
-                        </div>
-                        <div class="component-item" draggable="true" data-type="flow-layout">
-                            <span class="component-icon">↻</span> Flow Layout
-                        </div>
-                    </div>
-
-                    <!-- Flexbox -->
-                    <div class="component-section">
-                        <div class="component-section-title">Flexbox</div>
-                        <div class="component-item" draggable="true" data-type="h-stack">
-                            <span class="component-icon">↔</span> H-Stack
-                        </div>
-                        <div class="component-item" draggable="true" data-type="v-stack">
-                            <span class="component-icon">↕</span> V-Stack
-                        </div>
-                        <div class="component-item" draggable="true" data-type="center">
-                            <span class="component-icon">◎</span> Center
-                        </div>
-                    </div>
-
-                    <!-- Spacing -->
-                    <div class="component-section">
-                        <div class="component-section-title">Spacing</div>
-                        <div class="component-item" draggable="true" data-type="spacer">
-                            <span class="component-icon">⤓</span> Spacer
-                        </div>
-                        <div class="component-item" draggable="true" data-type="divider">
-                            <span class="component-icon">—</span> Divider
-                        </div>
-                    </div>
-
-                    <!-- Text & Typography -->
-                    <div class="component-section">
-                        <div class="component-section-title">Text & Typography</div>
-                        <div class="component-item" draggable="true" data-type="text">
-                            <span class="component-icon">T</span> Text
-                        </div>
-                        <div class="component-item" draggable="true" data-type="heading">
-                            <span class="component-icon">H</span> Heading
-                        </div>
-                    </div>
-
-                    <!-- Media -->
-                    <div class="component-section">
-                        <div class="component-section-title">Media</div>
-                        <div class="component-item" draggable="true" data-type="image">
-                            <span class="component-icon">🖼</span> Image
-                        </div>
-                        <div class="component-item" draggable="true" data-type="audio">
-                            <span class="component-icon">🔊</span> Audio
-                        </div>
-                    </div>
-                </div>
-            </aside>
-
-            <!-- Canvas Area -->
-            <main class="canvas-area">
-                <div class="canvas-wrapper">
-                    <div class="canvas" id="designCanvas">
-                        <div class="canvas-empty">
-                            <div class="canvas-empty-icon">📄</div>
-                            <div>Drag components here to start building</div>
-                        </div>
-                    </div>
-                </div>
-            </main>
-
-            <!-- Properties Panel -->
-            <aside class="properties-panel">
-                <div class="properties-header">Properties</div>
-                <div class="properties-content">
-                    <div class="no-selection">Select a component to view its properties</div>
-                </div>
-            </aside>
-        </div>
-
-        <!-- Status Bar -->
-        <footer class="status-bar">
-            <span id="statusLeft">Ready</span>
-            <span id="statusRight">v2.0.0 (Refactored)</span>
-        </footer>
-    </div>
-    
-    <!-- Error Toast Container -->
-    <div id="errorToastContainer"></div>
-    
-    <!-- Settings Modal -->
-    <div id="settingsModal" class="settings-modal hidden">
-        <div class="settings-modal-overlay" onclick="closeSettingsModal()"></div>
-        <div class="settings-modal-content">
-            <div class="settings-modal-header">
-                <h2>Settings</h2>
-                <button class="settings-modal-close" onclick="closeSettingsModal()">&times;</button>
-            </div>
-            <div class="settings-modal-body">
-                <div class="settings-group">
-                    <label for="autoSaveCheckbox" class="settings-label">
-                        <input type="checkbox" id="autoSaveCheckbox" class="settings-checkbox">
-                        <span>Enable Auto-Save</span>
-                    </label>
-                </div>
-                <div class="settings-group">
-                    <label for="autoSaveInterval" class="settings-label">Auto-Save Interval (seconds)</label>
-                    <input type="number" id="autoSaveInterval" class="settings-input" min="5" max="300" step="5" value="30">
-                </div>
-                <div class="settings-group">
-                    <label for="themeSelect" class="settings-label">Theme</label>
-                    <select id="themeSelect" class="settings-select">
-                        <option value="system">System Default</option>
-                        <option value="light">Light</option>
-                        <option value="dark">Dark</option>
-                    </select>
-                </div>
-                <div class="settings-group">
-                    <label for="logLevelSelect" class="settings-label">Log Level</label>
-                    <select id="logLevelSelect" class="settings-select">
-                        <option value="DEBUG">Debug</option>
-                        <option value="INFO">Info</option>
-                        <option value="WARNING">Warning</option>
-                        <option value="ERROR">Error</option>
-                    </select>
-                </div>
-            </div>
-            <div class="settings-modal-footer">
-                <button class="settings-btn cancel" onclick="closeSettingsModal()">Cancel</button>
-                <button class="settings-btn save" onclick="saveSettings()">Save Settings</button>
-            </div>
+        <div class="toolbar-right">
+            <div class="toolbar-actions"></div>
         </div>
     </div>
-    
-    <!-- Preview Modal -->
-    <div id="previewModal" class="preview-modal hidden">
-        <div class="preview-modal-overlay" onclick="closePreviewModal()"></div>
-        <div class="preview-modal-content">
-            <div class="preview-modal-header">
-                <h2>Preview</h2>
-                <div style="display: flex; gap: 8px;">
-                    <button class="preview-btn" onclick="switchCardSide()">🔄 Flip Card</button>
-                    <button class="preview-btn" onclick="refreshPreview()">🔄 Refresh</button>
-                    <button class="preview-modal-close" onclick="closePreviewModal()">&times;</button>
-                </div>
-            </div>
-            <div class="preview-modal-body">
-                <div id="previewContent" class="preview-content">
-                    <div style="text-align: center; padding: 40px; color: #999;">
-                        Loading preview...
-                    </div>
-                </div>
+
+    <!-- Editor row: blocks sidebar + canvas + right sidebar -->
+    <div class="editor-row">
+        <!-- Left sidebar: GrapeJS renders blocks here by category -->
+        <div class="panel-left" id="blocks-container"></div>
+
+        <!-- Canvas -->
+        <div class="editor-canvas">
+            <div id="gjs">
+                <p style="padding:20px;color:#888;text-align:center;">
+                    Drag components from the left panel to start building your template.
+                </p>
             </div>
         </div>
-    </div>
-    
-    <!-- Export Modal -->
-    <div id="exportModal" class="export-modal hidden">
-        <div class="export-modal-overlay" onclick="closeExportModal()"></div>
-        <div class="export-modal-content">
-            <div class="export-modal-header">
-                <h2>Export Template</h2>
-                <button class="export-modal-close" onclick="closeExportModal()">&times;</button>
-            </div>
-            <div class="export-modal-body">
-                <div class="export-group">
-                    <label class="export-label">Export Format</label>
-                    <div class="export-options">
-                        <label class="export-option">
-                            <input type="radio" name="exportFormat" value="html" checked>
-                            <span>HTML (Template only)</span>
-                        </label>
-                        <label class="export-option">
-                            <input type="radio" name="exportFormat" value="json">
-                            <span>JSON (With metadata)</span>
-                        </label>
-                    </div>
-                </div>
-                <div class="export-group">
-                    <label class="export-label">Options</label>
-                    <label class="export-checkbox">
-                        <input type="checkbox" id="exportIncludeCSS" checked>
-                        <span>Include CSS</span>
-                    </label>
-                    <label class="export-checkbox">
-                        <input type="checkbox" id="exportIncludeMetadata">
-                        <span>Include metadata</span>
-                    </label>
-                </div>
-            </div>
-            <div class="export-modal-footer">
-                <button class="export-btn cancel" onclick="closeExportModal()">Cancel</button>
-                <button class="export-btn download" onclick="performExport()">📥 Download</button>
-            </div>
+
+        <!-- Right sidebar: styles / traits / layers -->
+        <div class="panel-right">
+            <div class="panel-switcher" id="panelSwitcher"></div>
+            <div id="styles-container" class="right-panel-section"></div>
+            <div id="traits-container" class="right-panel-section"></div>
+            <div id="layers-container" class="right-panel-section"></div>
         </div>
-    </div>
-    
-    <!-- Debug Console Panel -->
-    <div id="debugConsole" class="hidden">
-        <div id="debugHeader">
-            <span>Debug Console (Press Ctrl+Alt+D to toggle)</span>
-            <div style="display: flex; gap: 8px;">
-                <button id="debugCopy" title="Copy to clipboard">📋</button>
-                <button id="debugClear" title="Clear console">🗑️</button>
-                <button id="debugClose">&times;</button>
-            </div>
-        </div>
-        <div id="debugOutput"></div>
     </div>
 
-    <!-- JavaScript Modules (load in dependency order) -->
-    <script src="js/utils.js"></script>
+    <!-- Status bar -->
+    <div class="status-bar">
+        <span id="statusLeft">Ready</span>
+        <span id="statusRight">v2.0.0</span>
+    </div>
+
+    <!-- Scripts (load in order) -->
     <script src="js/bridge.js"></script>
-    <script src="js/components.js"></script>
-    <script src="js/canvas.js"></script>
-    <script src="js/properties.js"></script>
-    <script src="js/app.js"></script>
+    <script src="js/anki-components.js"></script>
+    <script src="js/anki-blocks.js"></script>
+    <script src="js/editor.js"></script>
 </body>
 </html>

@@ -1,7 +1,14 @@
+[project]
+name = "anki-template-designer"
+version = "2.0.0"
+description = "A visual template designer for Anki flashcard templates using GrapeJS"
+license = { text = "MIT" }
+requires-python = ">=3.9"
+
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = "-ra -q --strict-markers --tb=short"
-testpaths = ["tests", "testsuite"]
+testpaths = ["anki_template_designer/tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
@@ -9,19 +16,14 @@ python_functions = ["test_*"]
 markers = [
     "unit: Unit tests",
     "integration: Integration tests",
-    "e2e: End-to-end workflow tests",
     "slow: Tests that take a long time to run",
-    "ui: Tests that require UI/Qt",
 ]
 
-# Coverage settings
 [tool.coverage.run]
-source = ["ui", "utils"]
+source = ["anki_template_designer"]
 omit = [
     "*/tests/*",
     "*/__pycache__/*",
-    "*/build.py",
-    "*/examples.py",
 ]
 
 [tool.coverage.report]

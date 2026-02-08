@@ -68,6 +68,11 @@ class WebViewBridge(QObject):
         self._template_service = service
         logger.debug("Template service connected to bridge")
     
+    @property
+    def template_service(self) -> Optional["TemplateService"]:
+        """Get the template service instance."""
+        return self._template_service
+    
     def setup_channel(self, webview: Any) -> None:
         """Set up the QWebChannel with the WebView.
         

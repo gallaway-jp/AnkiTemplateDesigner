@@ -1,2 +1,0 @@
-ADDON __init__.py LOADED
-ImportError (outside Anki): No module named 'aqt'

@@ -347,6 +347,8 @@ class DesignerDialog(QDialog):
         # Register default actions
         self._bridge.register_action("save_template", self._on_save_template)
         self._bridge.register_action("load_template", self._on_load_template)
+        self._bridge.register_action("get_templates", self._on_get_templates)
+        self._bridge.register_action("get_current_template", self._on_get_current_template)
         
         # Connect inspector toggle signal
         self._bridge.inspectorToggleRequested.connect(self._toggle_inspector)
@@ -370,15 +372,36 @@ class DesignerDialog(QDialog):
         """Handle load template action from JS.
         
         Args:
-            payload: Contains template_id.
+            payload: Contains templateId.
             
         Returns:
-            Template data.
+            Template data including projectData for GrapeJS.
         """
-        template_id = payload.get("template_id")
+        template_id = payload.get("templateId")
         logger.info(f"Load template requested: {template_id}")
-        # Actual implementation in Plan 06
-        return {"template_id": template_id, "content": ""}
+        return {"templateId": template_id, "projectData": None}
+    
+    def _on_get_templates(self, payload: dict) -> dict:
+        """Return the list of available templates.
+        
+        Returns:
+            Dict with templates list.
+        """
+        if self._bridge and self._bridge.template_service:
+            try:
+                templates = self._bridge.template_service.list_templates()
+                return {"templates": templates}
+            except Exception as e:
+                logger.error(f"Failed to list templates: {e}")
+        return {"templates": []}
+    
+    def _on_get_current_template(self, payload: dict) -> dict:
+        """Return the currently selected template (if any).
+        
+        Returns:
+            Dict with templateId and projectData.
+        """
+        return {"templateId": None, "projectData": None}
     
     @property
     def bridge(self) -> Optional[WebViewBridge]:
