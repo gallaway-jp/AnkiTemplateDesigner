@@ -135,6 +135,28 @@ function initEditor() {
         registerAnkiBlocks(editor);
         console.log('[ATD] Anki blocks registered');
 
+        // Register list add/remove commands (used by atd-list trait buttons)
+        editor.Commands.add('atd-list-add', {
+            run(ed) {
+                const sel = ed.getSelected();
+                if (sel && sel.get('type') === 'atd-list') {
+                    const count = sel.components().length;
+                    sel.append({ tagName: 'li', content: `Item ${count + 1}`, editable: true, draggable: false, droppable: false });
+                }
+            },
+        });
+        editor.Commands.add('atd-list-remove', {
+            run(ed) {
+                const sel = ed.getSelected();
+                if (sel && sel.get('type') === 'atd-list') {
+                    const children = sel.components();
+                    if (children.length > 1) {
+                        children.last().remove();
+                    }
+                }
+            },
+        });
+
         // Build toolbar buttons
         _buildToolbarPanels();
 
@@ -417,27 +439,74 @@ function _clearUnsaved() {
 
 async function _saveTemplate() {
     if (!editor) return;
+
+    // Save current side state in memory
     _saveSideState();
 
-    const html = editor.getHtml();
-    const css = editor.getCss();
-    const projectData = editor.getProjectData();
+    if (!currentTemplateId) {
+        _setStatus('No template selected');
+        return;
+    }
+
+    // Parse composite id → noteTypeId:ordinal
+    const [noteTypeIdStr, ordinalStr] = currentTemplateId.split(':');
+    const noteTypeId = parseInt(noteTypeIdStr, 10);
+    const ordinal = parseInt(ordinalStr, 10);
+
+    if (isNaN(noteTypeId) || isNaN(ordinal)) {
+        _setStatus('Invalid template id');
+        return;
+    }
+
+    // Build front HTML from stored front side state
+    let frontHtml = '';
+    let backHtml = '';
+    let css = '';
+
+    const key = currentTemplateId;
+    const states = sideState[key] || {};
+
+    // Extract front HTML
+    if (states.front) {
+        editor.loadProjectData(states.front);
+        frontHtml = grapejsHtmlToAnki(editor.getHtml());
+        css = editor.getCss();  // CSS is shared, take from whichever side
+    }
+
+    // Extract back HTML
+    if (states.back) {
+        editor.loadProjectData(states.back);
+        backHtml = grapejsHtmlToAnki(editor.getHtml());
+        if (!css) css = editor.getCss();
+    }
+
+    // Restore the current side view
+    const currentData = states[currentSide];
+    if (currentData) {
+        editor.loadProjectData(currentData);
+    }
+
+    _setStatus('Saving...');
 
     const payload = {
-        templateId: currentTemplateId,
-        side: currentSide,
-        html,
-        css,
-        projectData: JSON.stringify(projectData),
-        allSides: JSON.stringify(sideState[currentTemplateId] || {}),
+        noteTypeId: noteTypeId,
+        ordinal: ordinal,
+        frontHtml: frontHtml,
+        backHtml: backHtml,
+        css: css,
     };
 
-    const result = await bridgeCall('save_template', payload);
-    if (result?.success) {
-        _clearUnsaved();
-        _setStatus('Saved');
-    } else {
-        _setStatus('Save failed');
+    try {
+        const result = await bridgeCall('save_template', payload);
+        if (result?.success) {
+            _clearUnsaved();
+            _setStatus('Saved ✓');
+        } else {
+            _setStatus('Save failed: ' + (result?.error || 'unknown'));
+        }
+    } catch (err) {
+        console.error('[ATD] Save error:', err);
+        _setStatus('Save error');
     }
 }
 
@@ -488,16 +557,19 @@ async function _connectBridge() {
         if (bridge) {
             _setConnectionStatus('Connected', true);
 
-            // Load templates list
+            // Load templates list from Anki note types
             const result = await bridgeCall('get_templates', {});
             if (result?.templates) {
                 _populateTemplateSelector(result.templates);
             }
 
-            // Load currently selected template
+            // Auto-load the first template
             const current = await bridgeCall('get_current_template', {});
-            if (current?.templateId) {
+            if (current?.templateId && current.frontHtml !== undefined) {
                 _loadTemplate(current.templateId, current);
+                // Select it in the dropdown
+                const select = document.getElementById('templateSelect');
+                if (select) select.value = current.templateId;
             }
         } else {
             _setConnectionStatus('Standalone', false);
@@ -512,50 +584,95 @@ function _populateTemplateSelector(templates) {
     const select = document.getElementById('templateSelect');
     if (!select) return;
 
-    select.innerHTML = '';
+    // Clear existing options
+    select.innerHTML = '<option value="">Select template...</option>';
+
     templates.forEach((t) => {
         const opt = document.createElement('option');
-        opt.value = t.id || t.name;
-        opt.textContent = t.name || t.id;
+        opt.value = t.id;                        // "noteTypeId:ordinal"
+        opt.textContent = t.name;                // "NoteType > Card 1"
+        opt.dataset.noteTypeId = t.noteTypeId;
+        opt.dataset.ordinal = t.ordinal;
         select.appendChild(opt);
     });
 
     select.addEventListener('change', async () => {
+        const val = select.value;
+        if (!val) return;
+
         if (hasUnsavedChanges) {
             if (!confirm('You have unsaved changes. Switch template?')) {
-                select.value = currentTemplateId;
+                select.value = currentTemplateId || '';
                 return;
             }
         }
-        const result = await bridgeCall('load_template', { templateId: select.value });
-        if (result) {
-            _loadTemplate(select.value, result);
+
+        // Parse composite id
+        const [noteTypeIdStr, ordinalStr] = val.split(':');
+        const payload = {
+            noteTypeId: parseInt(noteTypeIdStr, 10),
+            ordinal: parseInt(ordinalStr, 10),
+        };
+
+        _setStatus('Loading...');
+        const result = await bridgeCall('load_template', payload);
+        if (result && !result.error) {
+            _loadTemplate(val, result);
+        } else {
+            _setStatus('Load failed: ' + (result?.error || 'unknown'));
         }
     });
 }
 
+/**
+ * Load a template's front/back HTML into GrapeJS, converting Anki
+ * Mustache syntax to our custom component elements first.
+ *
+ * @param {string} templateId  Composite id "noteTypeId:ordinal"
+ * @param {object} data        { frontHtml, backHtml, css, fields, templateName, noteTypeName }
+ */
 function _loadTemplate(templateId, data) {
+    if (!editor) return;
+
     currentTemplateId = templateId;
     currentSide = 'front';
 
-    // Reset side toggle
+    // Reset side toggle UI
     document.querySelectorAll('.side-btn').forEach((b) => {
         b.classList.toggle('active', b.dataset.side === 'front');
     });
 
-    // Load project data if available
-    if (data?.projectData) {
-        try {
-            const parsed = typeof data.projectData === 'string'
-                ? JSON.parse(data.projectData) : data.projectData;
-            sideState[templateId] = parsed;
-        } catch { /* ignore */ }
-    }
+    // Convert Anki HTML → GrapeJS component HTML
+    const frontGjs = ankiHtmlToGrapejs(data.frontHtml || '');
+    const backGjs = ankiHtmlToGrapejs(data.backHtml || '');
+    const css = data.css || '';
 
-    _loadSideState();
+    // Load front side into the editor first
+    editor.DomComponents.clear();
+    editor.CssComposer.clear();
+    editor.setComponents(frontGjs);
+    editor.setStyle(css);
+
+    // Save front project state
+    if (!sideState[templateId]) sideState[templateId] = { front: null, back: null };
+    sideState[templateId].front = editor.getProjectData();
+
+    // Load back side temporarily to store its project data
+    editor.DomComponents.clear();
+    editor.CssComposer.clear();
+    editor.setComponents(backGjs);
+    editor.setStyle(css);
+    sideState[templateId].back = editor.getProjectData();
+
+    // Switch back to front view for the user
+    editor.loadProjectData(sideState[templateId].front);
+
     _clearUnsaved();
-    _setStatus(`Loaded: ${templateId}`);
-    bridgeLog(`Template loaded: ${templateId}`);
+    const label = data.templateName
+        ? `${data.noteTypeName || ''} > ${data.templateName}`
+        : templateId;
+    _setStatus(`Loaded: ${label}`);
+    bridgeLog(`Template loaded: ${label}`);
 }
 
 /* ------------------------------------------------------------------ */
