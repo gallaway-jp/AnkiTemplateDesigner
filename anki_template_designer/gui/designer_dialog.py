@@ -2,6 +2,8 @@
 
 import os
 import sys
+import json
+import time
 import warnings
 from typing import Optional, Any
 import logging
@@ -328,11 +330,15 @@ class DesignerDialog(QDialog):
         self._bridge = WebViewBridge(self)
         self._bridge.setup_channel(self._webview)
         
-        # Initialize template service
+        # Initialize template service (kept for legacy compat, not used for Anki templates)
         from ..services.template_service import TemplateService
         addon_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         template_service = TemplateService(addon_dir)
         self._bridge.set_template_service(template_service)
+        
+        # Get the real Anki NoteTypeService (initialised in __init__.py)
+        from ..services.note_type_service import get_note_type_service
+        self._note_type_service = get_note_type_service()
         
         # Initialize undo/redo manager
         from ..services.undo_redo_manager import UndoRedoManager
@@ -344,7 +350,7 @@ class DesignerDialog(QDialog):
         error_handler = ErrorHandler()
         self._bridge.set_error_handler(error_handler)
         
-        # Register default actions
+        # Register actions → these now talk to Anki's note types
         self._bridge.register_action("save_template", self._on_save_template)
         self._bridge.register_action("load_template", self._on_load_template)
         self._bridge.register_action("get_templates", self._on_get_templates)
@@ -353,55 +359,203 @@ class DesignerDialog(QDialog):
         # Connect inspector toggle signal
         self._bridge.inspectorToggleRequested.connect(self._toggle_inspector)
         
-        logger.debug("Bridge setup complete with template service, undo manager, and error handler")
+        logger.debug("Bridge setup complete with NoteTypeService")
     
+    # ------------------------------------------------------------------ #
+    #  Template backup helpers                                            #
+    # ------------------------------------------------------------------ #
+
+    def _get_backup_dir(self) -> str:
+        """Return (and create) the template-backup directory."""
+        addon_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        backup_dir = os.path.join(addon_dir, "backups", "templates")
+        os.makedirs(backup_dir, exist_ok=True)
+        return backup_dir
+
+    def _backup_template(
+        self,
+        note_type_name: str,
+        template_name: str,
+        ordinal: int,
+        front: str,
+        back: str,
+        css: str,
+    ) -> str:
+        """Write a timestamped backup of the current front/back/css.
+
+        Returns the backup folder path.
+        """
+        ts = time.strftime("%Y%m%d_%H%M%S")
+        safe_name = "".join(
+            c if c.isalnum() or c in "-_ " else "_" for c in note_type_name
+        ).strip()
+        safe_tmpl = "".join(
+            c if c.isalnum() or c in "-_ " else "_" for c in template_name
+        ).strip()
+        folder = os.path.join(
+            self._get_backup_dir(), f"{safe_name}_{safe_tmpl}_{ts}"
+        )
+        os.makedirs(folder, exist_ok=True)
+
+        with open(os.path.join(folder, "front.html"), "w", encoding="utf-8") as f:
+            f.write(front)
+        with open(os.path.join(folder, "back.html"), "w", encoding="utf-8") as f:
+            f.write(back)
+        with open(os.path.join(folder, "style.css"), "w", encoding="utf-8") as f:
+            f.write(css)
+
+        logger.info(f"Template backup saved to {folder}")
+        return folder
+
+    # ------------------------------------------------------------------ #
+    #  Action handlers (connected to handleAction dispatch)               #
+    # ------------------------------------------------------------------ #
+
     def _on_save_template(self, payload: dict) -> dict:
-        """Handle save template action from JS.
-        
-        Args:
-            payload: Template data to save.
-            
-        Returns:
-            Result dictionary.
+        """Save the front/back HTML + CSS back to Anki, creating a backup first.
+
+        Expected payload keys from JS:
+            noteTypeId  – int (the Anki model id)
+            ordinal     – int (card template ordinal)
+            frontHtml   – str (front HTML from GrapeJS)
+            backHtml    – str (back HTML from GrapeJS)
+            css         – str (shared CSS from GrapeJS)
         """
         logger.info("Save template requested")
-        # Actual implementation in Plan 06
-        return {"saved": True}
-    
+        svc = self._note_type_service
+        if svc is None:
+            return {"success": False, "error": "NoteTypeService not available"}
+
+        try:
+            note_type_id = int(payload.get("noteTypeId", 0))
+            ordinal = int(payload.get("ordinal", 0))
+            front_html = payload.get("frontHtml", "")
+            back_html = payload.get("backHtml", "")
+            css = payload.get("css", "")
+
+            # Fetch current state for backup
+            nt = svc.get_note_type(note_type_id)
+            if nt is None:
+                return {"success": False, "error": f"Note type {note_type_id} not found"}
+
+            if ordinal >= len(nt.templates):
+                return {"success": False, "error": f"Template ordinal {ordinal} out of range"}
+
+            old_tmpl = nt.templates[ordinal]
+            self._backup_template(
+                nt.name, old_tmpl.name, ordinal,
+                old_tmpl.front, old_tmpl.back, nt.css,
+            )
+
+            # Write new values to Anki
+            ok_tmpl = svc.update_template(note_type_id, ordinal, front=front_html, back=back_html)
+            ok_css = svc.update_css(note_type_id, css)
+
+            if ok_tmpl and ok_css:
+                return {"success": True}
+            else:
+                return {"success": False, "error": "Anki save returned False"}
+
+        except Exception as e:
+            logger.error(f"Save template failed: {e}", exc_info=True)
+            return {"success": False, "error": str(e)}
+
     def _on_load_template(self, payload: dict) -> dict:
-        """Handle load template action from JS.
-        
-        Args:
-            payload: Contains templateId.
-            
-        Returns:
-            Template data including projectData for GrapeJS.
+        """Load the front/back HTML + CSS for one card template.
+
+        Expected payload:
+            noteTypeId – int
+            ordinal    – int
+        Returns dict with keys: noteTypeId, ordinal, templateName,
+            frontHtml, backHtml, css, fields.
         """
-        template_id = payload.get("templateId")
-        logger.info(f"Load template requested: {template_id}")
-        return {"templateId": template_id, "projectData": None}
-    
+        svc = self._note_type_service
+        if svc is None:
+            return {"error": "NoteTypeService not available"}
+
+        try:
+            note_type_id = int(payload.get("noteTypeId", 0))
+            ordinal = int(payload.get("ordinal", 0))
+
+            nt = svc.get_note_type(note_type_id)
+            if nt is None:
+                return {"error": f"Note type {note_type_id} not found"}
+
+            if ordinal >= len(nt.templates):
+                return {"error": f"Template ordinal {ordinal} out of range"}
+
+            tmpl = nt.templates[ordinal]
+            return {
+                "noteTypeId": note_type_id,
+                "ordinal": ordinal,
+                "noteTypeName": nt.name,
+                "templateName": tmpl.name,
+                "frontHtml": tmpl.front,
+                "backHtml": tmpl.back,
+                "css": nt.css,
+                "fields": nt.get_field_names(),
+            }
+        except Exception as e:
+            logger.error(f"Load template failed: {e}", exc_info=True)
+            return {"error": str(e)}
+
     def _on_get_templates(self, payload: dict) -> dict:
-        """Return the list of available templates.
-        
-        Returns:
-            Dict with templates list.
+        """Return the flat list of selectable templates for the dropdown.
+
+        Each entry is:
+            { id: "<noteTypeId>:<ordinal>", name: "NoteType > Card 1" }
         """
-        if self._bridge and self._bridge.template_service:
-            try:
-                templates = self._bridge.template_service.list_templates()
-                return {"templates": templates}
-            except Exception as e:
-                logger.error(f"Failed to list templates: {e}")
-        return {"templates": []}
-    
+        svc = self._note_type_service
+        if svc is None:
+            return {"templates": []}
+
+        try:
+            note_types = svc.get_all_note_types()
+            templates = []
+            for nt in note_types:
+                for tmpl in nt.templates:
+                    templates.append({
+                        "id": f"{nt.id}:{tmpl.ordinal}",
+                        "name": f"{nt.name} > {tmpl.name}",
+                        "noteTypeId": nt.id,
+                        "ordinal": tmpl.ordinal,
+                    })
+            return {"templates": templates}
+        except Exception as e:
+            logger.error(f"Get templates failed: {e}", exc_info=True)
+            return {"templates": []}
+
     def _on_get_current_template(self, payload: dict) -> dict:
-        """Return the currently selected template (if any).
-        
-        Returns:
-            Dict with templateId and projectData.
-        """
-        return {"templateId": None, "projectData": None}
+        """Return the first available template so the editor has something on load."""
+        svc = self._note_type_service
+        if svc is None:
+            return {"templateId": None}
+
+        try:
+            note_types = svc.get_all_note_types()
+            if not note_types:
+                return {"templateId": None}
+
+            nt = note_types[0]
+            if not nt.templates:
+                return {"templateId": None}
+
+            tmpl = nt.templates[0]
+            composite_id = f"{nt.id}:{tmpl.ordinal}"
+            return {
+                "templateId": composite_id,
+                "noteTypeId": nt.id,
+                "ordinal": tmpl.ordinal,
+                "noteTypeName": nt.name,
+                "templateName": tmpl.name,
+                "frontHtml": tmpl.front,
+                "backHtml": tmpl.back,
+                "css": nt.css,
+                "fields": nt.get_field_names(),
+            }
+        except Exception as e:
+            logger.error(f"Get current template failed: {e}", exc_info=True)
+            return {"templateId": None}
     
     @property
     def bridge(self) -> Optional[WebViewBridge]:
