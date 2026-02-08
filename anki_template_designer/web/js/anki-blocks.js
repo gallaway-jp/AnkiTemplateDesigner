@@ -131,14 +131,7 @@ function registerAnkiBlocks(editor) {
     bm.add('text', {
         label: 'Text',
         category: 'Basic',
-        content: '<div data-gjs-type="text">Insert your text here</div>',
-        attributes: { class: 'gjs-block-basic' },
-    });
-
-    bm.add('heading', {
-        label: 'Heading',
-        category: 'Basic',
-        content: '<h2>Heading</h2>',
+        content: { type: 'atd-text' },
         attributes: { class: 'gjs-block-basic' },
     });
 
@@ -161,7 +154,7 @@ function registerAnkiBlocks(editor) {
     bm.add('list', {
         label: 'List',
         category: 'Basic',
-        content: '<ul><li>Item 1</li><li>Item 2</li><li>Item 3</li></ul>',
+        content: { type: 'atd-list' },
         attributes: { class: 'gjs-block-basic' },
     });
 }
