@@ -158,6 +158,11 @@ html, body {
     background: var(--atd-bg-light);
     border-color: var(--atd-accent-dim);
 }
+.toolbar-btn.active {
+    background: var(--atd-accent-dim);
+    color: #fff;
+    border-color: var(--atd-accent);
+}
 
 /* ── Editor row: left + canvas + right ────────────────────────── */
 .editor-row {
@@ -334,6 +339,78 @@ html, body {
     background: rgba(203, 166, 247, 0.08);
     border: 1px dashed rgba(203, 166, 247, 0.35);
     min-height: 40px;
+}
+
+/* ── Layout component indicators in canvas ────────────────────── */
+/* These styles are duplicated into the canvas iframe via
+   editor.Canvas.getDocument() in a <style> block if needed,
+   but GrapeJS also applies component styles from the outer doc. */
+
+.atd-section {
+    position: relative;
+}
+.atd-section:empty::after {
+    content: 'Section – drop components here';
+    display: block;
+    padding: 12px;
+    text-align: center;
+    color: #9399b2;
+    font-size: 12px;
+    font-style: italic;
+}
+
+.atd-row {
+    position: relative;
+}
+.atd-row:empty::after {
+    content: 'Row – drop columns here';
+    display: block;
+    padding: 12px;
+    text-align: center;
+    color: #9399b2;
+    font-size: 12px;
+    font-style: italic;
+}
+
+.atd-col {
+    position: relative;
+}
+.atd-col:empty::after {
+    content: 'Column – drop content here';
+    display: block;
+    padding: 8px;
+    text-align: center;
+    color: #9399b2;
+    font-size: 11px;
+    font-style: italic;
+}
+
+.atd-container {
+    position: relative;
+}
+.atd-container:empty::after {
+    content: 'Container – drop content here';
+    display: block;
+    padding: 12px;
+    text-align: center;
+    color: #9399b2;
+    font-size: 12px;
+    font-style: italic;
+}
+
+.atd-spacer {
+    position: relative;
+    background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 4px,
+        rgba(147, 153, 178, 0.08) 4px,
+        rgba(147, 153, 178, 0.08) 8px
+    );
+}
+
+.atd-divider {
+    /* Styled via component styles */
 }
 
 /* ── Scrollbar styling ────────────────────────────────────────── */

@@ -72,49 +72,55 @@ function registerAnkiBlocks(editor) {
     bm.add('section', {
         label: 'Section',
         category: 'Layout',
-        content: '<section class="atd-section"><div>Section content</div></section>',
+        content: { type: 'atd-section' },
         attributes: { class: 'gjs-block-layout' },
     });
 
     bm.add('columns-2', {
         label: '2 Columns',
         category: 'Layout',
-        content: `<div class="atd-row" data-gjs-droppable=".atd-col" style="display:flex;gap:12px;">
-            <div class="atd-col" style="flex:1;min-height:60px;padding:8px;">Column 1</div>
-            <div class="atd-col" style="flex:1;min-height:60px;padding:8px;">Column 2</div>
-        </div>`,
+        content: {
+            type: 'atd-row',
+            components: [
+                { type: 'atd-column' },
+                { type: 'atd-column' },
+            ],
+        },
         attributes: { class: 'gjs-block-layout' },
     });
 
     bm.add('columns-3', {
         label: '3 Columns',
         category: 'Layout',
-        content: `<div class="atd-row" data-gjs-droppable=".atd-col" style="display:flex;gap:12px;">
-            <div class="atd-col" style="flex:1;min-height:60px;padding:8px;">Col 1</div>
-            <div class="atd-col" style="flex:1;min-height:60px;padding:8px;">Col 2</div>
-            <div class="atd-col" style="flex:1;min-height:60px;padding:8px;">Col 3</div>
-        </div>`,
+        content: {
+            type: 'atd-row',
+            components: [
+                { type: 'atd-column' },
+                { type: 'atd-column' },
+                { type: 'atd-column' },
+            ],
+        },
         attributes: { class: 'gjs-block-layout' },
     });
 
     bm.add('container', {
         label: 'Container',
         category: 'Layout',
-        content: '<div class="atd-container" style="max-width:800px;margin:0 auto;padding:16px;min-height:60px;">Container</div>',
+        content: { type: 'atd-container' },
         attributes: { class: 'gjs-block-layout' },
     });
 
     bm.add('divider', {
         label: 'Divider',
         category: 'Layout',
-        content: '<hr class="atd-divider" style="border:none;border-top:1px solid #ccc;margin:12px 0;">',
+        content: { type: 'atd-divider' },
         attributes: { class: 'gjs-block-layout' },
     });
 
     bm.add('spacer', {
         label: 'Spacer',
         category: 'Layout',
-        content: '<div class="atd-spacer" style="height:24px;"></div>',
+        content: { type: 'atd-spacer' },
         attributes: { class: 'gjs-block-layout' },
     });
 

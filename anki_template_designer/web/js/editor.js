@@ -82,9 +82,12 @@ function initEditor() {
                         name: 'Layout',
                         open: false,
                         buildProps: [
-                            'display', 'flex-direction', 'justify-content',
-                            'align-items', 'flex-wrap', 'gap',
+                            'display', 'position',
+                            'flex-direction', 'justify-content',
+                            'align-items', 'flex-wrap', 'flex-basis',
+                            'order', 'gap',
                             'width', 'height', 'max-width', 'min-height',
+                            'overflow',
                         ],
                     },
                     {
@@ -146,6 +149,9 @@ function initEditor() {
             _markUnsaved();
         });
 
+        // Inject canvas styles for layout placeholders and Anki badges
+        _injectCanvasStyles();
+
         // Connect to Python bridge
         _connectBridge();
 
@@ -159,6 +165,92 @@ function initEditor() {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Canvas style injection                                             */
+/* ------------------------------------------------------------------ */
+
+function _injectCanvasStyles() {
+    // GrapeJS renders components inside an iframe.
+    // We inject styles so layout placeholders and Anki badges render properly.
+    const css = `
+        /* Anki component badges */
+        [data-gjs-type="anki-field"],
+        [data-gjs-type="anki-cloze"],
+        [data-gjs-type="anki-hint"],
+        [data-gjs-type="anki-type-answer"],
+        [data-gjs-type="anki-tags"],
+        [data-gjs-type="anki-frontside"] {
+            display: inline-block;
+            padding: 4px 10px;
+            margin: 2px;
+            border-radius: 4px;
+            font-family: "Fira Code", "Cascadia Code", monospace;
+            font-size: 13px;
+            background: rgba(137, 180, 250, 0.12);
+            border: 1px dashed rgba(137, 180, 250, 0.4);
+            color: #89b4fa;
+            min-width: 60px;
+            text-align: center;
+        }
+        [data-gjs-type="anki-conditional"] {
+            display: block;
+            padding: 8px 12px;
+            margin: 4px 0;
+            border-radius: 4px;
+            background: rgba(203, 166, 247, 0.08);
+            border: 1px dashed rgba(203, 166, 247, 0.35);
+            min-height: 40px;
+        }
+
+        /* Layout placeholders */
+        .atd-section { position: relative; }
+        .atd-section:empty::after {
+            content: 'Section \\2013  drop components here';
+            display: block; padding: 16px; text-align: center;
+            color: #999; font-size: 12px; font-style: italic;
+        }
+        .atd-row { position: relative; }
+        .atd-row:empty::after {
+            content: 'Row \\2013  drop columns here';
+            display: block; padding: 16px; text-align: center;
+            color: #999; font-size: 12px; font-style: italic;
+        }
+        .atd-col { position: relative; }
+        .atd-col:empty::after {
+            content: 'Column \\2013  drop content';
+            display: block; padding: 8px; text-align: center;
+            color: #999; font-size: 11px; font-style: italic;
+        }
+        .atd-container { position: relative; }
+        .atd-container:empty::after {
+            content: 'Container \\2013  drop content here';
+            display: block; padding: 16px; text-align: center;
+            color: #999; font-size: 12px; font-style: italic;
+        }
+        .atd-spacer {
+            background: repeating-linear-gradient(
+                45deg, transparent, transparent 4px,
+                rgba(150, 150, 150, 0.08) 4px, rgba(150, 150, 150, 0.08) 8px
+            );
+        }
+    `;
+
+    // Wait for the canvas iframe to be ready, then inject
+    editor.on('load', () => {
+        try {
+            const frame = editor.Canvas.getFrameEl();
+            if (frame?.contentDocument) {
+                const style = frame.contentDocument.createElement('style');
+                style.textContent = css;
+                frame.contentDocument.head.appendChild(style);
+                console.log('[ATD] Canvas styles injected');
+            }
+        } catch (err) {
+            console.warn('[ATD] Could not inject canvas styles:', err);
+        }
+    });
+}
+
+/* ------------------------------------------------------------------ */
 /*  Toolbar                                                            */
 /* ------------------------------------------------------------------ */
 
@@ -166,20 +258,47 @@ function _buildToolbarPanels() {
     const container = document.querySelector('.toolbar-actions');
     if (!container) return;
 
+    let bordersActive = false;
+    let currentDevice = 'Desktop';
+
+    const _setActiveDevice = (device) => {
+        currentDevice = device;
+        editor.setDevice(device);
+        ['device-d', 'device-t', 'device-m'].forEach((id) => {
+            const b = document.getElementById(`btn-${id}`);
+            if (b) b.classList.toggle('active',
+                (id === 'device-d' && device === 'Desktop') ||
+                (id === 'device-t' && device === 'Tablet') ||
+                (id === 'device-m' && device === 'Mobile')
+            );
+        });
+    };
+
+    const _toggleBorders = () => {
+        bordersActive = !bordersActive;
+        if (bordersActive) {
+            editor.runCommand('sw-visibility');
+        } else {
+            editor.stopCommand('sw-visibility');
+        }
+        const btn = document.getElementById('btn-borders');
+        if (btn) btn.classList.toggle('active', bordersActive);
+    };
+
     const buttons = [
         { id: 'save',       label: '💾 Save',    action: _saveTemplate },
         { id: 'undo',       label: '↶ Undo',     action: () => editor.UndoManager.undo() },
         { id: 'redo',       label: '↷ Redo',     action: () => editor.UndoManager.redo() },
         { id: 'export',     label: '📤 Export',   action: _showExport },
-        { id: 'device-d',   label: '🖥',          action: () => editor.setDevice('Desktop'), title: 'Desktop' },
-        { id: 'device-t',   label: '⊟',           action: () => editor.setDevice('Tablet'),  title: 'Tablet' },
-        { id: 'device-m',   label: '📱',          action: () => editor.setDevice('Mobile'),  title: 'Mobile' },
-        { id: 'borders',    label: 'B',           action: () => editor.runCommand('sw-visibility'), title: 'Toggle borders' },
+        { id: 'device-d',   label: '🖥',          action: () => _setActiveDevice('Desktop'), title: 'Desktop',        active: true },
+        { id: 'device-t',   label: '⊟',           action: () => _setActiveDevice('Tablet'),  title: 'Tablet' },
+        { id: 'device-m',   label: '📱',          action: () => _setActiveDevice('Mobile'),  title: 'Mobile' },
+        { id: 'borders',    label: 'B',           action: _toggleBorders, title: 'Toggle borders' },
     ];
 
-    buttons.forEach(({ id, label, action, title }) => {
+    buttons.forEach(({ id, label, action, title, active }) => {
         const btn = document.createElement('button');
-        btn.className = 'toolbar-btn';
+        btn.className = 'toolbar-btn' + (active ? ' active' : '');
         btn.id = `btn-${id}`;
         btn.innerHTML = label;
         if (title) btn.title = title;
@@ -253,17 +372,21 @@ function _setupSideToggle() {
     });
 }
 
+const STANDALONE_KEY = '__standalone__';
+
 function _saveSideState() {
-    if (!currentTemplateId || !editor) return;
-    if (!sideState[currentTemplateId]) {
-        sideState[currentTemplateId] = { front: null, back: null };
+    if (!editor) return;
+    const key = currentTemplateId || STANDALONE_KEY;
+    if (!sideState[key]) {
+        sideState[key] = { front: null, back: null };
     }
-    sideState[currentTemplateId][currentSide] = editor.getProjectData();
+    sideState[key][currentSide] = editor.getProjectData();
 }
 
 function _loadSideState() {
-    if (!currentTemplateId || !editor) return;
-    const data = sideState[currentTemplateId]?.[currentSide];
+    if (!editor) return;
+    const key = currentTemplateId || STANDALONE_KEY;
+    const data = sideState[key]?.[currentSide];
     if (data) {
         editor.loadProjectData(data);
     } else {
